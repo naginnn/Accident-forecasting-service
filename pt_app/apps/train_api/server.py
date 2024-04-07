@@ -3,7 +3,7 @@ import os
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from apps.train_api.src.routers import train_router
+from src.routers import train_router
 
 app = FastAPI(redoc_url=None)
 

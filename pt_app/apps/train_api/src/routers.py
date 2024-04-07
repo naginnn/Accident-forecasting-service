@@ -6,7 +6,6 @@ import pandas as pd
 from fastapi import APIRouter, Depends, UploadFile
 from redis import Redis
 from rq import Queue, get_current_job
-from xlsx2csv import Xlsx2csv
 
 from apps.train_api.src.utils import start_train, check_train_state
 from settings.db import sync_db
@@ -25,8 +24,9 @@ async def train_model() -> dict:
 
 @train_router.post("/state", status_code=200)
 async def check_state() -> dict:
-    result = await check_train_state()
-    return result
+    # result = await ut.check_train_state()
+    # return result
+    return {}
 
 
 @train_router.post("/upload", status_code=200)

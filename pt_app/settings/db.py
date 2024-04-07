@@ -15,11 +15,11 @@ connect_args = {'prepared_statement_cache_size': 0,
                 'statement_cache_size': 0,
                 'connection_class': CConnection}
 
-PG_USR = os.getenv('PG_USR')
-PG_PWD = os.getenv('PG_PWD')
-PG_HOST = os.getenv('PG_HOST')
-PG_PORT = os.getenv('PG_PORT')
-PG_DB_NAME = os.getenv('PG_DB_NAME')
+PG_USR = os.getenv('POSTGRES_USER')
+PG_PWD = os.getenv('POSTGRES_PASSWORD')
+PG_HOST = os.getenv('POSTGRES_HOST')
+PG_PORT = os.getenv('POSTGRES_PORT')
+PG_DB_NAME = os.getenv('POSTGRES_DB')
 
 DATABASE_ASYNC_URL = f"postgresql+asyncpg://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}?prepared_statement_cache_size=0"
 DB_URL = f"postgresql+psycopg2://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}"
