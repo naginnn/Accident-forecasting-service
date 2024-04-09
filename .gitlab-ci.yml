@@ -6,7 +6,7 @@ stages:
 
 variables:
   # Image name created from the docker-compose
-  IMAGE_NAME: go-docker
+  IMAGE_NAME: docker
   # Create the final image name
   FINAL_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
