@@ -1,6 +1,5 @@
 # Steps to run in the preceding order
 stages:
-  - cleanup
   - build
   - deploy
 
@@ -10,14 +9,6 @@ variables:
   # Create the final image name
   FINAL_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
-Cleanup Unused Docker Images:
-  stage: cleanup
-  tags:
-    - build
-    - docker
-  script:
-    # Delete unnecessary images
-    - docker image prune -f
 
 Build Docker:
   stage: build
