@@ -9,7 +9,6 @@ variables:
   # Image name created from the docker-compose
   IMAGE_NAME: go-docker
   # Create the final image name
-  # e.g., registry.gitlab.com/nikitabuyevich/go-docker:master
   FINAL_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
 Cleanup Unused Docker Images:
