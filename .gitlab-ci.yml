@@ -37,7 +37,7 @@ Deploy to Prod:
   stage: deploy
   only:
     # Only runs in the master branch
-    - release
+    - develop
   tags:
     # Only runs if the Gitlab Runner has a "deploy" tag
     - deploy
