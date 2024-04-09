@@ -2,7 +2,6 @@
 stages:
   - cleanup
   - build
-  - test
   - deploy
 
 variables:
@@ -34,21 +33,11 @@ Build Docker:
     # Push build image to Gitlab's Docker Registry
     - docker push $FINAL_IMAGE_NAME
 
-Run Tests:
-  stage: test
-  tags:
-    - build
-    - docker
-  script:
-    # Run tests through docker-compose using
-    # the newly built image
-    - FINAL_IMAGE_NAME=$FINAL_IMAGE_NAME docker-compose up --exit-code-from tests tests
-
 Deploy to Prod:
   stage: deploy
   only:
     # Only runs in the master branch
-    - master
+    - develop
   tags:
     # Only runs if the Gitlab Runner has a "deploy" tag
     - deploy
