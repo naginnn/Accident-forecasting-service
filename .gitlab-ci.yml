@@ -1,8 +1,6 @@
 # Steps to run in the preceding order
 stages:
-  - cleanup
   - build
-  - deploy
 
 variables:
   # Image name created from the docker-compose
@@ -10,28 +8,6 @@ variables:
   # Create the final image name
   FINAL_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
-Cleanup Unused Docker Images:
-  stage: cleanup
-  tags:
-    - build
-    - docker
-  script:
-    # Delete unnecessary images
-    - docker image prune -f
-
-Build Docker:
-  stage: build
-  tags:
-    - build
-    - docker
-  before_script:
-    # Login to the Gitlab Docker Registry
-    - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
-  script:
-    # Build with docker-compose
-    - FINAL_IMAGE_NAME=$FINAL_IMAGE_NAME docker-compose build
-    # Push build image to Gitlab's Docker Registry
-    - docker push $FINAL_IMAGE_NAME
 
 Deploy to Prod:
   stage: deploy
@@ -40,7 +16,7 @@ Deploy to Prod:
     - develop
   tags:
     # Only runs if the Gitlab Runner has a "deploy" tag
-    - deploy
+    - build
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_JOB_TOKEN $CI_REGISTRY
   script:
@@ -50,3 +26,4 @@ Deploy to Prod:
     - FINAL_IMAGE_NAME=$FINAL_IMAGE_NAME docker-compose up --remove-orphans -d api
     # Cleanup older images which are no longer used
     - docker image prune -f
+
