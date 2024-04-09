@@ -1,6 +1,6 @@
 # Steps to run in the preceding order
 stages:
-  - build
+  - deploy
 
 variables:
   # Image name created from the docker-compose
