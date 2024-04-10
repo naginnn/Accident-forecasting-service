@@ -10,14 +10,14 @@ build:
   stage: build
   script:
     - docker-compose build
-    - docker-compose push
+    - docker-compose up
   only:
     - develop
 
 deploy:
   stage: deploy
   script:
-    - docker-compose up -d
+    - docker-compose up
   only:
     - develop
 
