@@ -3,9 +3,10 @@ API_AUTH_HOST=0.0.0.0
 API_AUTH_PORT=2223
 API_OBJ_HOST=0.0.0.0
 API_OBJ_PORT=2224
+API_CB_HOST=0.0.0.0
+API_CB_PORT=2225
 TRAIN_API_HOST=0.0.0.0
 TRAIN_API_PORT=2225
-
 
 POSTGRES_DB=postgres
 POSTGRES_HOST=localhost
@@ -17,3 +18,7 @@ POSTGRES_PASSWORD=password
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_DB=1
+
+MODEL_PATH=/Users/sergeyesenin/GolandProjects/services01/models
+DYLD_LIBRARY_PATH=/Users/sergeyesenin/GolandProjects/services01/go_app/pkg/ml/catboost/catboost/libs/model_interface
+LD_LIBRARY_PATH=/app/pkg/ml/catboost/catboost/libs/model_interface

@@ -19,6 +19,7 @@ internal
   app
     auth-api - Авторизация/Регистрация
     obj-api - Предикт/Логика выдачи
+    cb-api - Catboost GO
   pkg
 pkg
 go.mod
