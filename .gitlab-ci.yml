@@ -19,3 +19,4 @@ deploy:
     - docker-compose up -d
   only:
     - develop
+
