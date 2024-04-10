@@ -9,8 +9,8 @@ services:
 build:
   stage: build
   script:
-    - docker build -t ${NAME_OF_IMAGE} .
-    - docker push ${NAME_OF_IMAGE}
+    - docker-compose build
+    - docker-compose push
   only:
     - develop
 
