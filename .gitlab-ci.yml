@@ -5,13 +5,13 @@ stages:
 build:
   stage: build
   script:
-    - docker-compose build
+    - docker compose build
   only:
     - develop
 
 deploy:
   stage: deploy
   script:
-    - docker-compose up -d
+    - docker compose up -d
   only:
     - develop
