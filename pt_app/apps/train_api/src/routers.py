@@ -1,5 +1,6 @@
 import io
 import os
+import time
 from datetime import datetime
 from zipfile import ZipFile
 import pandas as pd
@@ -15,6 +16,12 @@ train_router = APIRouter(tags=["train"],
                          prefix="/api/v1/train",
                          responses=None)
 
+
+@train_router.get("/get_reccomendations", status_code=200)
+async def train_model() -> dict:
+    start = time.time()
+    # result = await start_train()
+    return {"adress": "Байкальская", "unom": 123332, "server_time":  time.time() - start}
 
 @train_router.post("/", status_code=200)
 async def train_model() -> dict:

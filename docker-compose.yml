@@ -1,16 +1,19 @@
 version: '3'
 
 services:
-#  frontend:
-#    build:
-#      context: ./frontend
-#    restart: always
-#    command: >
-#      sh -c "npm start"
-#    #    volumes:
-#    #      - ./frontend:/app
-#    ports:
-#      - "3000:3000"
+  frontend:
+    container_name: ui
+    build:
+      context: ./react_app
+      dockerfile: ./Dockerfile
+    restart: always
+    command: >
+      sh -c "npm install -i --save --force 
+      && npm run build 
+      && node server.js"
+    ports:
+      - "3000:3000"
+
 
   db:
     image: postgres:alpine
