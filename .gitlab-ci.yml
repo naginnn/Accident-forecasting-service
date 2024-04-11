@@ -16,20 +16,17 @@ stages:
 
 
 build:
-  image: docker:cli
   stage: build
+  image: docker:18
   services:
-    - docker:dind
+    - docker:18-dind
+  tags:
+    - docker-main
   variables:
-    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+    DOCKER_TLS_CERTDIR: "/certs/client"
+    DOCKER_HOST: tcp://docker:2375
   script:
-    - docker build --pull -t "$DOCKER_IMAGE_NAME" .
-    - docker push "$DOCKER_IMAGE_NAME"
-    - |  
-      if [[ "$CI_COMMIT_BRANCH" == "SCI_DEFAULT_BRANCH" ]]; then;
-      docker tag "$DOCKER_IMAGE_NAME" "SCI_REGISTRY_IMAGE:latest"
-      docker push "$CI_REGISTRY_IMAGE:latest"
-      fi
+    - docker compose up
   only:
     - develop
 
