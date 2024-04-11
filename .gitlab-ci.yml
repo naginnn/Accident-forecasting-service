@@ -29,6 +29,20 @@
 #      - docker-compose push
 #    only:
 #      - develop
+#  before_script:
+#    - mkdir -p ~/.ssh
+#    - touch ~/.ssh/known_hosts
+#    - cd ~/.ssh
+#    - echo "${SSH_PRIVATE_KEY}" > id_rsa
+#    - chmod 0400 id_rsa
+#    - ssh-keyscan -t rsa  ${WEBSERVER} >> ~/.ssh/known_hosts
+#    -
+  before_script:
+    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+    - eval $(ssh-agent -s)
+    - ssh-add <(echo "$SSH_PRIVATE_KEY")
+    - mkdir -p ~/.ssh
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
 
   deploy:
     stage: deploy
@@ -38,5 +52,6 @@
       - ssh litvin_admin@95.163.229.202 "docker stop train || true"
       - ssh litvin_admin@95.163.229.202 "docker rm train || true"
       - ssh litvin_admin@95.163.229.202 "docker run -d --name train -p 80:5000 $CI_REGISTRY_IMAGE/train:$CI_COMMIT_REF_SLUG"
+
     only:
       - develop
