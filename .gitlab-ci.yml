@@ -1,7 +1,28 @@
 stages:
-#  - build
-  - deploy
+  - build
+#  - deploy
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
 
+# Official docker compose image.
+image:
+  name: docker/compose:latest
+
+services:
+  - docker:dind
+
+before_script:
+  - docker version
+  - docker-compose version
+build:
+  stage: build
+  tags:
+    - build
+  script:
+    - docker-compose down
+    - docker-compose build
+    - docker-compose up tester-image
 
 #image: docker:20
 #services:
@@ -11,22 +32,24 @@ stages:
 #  tags:
 #    - build
 #  stage: build
+#  image: docker:20
+#  services:
+#    - docker:20-dind
 #  script:
 #    - docker-compose build
 #  only:
 #    - develop
 
 
-deploy:
-
-  stage: deploy
-  tags:
-    - deploy
-  image: docker:20
-  services:
-    - docker:20-dind
-  script:
-    - docker-compose up
-  only:
-    - develop
+#deploy:
+#
+#  stage: deploy
+#  tags:
+#    - deploy
+#
+#  script:
+#    - docker-compose build
+#    - docker-compose up -d
+#  only:
+#    - develop
 
