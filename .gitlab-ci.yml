@@ -7,6 +7,7 @@ variables:
   DOCKER_HOST: tcp://docker:2375/
   DOCKER_DRIVER: overlay2
 
+
 image:
   name: docker/compose:latest
 
@@ -18,7 +19,6 @@ build:
   stage: build
   script:
     - docker-compose build
-    - docker-compose up
   only:
     - develop
 
