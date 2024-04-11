@@ -82,7 +82,6 @@ services:
 #
 #
   train:
-    image: "${CI_REGISTRY_IMAGE}/train:${CI_COMMIT_REF_SLUG}"
     container_name: train-api
     build:
       context: ./pt_app
