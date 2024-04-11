@@ -16,7 +16,7 @@
       - docker-compose build
       - docker-compose push
     only:
-      - master
+      - develop
 
   deploy:
     stage: deploy
@@ -27,4 +27,4 @@
       - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
       - docker-compose push
     only:
-      - master
+      - develop
