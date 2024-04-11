@@ -1,38 +1,30 @@
-  image:
-    name: docker/compose:latest
-    entrypoint: ['']
-
   stages:
     - build
     - deploy
 
-  services:
-    - docker:dind
-
-  before_script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-
   variables:
-    DOCKER_HOST: tcp://docker:2375/
-    DOCKER_TLS_CERTDIR: ""
+    # Устанавливаем тэг для образа
+    IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
   build:
     stage: build
-#    tags:
-#      - build
+    services:
+      - docker:dind
+    image: docker:latest
     script:
-      - docker-compose pull
+      - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
       - docker-compose build
+      - docker-compose push
     only:
-      - develop
+      - master
 
   deploy:
     stage: deploy
-#    tags:
-#      - deploy
+    services:
+      - docker:dind
+    image: docker:latest
     script:
-      - docker-compose up
-#      - docker-compose exec myservice my-test-script.sh
-#    after_script:
-#      - docker-compose down
-    allow_failure: false
+      - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+      - docker-compose push
+    only:
+      - master
