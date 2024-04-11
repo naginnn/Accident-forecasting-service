@@ -3,9 +3,9 @@ stages:
   - deploy
 
 
-#image: docker:20
-#services:
-#  - docker:20-dind
+image: docker:20
+services:
+  - docker:20-dind
 
 build:
   tags:
