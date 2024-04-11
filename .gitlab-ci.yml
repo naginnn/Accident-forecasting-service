@@ -3,22 +3,34 @@ stages:
   - deploy
 
 
-variables:
-  DOCKER_HOST: tcp://docker:2375/
-  DOCKER_DRIVER: overlay2
+#variables:
+#  DOCKER_HOST: tcp://docker:2375/
+#  DOCKER_DRIVER: overlay2
 
 
-image:
-  name: docker/compose:latest
-
-services:
-  - docker:dind
+#image:
+#  name: docker/compose:latest
+#
+#services:
+#  - docker:dind
 
 
 build:
+  image: docker:cli
   stage: build
+  services:
+    - docker:dind
+  variables:
+    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   script:
-    - docker-compose build
+    - echo '{"vesion":"1.0.2", "commit":"${CI_COMMIT_SHA}"}'|jq > version.json
+    - docker build --pull -t "$DOCKER_IMAGE_NAME"
+    - docker push "$DOCKER_IMAGE_NAME"
+    - |  
+      if [[ "$CI_COMMIT_BRANCH" == "SCI_DEFAULT_BRANCH" ]]; then;
+      docker tag "$DOCKER_IMAGE_NAME" "SCI_REGISTRY_IMAGE:latest"
+      docker push "$CI_REGISTRY_IMAGE:latest"
+      fi
   only:
     - develop
 
