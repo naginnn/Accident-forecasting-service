@@ -30,7 +30,6 @@
 #    only:
 #      - develop
 
-
   deploy:
     stage: deploy
     script:
