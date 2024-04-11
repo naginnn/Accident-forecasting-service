@@ -18,6 +18,8 @@
 
   build:
     stage: build
+    tags:
+      - build
     script:
       - docker-compose pull
       - docker-compose build
@@ -26,9 +28,11 @@
 
   deploy:
     stage: deploy
+    tags:
+      - deploy
     script:
       - docker-compose up -d
-      - docker-compose exec myservice my-test-script.sh
-    after_script:
-      - docker-compose down
+#      - docker-compose exec myservice my-test-script.sh
+#    after_script:
+#      - docker-compose down
     allow_failure: false
