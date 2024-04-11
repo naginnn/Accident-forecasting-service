@@ -1,5 +1,5 @@
 stages:
-  - build
+#  - build
   - deploy
 
 
@@ -7,14 +7,14 @@ image: docker:20
 services:
   - docker:20-dind
 
-build:
-  tags:
-    - build
-  stage: build
-  script:
-    - docker-compose build
-  only:
-    - develop
+#build:
+#  tags:
+#    - build
+#  stage: build
+#  script:
+#    - docker-compose build
+#  only:
+#    - develop
 
 
 deploy:
