@@ -8,28 +8,26 @@ stages:
 #  DOCKER_DRIVER: overlay2
 
 
-#image:
-#  name: docker/compose:latest
-#
-#services:
-#  - docker:dind
+image:
+  name: docker/compose:latest
+
+services:
+  - docker:dind
 
 
 build:
+  tags:
+    - build
   stage: build
-  image: docker:20
-  services:
-    - docker:20-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs/client"
-    DOCKER_HOST: tcp://localhost:2375
   script:
     - docker-compose build
-    - docker-compose push
   only:
     - develop
 
+
 deploy:
+  tags:
+    - deploy
   stage: deploy
   script:
     - docker-compose up
