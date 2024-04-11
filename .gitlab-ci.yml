@@ -20,8 +20,8 @@ before_script:
 
 build:
   stage: build
-  tags:
-    - build
+#  tags:
+#    - build
   script:
 #    - docker-compose down
 #    - docker-compose build
