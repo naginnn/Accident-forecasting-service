@@ -24,7 +24,7 @@ build:
     DOCKER_TLS_CERTDIR: "/certs/client"
     DOCKER_HOST: tcp://docker:2375
   script:
-    - docker compose up
+    - docker-compose up
   only:
     - develop
 
