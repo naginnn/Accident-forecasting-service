@@ -23,7 +23,6 @@ build:
   variables:
     DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   script:
-    - echo '{"vesion":"1.0.2", "commit":"${CI_COMMIT_SHA}"}'|jq > version.json
     - docker build --pull -t "$DOCKER_IMAGE_NAME"
     - docker push "$DOCKER_IMAGE_NAME"
     - |  
