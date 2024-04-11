@@ -2,7 +2,7 @@ stages:
   - build
 #  - deploy
 #variables:
-#  DOCKER_HOST: tcp://docker:2375/
+#  DOCKER_HOST: tcp://127.0.0.1:2375/
 #  DOCKER_DRIVER: overlay2
 
 # Official docker compose image.
@@ -11,21 +11,27 @@ stages:
 
 #image:
 #  name: docker:cli
-services:
-  - docker:dind
+#services:
+#  - docker:dind
 
-before_script:
-  - docker version
-  - docker-compose version
+#before_script:
+#  - docker version
+#  - docker-compose version
 
 build:
   stage: build
+  services:
+    - docker:dind
+  script:
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER $CI_REGISTRY --password-stdin
+    - docker build -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE
 #  tags:
 #    - build
-  script:
+#  script:
 #    - docker-compose down
 #    - docker-compose build
-    - docker-compose up -d
+#    - docker-compose up -d
 
 #image: docker:20
 #services:
