@@ -18,8 +18,8 @@
 
   build:
     stage: build
-    tags:
-      - build
+#    tags:
+#      - build
     script:
       - docker-compose pull
       - docker-compose build
@@ -28,8 +28,8 @@
 
   deploy:
     stage: deploy
-    tags:
-      - deploy
+#    tags:
+#      - deploy
     script:
       - docker-compose up -d
 #      - docker-compose exec myservice my-test-script.sh
