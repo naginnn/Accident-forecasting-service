@@ -1,34 +1,34 @@
   stages:
-    - build
-    - push
+#    - build
+#    - push
     - deploy
 
   variables:
     # Устанавливаем тэг для образа
     IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
 
-  build:
-    stage: build
-    services:
-      - docker:dind
-    image: docker:latest
-    script:
-      - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-      - docker-compose build
-      - docker-compose push
-    only:
-      - develop
-
-  push:
-    stage: push
-    services:
-      - docker:dind
-    image: docker:latest
-    script:
-      - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-      - docker-compose push
-    only:
-      - develop
+#  build:
+#    stage: build
+#    services:
+#      - docker:dind
+#    image: docker:latest
+#    script:
+#      - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+#      - docker-compose build
+#      - docker-compose push
+#    only:
+#      - develop
+#
+#  push:
+#    stage: push
+#    services:
+#      - docker:dind
+#    image: docker:latest
+#    script:
+#      - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+#      - docker-compose push
+#    only:
+#      - develop
 
   deploy:
     stage: deploy
