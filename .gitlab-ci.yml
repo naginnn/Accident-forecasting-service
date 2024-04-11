@@ -9,10 +9,10 @@ stages:
 
 
 
-#image:
-#  name: docker:cli
-#services:
-#  - docker:dind
+image:
+  name: docker:cli
+services:
+  - docker:dind
 
 before_script:
   - docker version
