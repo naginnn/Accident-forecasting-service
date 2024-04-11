@@ -9,8 +9,8 @@ stages:
 
 
 
-image:
-  name: docker:cli
+#image:
+#  name: docker:cli
 services:
   - docker:dind
 
