@@ -17,9 +17,9 @@ stages:
 #before_script:
 #  - docker version
 #  - docker-compose version
-image: gitlab/dind
+image: gitlab/20-dind
 services:
-  - docker:dind
+  - docker:20-dind
 build:
   stage: build
   script:
