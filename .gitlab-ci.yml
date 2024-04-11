@@ -4,7 +4,7 @@
 
   stages:
     - build
-    - test
+    - deploy
 
   services:
     - docker:dind
@@ -22,10 +22,10 @@
       - docker-compose pull
       - docker-compose build
     only:
-      - master
+      - develop
 
-  test:
-    stage: test
+  deploy:
+    stage: deploy
     script:
       - docker-compose up -d
       - docker-compose exec myservice my-test-script.sh
