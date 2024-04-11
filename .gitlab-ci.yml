@@ -20,8 +20,6 @@ build:
   image: docker:18
   services:
     - docker:18-dind
-  tags:
-    - docker-main
   variables:
     DOCKER_TLS_CERTDIR: "/certs/client"
     DOCKER_HOST: tcp://docker:2375
