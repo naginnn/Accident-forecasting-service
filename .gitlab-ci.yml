@@ -6,6 +6,7 @@ image: docker:20
 services:
   - docker:20-dind
 
+
 build:
   stage: build
   script:
