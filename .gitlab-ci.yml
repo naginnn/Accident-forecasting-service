@@ -9,7 +9,10 @@ stages:
 
 
 
-
+image:
+  name: docker:cli
+services:
+  - docker:dind
 
 before_script:
   - docker version
@@ -17,16 +20,12 @@ before_script:
 
 build:
   stage: build
-  image:
-    name: docker:cli
-  services:
-    - docker:dind
   tags:
     - build
   script:
     - docker-compose down
     - docker-compose build
-    - docker-compose up
+    - docker-compose up -d
 
 #image: docker:20
 #services:
