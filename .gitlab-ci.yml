@@ -2,9 +2,16 @@ stages:
   - build
   - deploy
 
-image: docker:20
+
+variables:
+  DOCKER_HOST: tcp://docker:2375/
+  DOCKER_DRIVER: overlay2
+
+image:
+  name: docker/compose:latest
+
 services:
-  - docker:20-dind
+  - docker:dind
 
 
 build:
