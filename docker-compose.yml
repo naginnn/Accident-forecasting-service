@@ -16,22 +16,22 @@ services:
       - "3000:3000"
 
 
-  db:
-    image: postgres:alpine
-    container_name: db
-    restart: always
-    env_file:
-      - ./env_dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./pg_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:alpine
-    restart: always
-    ports:
-      - "6379:6379"
+#  db:
+#    image: postgres:alpine
+#    container_name: db
+#    restart: always
+#    env_file:
+#      - ./env_dev
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - ./pg_data:/var/lib/postgresql/data
+#
+#  redis:
+#    image: redis:alpine
+#    restart: always
+#    ports:
+#      - "6379:6379"
 #
 #  auth:
 #    image: "${CI_REGISTRY_IMAGE}/auth:${CI_COMMIT_REF_SLUG}"
@@ -101,10 +101,10 @@ services:
       - ./env_dev
     volumes:
       - ./models:/models
-    depends_on:
-      - db
-    links:
-      - db
+#    depends_on:
+#      - db
+#    links:
+#      - db
 
 
 #  worker:
