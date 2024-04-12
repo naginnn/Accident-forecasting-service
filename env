@@ -20,5 +20,5 @@ REDIS_PORT=6379
 REDIS_DB=1
 
 MODEL_PATH=/Users/sergeyesenin/GolandProjects/services01/models
-DYLD_LIBRARY_PATH=/Users/sergeyesenin/GolandProjects/services01/go_app/pkg/ml/catboost/catboost/libs/model_interface
-LD_LIBRARY_PATH=/app/pkg/ml/catboost/catboost/libs/model_interface
+DYLD_LIBRARY_PATH=/usr/local/lib
+LD_LIBRARY_PATH=/usr/local/bin
