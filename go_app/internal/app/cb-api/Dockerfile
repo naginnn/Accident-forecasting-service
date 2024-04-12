@@ -1,5 +1,5 @@
-FROM --platform=aarch64 golang:1.22
-#FROM golang:1.22
+#FROM --platform=aarch64 golang:1.22
+FROM golang:1.22
 RUN mkdir /app
 ADD . /app/
 WORKDIR /app/internal/app/cb-api
