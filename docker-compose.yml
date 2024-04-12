@@ -62,23 +62,23 @@ services:
       - ./models:/models
     depends_on:
       - db
-#
-#  cb:
-#    container_name: cb-api
-#    build:
-#      context: ./go_app
-#      dockerfile: ./internal/app/cb-api/Dockerfile
-#    restart: always
-#    ports:
-#      - "2225:2225"
-#    env_file:
-#      - ./env_dev
-#    volumes:
-#      - ./models:/models
-#    depends_on:
-#      - db
-#    links:
-#      - db
+
+  cb:
+    container_name: cb-api
+    build:
+      context: ./go_app
+      dockerfile: ./internal/app/cb-api/Dockerfile
+    restart: always
+    ports:
+      - "2225:2225"
+    env_file:
+      - ./env_dev
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+    links:
+      - db
 
 
   train:
