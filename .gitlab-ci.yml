@@ -42,6 +42,7 @@
   deploy:
     stage: deploy
     script:
+      - ssh litvin_admin@95.163.229.202 "docker rmi -f $(docker images -aq)"
       - ssh litvin_admin@95.163.229.202 "docker system prune -a | printf 'y'"
       - ssh litvin_admin@95.163.229.202 "rm -rf $CI_PROJECT_NAME"
       - ssh litvin_admin@95.163.229.202 "git clone --depth 1 --branch develop git@gitlab.com:$CI_PROJECT_PATH.git"
