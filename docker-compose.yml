@@ -101,10 +101,10 @@ services:
       - ./env_dev
     volumes:
       - ./models:/models
-    depends_on:
-      - db
-    links:
-      - db
+#    depends_on:
+#      - db
+#    links:
+#      - db
 
 
 #  worker:
