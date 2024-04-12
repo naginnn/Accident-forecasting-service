@@ -42,7 +42,6 @@
     script:
       - ssh litvin_admin@95.163.229.202 "rm -rf hack2024"
       - ssh litvin_admin@95.163.229.202 "git clone --depth 1 --branch develop git@gitlab.com:purple_hare/hack2024.git"
-      - ssh litvin_admin@95.163.229.202 "cd hack2024"
-      - ssh litvin_admin@95.163.229.202 "docker compose up"
+      - ssh litvin_admin@95.163.229.202 "cd hack2024 && docker compose up"
     only:
       - develop
