@@ -1,6 +1,6 @@
   stages:
-#    - build
-#    - push
+    - build
+    - push
     - deploy
 
   variables:
@@ -40,6 +40,11 @@
   deploy:
     stage: deploy
     script:
-      - ssh litvin_admin@95.163.229.202 "git clone --depth 1 --branch develop https://gitlab.com/purple_hare/hack2024.git"
+#      - ssh litvin_admin@95.163.229.202 "docker run --name postgres -p 5432:5432 -e POSTGRES_USER=username -e POSTGRES_PASSWORD=password -e POSTGRES_DB=postgres -d postgres:alpine"
+      - ssh litvin_admin@95.163.229.202 "docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY"
+      - ssh litvin_admin@95.163.229.202 "docker pull $CI_REGISTRY_IMAGE/train:$CI_COMMIT_REF_SLUG"
+      - ssh litvin_admin@95.163.229.202 "docker stop train || true"
+      - ssh litvin_admin@95.163.229.202 "docker rm train || true"
+      - ssh litvin_admin@95.163.229.202 "docker run --env-file ./.env -d --name train -p 2226:2226 $CI_REGISTRY_IMAGE/train:$CI_COMMIT_REF_SLUG"
     only:
       - develop
