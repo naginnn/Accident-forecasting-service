@@ -1,10 +1,8 @@
 package catboost
 
 /*
-#cgo linux LDFLAGS: -L /app/pkg/ml/catboost/catboost/libs/model_interface -lcatboostmodel
-#cgo darwin LDFLAGS: -L /app/pkg/ml/catboost/catboost/libs/model_interface -lcatboostmodel
-//#cgo linux LDFLAGS: -lcatboostmodel
-//#cgo darwin LDFLAGS: -lcatboostmodel
+#cgo linux LDFLAGS: -lcatboostmodel
+#cgo darwin LDFLAGS: -lcatboostmodel
 #include <stdlib.h>
 #include <stdbool.h>
 #include <model_calcer_wrapper.h>
