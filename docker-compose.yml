@@ -1,4 +1,4 @@
-version: '3'
+version: '3.9'
 
 services:
   frontend:
@@ -32,53 +32,53 @@ services:
     ports:
       - "6379:6379"
 
-  auth:
-    container_name: auth-api
-    build:
-      context: ./go_app
-      dockerfile: ./internal/app/auth-api/Dockerfile
-    restart: always
-    ports:
-      - "2223:2223"
-    env_file:
-      - ./env_dev
-    volumes:
-      - ./models:/models
-    depends_on:
-      - db
-    links:
-      - db
-  obj:
-    container_name: obj-api
-    build:
-      context: ./go_app
-      dockerfile: ./internal/app/obj-api/Dockerfile
-    restart: always
-    ports:
-      - "2224:2224"
-    env_file:
-      - ./env_dev
-    volumes:
-      - ./models:/models
-    depends_on:
-      - db
-
-  cb:
-    container_name: cb-api
-    build:
-      context: ./go_app
-      dockerfile: ./internal/app/cb-api/Dockerfile
-    restart: always
-    ports:
-      - "2225:2225"
-    env_file:
-      - ./env_dev
-    volumes:
-      - ./models:/models
-    depends_on:
-      - db
-    links:
-      - db
+#  auth:
+#    container_name: auth-api
+#    build:
+#      context: ./go_app
+#      dockerfile: ./internal/app/auth-api/Dockerfile
+#    restart: always
+#    ports:
+#      - "2223:2223"
+#    env_file:
+#      - ./env_dev
+#    volumes:
+#      - ./models:/models
+#    depends_on:
+#      - db
+#    links:
+#      - db
+#  obj:
+#    container_name: obj-api
+#    build:
+#      context: ./go_app
+#      dockerfile: ./internal/app/obj-api/Dockerfile
+#    restart: always
+#    ports:
+#      - "2224:2224"
+#    env_file:
+#      - ./env_dev
+#    volumes:
+#      - ./models:/models
+#    depends_on:
+#      - db
+#
+#  cb:
+#    container_name: cb-api
+#    build:
+#      context: ./go_app
+#      dockerfile: ./internal/app/cb-api/Dockerfile
+#    restart: always
+#    ports:
+#      - "2225:2225"
+#    env_file:
+#      - ./env_dev
+#    volumes:
+#      - ./models:/models
+#    depends_on:
+#      - db
+#    links:
+#      - db
 
 
   train:
