@@ -47,7 +47,7 @@
 #
       - ssh litvin_admin@95.163.229.202 "cd $CI_PROJECT_NAME && docker compose down -v || true"
       - ssh litvin_admin@95.163.229.202 "docker system prune -a | printf 'y'"
-      - ssh litvin_admin@95.163.229.202 "rm -rf $CI_PROJECT_NAME || true"
+#      - ssh litvin_admin@95.163.229.202 "rm -rf $CI_PROJECT_NAME || true"
       - ssh litvin_admin@95.163.229.202 "git clone --depth 1 --branch develop git@gitlab.com:$CI_PROJECT_PATH.git"
       - ssh litvin_admin@95.163.229.202 "cd $CI_PROJECT_NAME && docker compose up -d --build"
     only:
