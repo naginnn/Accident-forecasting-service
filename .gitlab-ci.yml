@@ -46,6 +46,6 @@
       - ssh litvin_admin@95.163.229.202 "docker pull $CI_REGISTRY_IMAGE/train:$CI_COMMIT_REF_SLUG"
       - ssh litvin_admin@95.163.229.202 "docker stop train || true"
       - ssh litvin_admin@95.163.229.202 "docker rm train || true"
-      - ssh litvin_admin@95.163.229.202 "docker run --env-file ./env -d --name train -p 2226:2226 $CI_REGISTRY_IMAGE/train:$CI_COMMIT_REF_SLUG"
+      - ssh litvin_admin@95.163.229.202 "docker run --env-file env -d --name train -p 2226:2226 $CI_REGISTRY_IMAGE/train:$CI_COMMIT_REF_SLUG"
     only:
       - develop
