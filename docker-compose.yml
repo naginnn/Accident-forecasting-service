@@ -15,7 +15,6 @@ services:
     ports:
       - "3000:3000"
 
-
   db:
     image: postgres:alpine
     container_name: db
@@ -32,59 +31,59 @@ services:
     restart: always
     ports:
       - "6379:6379"
-#
-#  auth:
-#    image: "${CI_REGISTRY_IMAGE}/auth:${CI_COMMIT_REF_SLUG}"
-#    container_name: auth-api
-#    build:
-#      context: ./go_app
-#      dockerfile: ./internal/app/auth-api/Dockerfile
-#    restart: always
-#    ports:
-#      - "2223:2223"
-#    env_file:
-#      - ./env_dev
-#    volumes:
-#      - ./models:/models
-#    depends_on:
-#      - db
-#    links:
-#      - db
-#  obj:
-#    image: "${CI_REGISTRY_IMAGE}/obj:${CI_COMMIT_REF_SLUG}"
-#    container_name: obj-api
-#    build:
-#      context: ./go_app
-#      dockerfile: ./internal/app/obj-api/Dockerfile
-#    restart: always
-#    ports:
-#      - "2224:2224"
-#    env_file:
-#      - ./env_dev
-#    volumes:
-#      - ./models:/models
-#    depends_on:
-#      - db
-#
-#  cb:
-#    image: "${CI_REGISTRY_IMAGE}/cb:${CI_COMMIT_REF_SLUG}"
-#    container_name: cb-api
-#    build:
-#      context: ./go_app
-#      dockerfile: ./internal/app/cb-api/Dockerfile
-#    restart: always
-#    ports:
-#      - "2225:2225"
-#    env_file:
-#      - ./env_dev
-#    volumes:
-#      - ./models:/models
-#    depends_on:
-#      - db
-#    links:
-#      - db
-#
-#
+
+  auth:
+    image: "${CI_REGISTRY_IMAGE}/auth:${CI_COMMIT_REF_SLUG}"
+    container_name: auth-api
+    build:
+      context: ./go_app
+      dockerfile: ./internal/app/auth-api/Dockerfile
+    restart: always
+    ports:
+      - "2223:2223"
+    env_file:
+      - ./env_dev
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+    links:
+      - db
+  obj:
+    image: "${CI_REGISTRY_IMAGE}/obj:${CI_COMMIT_REF_SLUG}"
+    container_name: obj-api
+    build:
+      context: ./go_app
+      dockerfile: ./internal/app/obj-api/Dockerfile
+    restart: always
+    ports:
+      - "2224:2224"
+    env_file:
+      - ./env_dev
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+
+  cb:
+    image: "${CI_REGISTRY_IMAGE}/cb:${CI_COMMIT_REF_SLUG}"
+    container_name: cb-api
+    build:
+      context: ./go_app
+      dockerfile: ./internal/app/cb-api/Dockerfile
+    restart: always
+    ports:
+      - "2225:2225"
+    env_file:
+      - ./env_dev
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+    links:
+      - db
+
+
   train:
 #    image: "${CI_REGISTRY_IMAGE}/train:${CI_COMMIT_REF_SLUG}"
     container_name: train-api
@@ -101,10 +100,10 @@ services:
       - ./env_dev
     volumes:
       - ./models:/models
-#    depends_on:
-#      - db
-#    links:
-#      - db
+    depends_on:
+      - db
+    links:
+      - db
 
 
 #  worker:
