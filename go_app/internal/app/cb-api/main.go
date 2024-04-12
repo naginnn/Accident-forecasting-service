@@ -22,7 +22,7 @@ func main() {
 	r.Use(middlewares.NoCache())
 	r.Use(middlewares.Auth())
 
-	model.RegRoutes(r, c, nil)
+	model.RegRoutes(r, c)
 
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, "not found")
