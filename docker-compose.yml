@@ -63,6 +63,7 @@ services:
     depends_on:
       - db
 
+
   cb:
     container_name: cb-api
     build:
