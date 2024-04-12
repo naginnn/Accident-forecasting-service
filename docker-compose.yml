@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   frontend:
-    image: "${CI_REGISTRY_IMAGE}/frontend:${CI_COMMIT_REF_SLUG}"
+#    image: "${CI_REGISTRY_IMAGE}/frontend:${CI_COMMIT_REF_SLUG}"
     container_name: ui
     build:
       context: ./react_app
@@ -101,10 +101,10 @@ services:
       - ./env_dev
     volumes:
       - ./models:/models
-    depends_on:
-      - db
-    links:
-      - db
+#    depends_on:
+#      - db
+#    links:
+#      - db
 
 #  worker:
 #    container_name: train-worker
