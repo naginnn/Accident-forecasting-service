@@ -1,7 +1,8 @@
-version: '3'
+version: '3.8'
 
 services:
   frontend:
+#    image: "${CI_REGISTRY_IMAGE}/frontend:${CI_COMMIT_REF_SLUG}"
     container_name: ui
     build:
       context: ./react_app
@@ -14,7 +15,6 @@ services:
     ports:
       - "3000:3000"
 
-
   db:
     image: postgres:alpine
     container_name: db
@@ -23,8 +23,8 @@ services:
       - ./env_dev
     ports:
       - "5432:5432"
-    volumes:
-      - ./pg_data:/var/lib/postgresql/data
+#    volumes:
+#      - ./pg_data:/var/lib/postgresql/data
 
   redis:
     image: redis:alpine
@@ -33,6 +33,7 @@ services:
       - "6379:6379"
 
   auth:
+#    image: "${CI_REGISTRY_IMAGE}/auth:${CI_COMMIT_REF_SLUG}"
     container_name: auth-api
     build:
       context: ./go_app
@@ -49,6 +50,7 @@ services:
     links:
       - db
   obj:
+#    image: "${CI_REGISTRY_IMAGE}/obj:${CI_COMMIT_REF_SLUG}"
     container_name: obj-api
     build:
       context: ./go_app
@@ -64,6 +66,7 @@ services:
       - db
 
   cb:
+#    image: "${CI_REGISTRY_IMAGE}/cb:${CI_COMMIT_REF_SLUG}"
     container_name: cb-api
     build:
       context: ./go_app
@@ -82,6 +85,7 @@ services:
 
 
   train:
+#    image: "${CI_REGISTRY_IMAGE}/train:${CI_COMMIT_REF_SLUG}"
     container_name: train-api
     build:
       context: ./pt_app
@@ -100,6 +104,7 @@ services:
       - db
     links:
       - db
+
 
 #  worker:
 #    container_name: train-worker
