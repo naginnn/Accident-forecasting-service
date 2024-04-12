@@ -40,6 +40,6 @@
   deploy:
     stage: deploy
     script:
-      - ssh litvin_admin@95.163.229.202 "git clone --depth 1 --branch develop https://gitlab.com/purple_hare/hack2024.git"
+      - ssh litvin_admin@95.163.229.202 "git clone --depth 1 --branch develop git@gitlab.com:purple_hare/hack2024.git"
     only:
       - develop
