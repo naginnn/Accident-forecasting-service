@@ -64,35 +64,14 @@ services:
 #      - db
 
 
-  cb:
-    container_name: cb-api
-    build:
-      context: ./go_app
-      dockerfile: ./internal/app/cb-api/Dockerfile
-    restart: always
-    ports:
-      - "2225:2225"
-    env_file:
-      - ./env_dev
-    volumes:
-      - ./models:/models
-#    depends_on:
-#      - db
-#    links:
-#      - db
-
-
-#  train:
-#    container_name: train-api
+#  cb:
+#    container_name: cb-api
 #    build:
-#      context: ./pt_app
-#      dockerfile: ./apps/train_api/Dockerfile
-#      network: host
+#      context: ./go_app
+#      dockerfile: ./internal/app/cb-api/Dockerfile
 #    restart: always
-#    command: >
-#      sh -c "python3 apps/train_api/server.py"
 #    ports:
-#      - "2226:2226"
+#      - "2225:2225"
 #    env_file:
 #      - ./env_dev
 #    volumes:
@@ -101,6 +80,27 @@ services:
 #      - db
 #    links:
 #      - db
+
+
+  train:
+    container_name: train-api
+    build:
+      context: ./pt_app
+      dockerfile: ./apps/train_api/Dockerfile
+      network: host
+    restart: always
+    command: >
+      sh -c "python3 apps/train_api/server.py"
+    ports:
+      - "2226:2226"
+    env_file:
+      - ./env_dev
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+    links:
+      - db
 
 #  worker:
 #    container_name: train-worker
