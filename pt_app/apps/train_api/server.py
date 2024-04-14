@@ -14,6 +14,8 @@ app = FastAPI(docs_url=None,
               redoc_url=None,
               openapi_url="/docs/openapi.json")
 static_path = "/".join(os.getcwd().split('/')[:len(os.getcwd().split('/'))-2])
+if static_path == '':
+    static_path = os.getcwd()
 app.mount(static_path, StaticFiles(directory=static_path), name="static")
 
 """ Настройки CORS """
