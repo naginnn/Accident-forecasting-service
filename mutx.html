@@ -25,16 +25,16 @@
             justify-content: center;
             align-items: center;
             /*font-family: 'Source Code Pro', monospace;*/
-            background-image: url('https://example.com/background-space-image.jpg'); /* Замените URL на адрес вашего изображения */
+            background-image: url('https://example.com/background-space-image.jpg');
             background-size: cover;
             /*background-position: center;*/
             font-family: 'Press Start 2P';
-            font-size: 16px; /* Увеличьте или уменьшите размер шрифта по вашему желанию */
+            font-size: 16px;
             margin: 30px;
             line-height: 1.5;
         }
         #typewriter {
-            white-space: pre-wrap; /* Поддержка переносов строк */
+            white-space: pre-wrap;
             /*border-right: 3px solid black;*/
             padding-right: 5px;
         }
@@ -62,7 +62,7 @@
                     charIndex++;
                     setTimeout(typeChar, typingDelay);
                 } else {
-                    span.textContent += ''; // Добавляем пробел после слова
+                    span.textContent += '';
                     currentWordIndex++;
                     charIndex = 0;
                     setTimeout(typeChar, typingDelay);
