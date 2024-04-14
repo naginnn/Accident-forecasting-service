@@ -12,7 +12,7 @@ from fastapi.openapi.utils import get_openapi
 # app = FastAPI(redoc_url=None)
 app = FastAPI(docs_url=None,
               redoc_url=None,
-              openapi_url="/docs/openapi.json")
+              openapi_url="/docs/train/openapi.json")
 static_path = "/".join(os.getcwd().split('/')[:len(os.getcwd().split('/'))-2])
 if static_path == '':
     static_path = os.getcwd()
@@ -53,7 +53,7 @@ def custom_openapi():
 app.openapi = custom_openapi
 
 
-@app.get("/docs", include_in_schema=False)
+@app.get("/docs/train", include_in_schema=False)
 async def custom_swagger_ui_html():
     return get_swagger_ui_html(
         openapi_url=app.openapi_url,
