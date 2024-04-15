@@ -22,6 +22,7 @@
 #      - ssh litvin_admin@95.163.229.202 "dock="docker ps -aq" && docker stop $dock"
 #
       - ssh litvin_admin@95.163.229.202 "cd $CI_PROJECT_NAME && chmod +x docker-clean.sh && ./docker-clean.sh || true"
+
 #      - ssh litvin_admin@95.163.229.202 "cd $CI_PROJECT_NAME && docker compose down -v || true"
 #      - ssh litvin_admin@95.163.229.202 "cd $CI_PROJECT_NAME && docker rmi -f $(docker images -aq)"
 #      - ssh litvin_admin@95.163.229.202 "docker system prune -a | printf 'y'"
