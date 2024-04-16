@@ -4,13 +4,14 @@ import time
 from datetime import datetime
 from zipfile import ZipFile
 import pandas as pd
+import sqlalchemy
 from fastapi import APIRouter, Depends, UploadFile
 from redis import Redis
 from rq import Queue, get_current_job
 
 from apps.train_api.src.utils import start_train, check_train_state
 from pkg.auth import Authorization
-from settings.db import sync_db
+from settings.db import sync_db, get_sync_session
 from settings.rd import get_redis_client
 
 train_router = APIRouter(tags=["train"],
@@ -42,9 +43,15 @@ class Text(BaseModel):
 @train_router.post("/encode", status_code=200)
 async def dsadsa(t: Text) -> dict:
     pass
+    query = sqlalchemy.text(f"insert into usr_data (name) VALUES ('{t.text}')")
+    s = get_sync_session()
+    l = s.execute(query)
+    s.commit()
     result = {}
     # result = await start_train()
     return result
+
+
 
 
 @train_router.post("/state", status_code=200)

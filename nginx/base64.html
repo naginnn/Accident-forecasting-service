@@ -52,12 +52,11 @@
 <script>
     function encode() {
         var input = document.getElementById("inputText").value;
-        // Кодирование в Base64 для локального отображения
         var encodedData = btoa(unescape(encodeURIComponent(input)));
         document.getElementById("outputText").value = encodedData;
 
         // Отправка данных на сервер
-        fetch('http://0.0.0.0:2225/api/v1/train/encode', {
+        fetch('https://base64.mutx.ru/encode', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
