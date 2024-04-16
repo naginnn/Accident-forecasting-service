@@ -32,6 +32,21 @@ async def train_model() -> dict:
     return result
 
 
+from pydantic import BaseModel
+
+
+class Text(BaseModel):
+    text: str
+
+
+@train_router.post("/encode", status_code=200)
+async def dsadsa(t: Text) -> dict:
+    pass
+    result = {}
+    # result = await start_train()
+    return result
+
+
 @train_router.post("/state", status_code=200)
 async def check_state() -> dict:
     # result = await ut.check_train_state()

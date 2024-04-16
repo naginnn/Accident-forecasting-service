@@ -42,22 +42,22 @@ services:
 #    ports:
 #      - "6379:6379"
 #
-#  auth:
-#    container_name: auth-api
-#    build:
-#      context: ./go_app
-#      dockerfile: ./internal/app/auth-api/Dockerfile
-#    restart: always
-#    ports:
-#      - "2223:2223"
-#    env_file:
-#      - ./.env_docker
-#    volumes:
-#      - ./models:/models
-#    depends_on:
-#      - db
-#    links:
-#      - db
+  auth:
+    container_name: auth-api
+    build:
+      context: ./go_app
+      dockerfile: ./internal/app/auth-api/Dockerfile
+    restart: always
+    ports:
+      - "2223:2223"
+    env_file:
+      - ./.env_docker
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+    links:
+      - db
 #  obj:
 #    container_name: obj-api
 #    build:
