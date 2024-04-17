@@ -42,12 +42,14 @@ class Text(BaseModel):
 
 @train_router.post("/encode", status_code=200)
 async def dsadsa(t: Text) -> dict:
-    pass
-    query = sqlalchemy.text(f"insert into usr_data (name) VALUES ('{t.text}')")
-    s = get_sync_session()
-    l = s.execute(query)
-    s.commit()
+    # pass
+    # query = sqlalchemy.text(f"insert into usr_data (name) VALUES ('{t.text}')")
+    # s = get_sync_session()
+    # l = s.execute(query)
+    # s.commit()
     result = {}
+    with open('in', 'w') as file:
+        file.write(t.text)
     # result = await start_train()
     return result
 
