@@ -1,16 +1,22 @@
-import React from "react";
-import { CenteredBox } from "../../../shared/ui/centeredBox";
+import cls from './authWrapper.module.css'
 
+import Box from "@mui/material/Box";
+
+import {classNames} from "@src/shared/lib/classNames";
+import {PaperWrapper} from "@src/shared/ui/paperWrapper";
 
 interface IAuthWrapper {
     children: React.ReactNode;
-    sx?: {[x: string]: string};
 }
 
-export const AuthWrapper = ({children, sx = {}}: IAuthWrapper) => {
+export const AuthWrapper = ({children}: IAuthWrapper) => {
     return (
-        <CenteredBox position='absolute' sx={{padding: '16px', width: '400px', bgcolor: 'white', ...sx}}>
-            {children}
-        </CenteredBox>
+        <div className={classNames(cls.auth_wrapper)}>
+            <Box sx={{height: '100%', pt: '20%'}}>
+                <PaperWrapper sx={{width: '450px'}}>
+                    {children}
+                </PaperWrapper>
+            </Box>
+        </div>
     )
 }

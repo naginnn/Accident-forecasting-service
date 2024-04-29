@@ -1,7 +1,5 @@
-import React from 'react'
-
 // Обработчик ошибки во время рендера и в хуках
-class ErrorBoundary extends React.Component {
+export class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props)
 
@@ -21,4 +19,3 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-export default ErrorBoundary

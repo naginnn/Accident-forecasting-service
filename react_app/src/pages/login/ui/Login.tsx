@@ -11,6 +11,7 @@ import {AuthHeader, AuthWrapper} from "../../../features/authentication";
 import {AuthPassShow} from "../../../features/authentication";
 import {getErrorMessage} from "../../../shared/lib/getErrorMessage";
 import { TextInput } from "../../../features/controlledInput";
+import { routerPaths } from "@src/shared/config/router";
 
 const validationSchema = yup.object(
     {
@@ -55,8 +56,6 @@ export const Login = () => {
     //
     //  }, [errorLogin, isSuccess, token, navigate, resetField, setError])
 
-
-    useEffect(()=> {setError('login', {message: 'Неправильный логин или пароль'})}, [])
     const onSubmit = (data: FormData) => {
         const data64 = btoa(`${data.login}:${data.password}`)
 
@@ -68,7 +67,7 @@ export const Login = () => {
             <AuthHeader
                 topic='Вход'
                 linkTopic='зарегистрироваться'
-                href='/registration'
+                href={routerPaths.registration}
             />
             <form onSubmit={handleSubmit(onSubmit)}>
                 <Grid container direction='column' alignItems='center' rowSpacing={3}>

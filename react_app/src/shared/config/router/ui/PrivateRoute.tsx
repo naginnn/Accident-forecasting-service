@@ -13,6 +13,5 @@ export const PrivateRoute = () => {
 
     const hasUserJWT = localStorage.getItem('token')
 
-
     return hasUserJWT ? <Outlet/> : <Navigate to='/login'/>
 }

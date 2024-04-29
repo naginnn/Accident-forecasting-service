@@ -1,4 +1,3 @@
-import React from "react";
 import {SxProps, Theme } from "@mui/system";
 
 import {Link as LinkMui} from "@mui/material";
@@ -15,6 +14,7 @@ export const Link = ({sx, children, ...props}: ILinkedTypography) => {
             underline='hover'
             sx={{
                 color: (theme) => theme.palette.primary.main,
+                cursor: 'pointer',
                 ...sx
             }}
             {...props}
