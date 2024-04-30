@@ -12,8 +12,10 @@ import {AuthPassShow} from "@src/features/authentication";
 import {TextInput} from "@src/features/controlledInput/ui/TextInput";
 import {SelectInput} from "@src/features/controlledInput";
 import {routerPaths} from "@src/shared/config/router";
+import {getErrorMessage} from "@src/shared/lib/getErrorMessage";
 
 import {rolesOpt} from "../const/rolesOpt";
+import {useRegistrationMutation} from "../api/makeRegistration";
 
 const validationSchema = yup.object(
     {
@@ -32,7 +34,10 @@ export const Registration = () => {
     const {palette} = useTheme()
     const [isVisiblePass, setIsVisiblePass] = useState<boolean>(false) // стейт для отображения/ скрытя пароля
 
-    // const [registrationFetch, {error: errorRegistration, isLoading, isSuccess}] = useRegistrationMutation() // хук регистрации
+    const [
+        registrationFetch,
+        {error: errorRegistration, isLoading: isLoadingRegistration, isSuccess: isSuccessRegistration}
+    ] = useRegistrationMutation() // хук регистрации
 
     const {control, resetField, setError, handleSubmit, formState: {errors}} = useForm({
         resolver: yupResolver(validationSchema),
@@ -44,21 +49,20 @@ export const Registration = () => {
         }
     });
 
-    // useEffect(() => {
-    //     // блок обработки ошибок
-    //     if (errorRegistration) {
-    //         // @ts-ignore
-    //         if (errorRegistration.status === 401) {
-    //             setError('login', {type: 'custom', message: 'Данный пользователь уже существует'})
-    //         } else {
-    //             setError('login', {type: 'custom', message: getErrorMessage(errorRegistration)})
-    //         }
-    //         resetField('confirmPass')
-    //         resetField('password')
-    //     } else if (isSuccess) {
-    //         navigate('/login')
-    //     }
-    // }, [errorRegistration, isSuccess, navigate, resetField, setError])
+    useEffect(() => {
+        // блок обработки ошибок
+        if (errorRegistration) {
+            if ('status' in errorRegistration && errorRegistration.status === 401) {
+                setError('login', {type: 'custom', message: 'Данный пользователь уже существует'})
+            } else {
+                setError('login', {type: 'custom', message: getErrorMessage(errorRegistration)})
+            }
+            resetField('confirmPass')
+            resetField('password')
+        } else if (isSuccessRegistration) {
+            navigate('/login')
+        }
+    }, [errorRegistration, isSuccessRegistration, navigate, resetField, setError])
 
     const onSubmit = (data: FormData) => {
         const {confirmPass, password, login, roles} = data;
@@ -68,11 +72,11 @@ export const Registration = () => {
             return
         }
 
-        // registrationFetch({
-        //     username: login,
-        //     roles: roles === 'user' ? roles : `${roles},user`,
-        //     password
-        // })
+        registrationFetch({
+            password,
+            login,
+            roles
+        })
     }
 
     return (
@@ -142,15 +146,12 @@ export const Registration = () => {
                     fullWidth
                     type="submit"
                     variant="contained"
+                    disabled={isLoadingRegistration}
                     sx={{mt: '24px', bgcolor: palette.primary.dark}}
                 >
-                    Зарегистрироваться
+                    {isLoadingRegistration ? 'Регистрация...' : 'Зарегистрироваться'}
                 </Button>
-                {/*<SubmitButton disabled={isLoading} bgcolor={palette.primary.dark}>*/}
-                {/*    {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}*/}
-                {/*</SubmitButton>*/}
             </form>
-
         </AuthWrapper>
     )
 }

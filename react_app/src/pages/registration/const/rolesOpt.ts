@@ -1,4 +1,4 @@
 export const rolesOpt = [
-    {name: 'Оператор', value: 'user'},
-    {name: 'Администратор', value: 'admin'}
+    {name: 'Оператор', value: 'ro'},
+    {name: 'Администратор', value: 'ro,rw'}
 ]
