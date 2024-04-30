@@ -35,8 +35,14 @@ utils
 requirements.txt
 ```
 ## react_app
-```java
-UI Client Roma edit
+**Launching:**
+1. build app:
+``` sh
+npm run build
+```
+2. run app:
+``` sh
+node server.js
 ```
 ## Run
 ```java
