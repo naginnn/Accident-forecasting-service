@@ -12,14 +12,14 @@ import (
 
 func main() {
 	// load model
-	entries, err := os.ReadDir("/models")
-	if err != nil {
-		return
-	}
-
-	for _, e := range entries {
-		log.Println(e.Name())
-	}
+	//entries, err := os.ReadDir("/models")
+	//if err != nil {
+	//	return
+	//}
+	//
+	//for _, e := range entries {
+	//	log.Println(e.Name())
+	//}
 
 	//gin.SetMode(gin.ReleaseMode)
 	gin.SetMode(gin.DebugMode)

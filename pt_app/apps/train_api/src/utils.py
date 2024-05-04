@@ -11,7 +11,7 @@ from rq.job import Job, get_current_job
 
 from apps.train_api.service.training_test import prepare_dataset
 from apps.train_api.src.tasks import train
-from pkg.utils import get_elapsed_time
+from pkg.utils import get_elapsed_time, FakeJob
 from settings.rd import get_redis_client
 
 job_name = "train_job"
@@ -66,7 +66,8 @@ async def check_train_state(job_name='upload_files') -> dict:
 
 async def upload_files(bts: io.BytesIO):
     """ Переодическая задача, разбор архива и вызов парсинга """
-    job = get_current_job()
+    # job = get_current_job()
+    job = FakeJob.get_current_job()
     # Загрузка файлов
     job.meta['stage'] = 0.0
     job.save_meta()

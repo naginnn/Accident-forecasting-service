@@ -51,8 +51,9 @@ async def upload_data(file: UploadFile):
     q = Queue(connection=Redis(host=os.environ.get('REDIS_HOST'),
                                port=int(os.environ.get('REDIS_PORT')))
               )
-    # await upload_files(bts)
-    job = q.enqueue(upload_files, bts, job_timeout=50000, job_id='upload_files')
-    return {'id': job.id}
+    await upload_files(bts)
+    # job = q.enqueue(upload_files, bts, job_timeout=50000, job_id='upload_files')
+    # return {'id': job.id}
+    return {'id': 'ok'}
 
 

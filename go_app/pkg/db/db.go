@@ -48,6 +48,13 @@ func Init(appName string) (*gorm.DB, error) {
 			db.Create(&models.UsrData{Name: "adm", Pwd: pwdAdm, Roles: "ro,rw"})
 			db.Create(&models.UsrData{Name: "usr", Pwd: pwdUsr, Roles: "ro"})
 		}
+	case "obj-api":
+		err = db.AutoMigrate(
+			&models.ObjConsumerStation{},
+			&models.ObjSourceStation{},
+			&models.ObjConsumer{},
+			&models.ObjConsumerEvent{},
+		)
 	}
 
 	if err != nil {

@@ -4,10 +4,17 @@ from sklearn import preprocessing
 from rq.job import Job, get_current_job
 
 from apps.train_api.service.utils import get_word, MultiColumnLabelEncoder, reverse_date, check_in_type, alpabet
+from pkg.utils import FakeJob
+from settings.db import DB_URL
 
 
 def prepare_dataset(files: dict):
-    job = get_current_job()
+    # job = get_current_job()
+    ###### save struct to db
+    to_db(files=files)
+    ###### save struct to db
+
+    job = FakeJob.get_current_job()
     # try:
     df = pd.read_excel(files.get('1.xlsx'), sheet_name='Sheet1')
     job.meta['stage'] = 30
@@ -132,13 +139,15 @@ def prepare_dataset(files: dict):
     # sum_df = sum_df[sum_df['UNOM']]
     for_predict = (sum_df.groupby("ID", as_index=False, group_keys=False).apply(lambda x: x.nlargest(1, "UNOM")))
     for_predict.drop(['index', 'WORK_CLASS'], axis=1).to_csv('for_predict_without_unom.csv', sep=',', index=False)
-    job.meta['stage'] = 100
-    job.save_meta()
+
     print(df)
     from sqlalchemy import create_engine
-    sync_db = create_engine(f'postgresql://username:password@localhost:5432/postgres')
+    # sync_db = create_engine(f'postgresql://username:password@localhost:5432/postgres')
+    sync_db = create_engine(DB_URL)
     for_model.iloc[1000:].to_sql(name='for_model', con=sync_db, if_exists='replace', index=False)
     for_model.iloc[:1000].to_sql(name='for_test', con=sync_db, if_exists='replace', index=False)
+    job.meta['stage'] = 100
+    job.save_meta()
     # except Exception as e:
     #     print(e.__str__())
     #     job.meta['stage'] = 0
@@ -148,3 +157,12 @@ def prepare_dataset(files: dict):
     # big_df.to_csv('/Users/sergeyesenin/PycharmProjects/hakaton2/backend/services/upload_data/src/servicedata_for_model2.csv', sep=',', index=False)
     # # сохраняем для предикта
     # big_df.to_csv('/Users/sergeyesenin/PycharmProjects/hakaton2/backend/services/upload_data/src/servicedata_for_model2.csv', sep=',', index=False)
+
+
+def to_db(files: dict = None):
+    df = pd.read_excel('1.xlsx', sheet_name='Sheet1')
+    print(df)
+
+if __name__ == '__main__':
+    files = {}
+    to_db()

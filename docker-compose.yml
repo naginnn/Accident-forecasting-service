@@ -10,18 +10,18 @@ services:
 #      - "80:80"
 #      - "8000:8000"
 
-  frontend:
-    container_name: ui
-    build:
-      context: ./react_app
-      dockerfile: ./Dockerfile
-    restart: always
-    command: >
-      sh -c "npm install -i --save --force
-      && npm run build
-      && node server.js"
-    ports:
-      - "3000:3000"
+#  frontend:
+#    container_name: ui
+#    build:
+#      context: ./react_app
+#      dockerfile: ./Dockerfile
+#    restart: always
+#    command: >
+#      sh -c "npm install -i --save --force
+#      && npm run build
+#      && node server.js"
+#    ports:
+#      - "3000:3000"
 
 
   db:
@@ -36,12 +36,12 @@ services:
 #      - ./pg_data:/var/lib/postgresql/data
   
 #
-#  redis:
-#    image: redis:alpine
-#    restart: always
-#    ports:
-#      - "6379:6379"
-#
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379"
+
   auth:
     container_name: auth-api
     build:
@@ -58,38 +58,37 @@ services:
       - db
     links:
       - db
-#  obj:
-#    container_name: obj-api
-#    build:
-#      context: ./go_app
-#      dockerfile: ./internal/app/obj-api/Dockerfile
-#    restart: always
-#    ports:
-#      - "2224:2224"
-#    env_file:
-#      - ./.env_docker
-#    volumes:
-#      - ./models:/models
-#    depends_on:
-#      - db
-
-
-  cb:
-    container_name: cb-api
+  obj:
+    container_name: obj-api
     build:
       context: ./go_app
-      dockerfile: ./internal/app/cb-api/Dockerfile
+      dockerfile: ./internal/app/obj-api/Dockerfile
     restart: always
     ports:
-      - "2225:2225"
+      - "2224:2224"
     env_file:
       - ./.env_docker
     volumes:
       - ./models:/models
     depends_on:
       - db
-    links:
-      - db
+
+#  cb:
+#    container_name: cb-api
+#    build:
+#      context: ./go_app
+#      dockerfile: ./internal/app/cb-api/Dockerfile
+#    restart: always
+#    ports:
+#      - "2225:2225"
+#    env_file:
+#      - ./.env_docker
+#    volumes:
+#      - ./models:/models
+#    depends_on:
+#      - db
+#    links:
+#      - db
 
 
   train:
@@ -112,17 +111,22 @@ services:
     links:
       - db
 
-#  worker:
-#    container_name: train-worker
-#    build:
-#      context: ./pt_app
-#    restart: always
-#    command: >
-#      sh -c "cd /apps/train_api/ && python3 worker.py"
-#    volumes:
-#      - ./models:/models
-#    env_file:
-#      - ./.env_docker
-#    depends_on:
-#      - db
-#      - redis
+  worker:
+    container_name: train-worker
+    build:
+      context: ./pt_app
+      dockerfile: ./apps/train_api/Dockerfile
+      network: host
+    restart: always
+    command: >
+      sh -c "python3 apps/train_api/worker.py"
+    env_file:
+      - .env_docker
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+      - redis
+    links:
+      - db
+      - redis
