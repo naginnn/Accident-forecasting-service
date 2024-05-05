@@ -37,7 +37,3 @@ def check_token(credentials: HTTPAuthorizationCredentials, app_role: str) -> tup
         return False, None
     except jwt.exceptions.InvalidTokenError:
         return False, None
-
-
-if __name__ == '__main__':
-    check_token(1, "ro")

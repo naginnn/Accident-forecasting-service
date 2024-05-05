@@ -44,6 +44,7 @@ func Init(appName string) (*gorm.DB, error) {
 		err = db.AutoMigrate(&models.UsrData{})
 		pwdAdm, _ := tools.Encrypt("adm")
 		pwdUsr, _ := tools.Encrypt("usr")
+
 		if err == nil {
 			db.Create(&models.UsrData{Name: "adm", Pwd: pwdAdm, Roles: "ro,rw"})
 			db.Create(&models.UsrData{Name: "usr", Pwd: pwdUsr, Roles: "ro"})
@@ -54,6 +55,8 @@ func Init(appName string) (*gorm.DB, error) {
 			&models.ObjSourceStation{},
 			&models.ObjConsumer{},
 			&models.ObjConsumerEvent{},
+			&models.ObjDistrict{},
+			&models.ObjArea{},
 		)
 	}
 

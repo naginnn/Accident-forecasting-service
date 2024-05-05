@@ -4,6 +4,8 @@ import "time"
 
 type ObjConsumerStation struct {
 	ID            uint64             `gorm:"primaryKey" json:"id"`
+	ObjDistrictId uint64             `json:"obj_district_id"`
+	ObjAreaId     uint64             `json:"obj_area_id"`
 	Name          string             `json:"name"`
 	Address       string             `json:"address"`
 	Coordinates   string             `json:"coordinates"`
@@ -13,7 +15,9 @@ type ObjConsumerStation struct {
 
 type ObjSourceStation struct {
 	ID                   uint64 `gorm:"primaryKey" json:"id"`
-	ObjConsumerStationId uint64 `json:"obj_consumer_station_id"` // foreign key Ctp
+	ObjConsumerStationId uint64 `json:"obj_consumer_station_id"`
+	ObjDistrictId        uint64 `json:"obj_district_id"`
+	ObjAreaId            uint64 `json:"obj_area_id"`
 	Name                 string `json:"name"`
 	Address              string `json:"address"`
 	Coordinates          string `json:"coordinates"`
@@ -40,7 +44,9 @@ OperatingMode: Время работы
 
 type ObjConsumer struct {
 	ID                   uint64  `gorm:"primaryKey" json:"id"`
-	ObjConsumerStationId uint64  `json:"obj_consumer_station_id"` // foreign key Ctp
+	ObjConsumerStationId uint64  `json:"obj_consumer_station_id"`
+	ObjDistrictId        uint64  `json:"obj_district_id"`
+	ObjAreaId            uint64  `json:"obj_area_id"`
 	Name                 string  `json:"name"`
 	Address              string  `json:"address"`
 	Coordinates          string  `json:"coordinates"`
