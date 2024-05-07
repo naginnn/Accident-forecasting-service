@@ -96,7 +96,7 @@ services:
     build:
       context: ./pt_app
       dockerfile: ./apps/train_api/Dockerfile
-#      network: host
+      network: host
     restart: always
     command: >
       sh -c "python3 apps/train_api/server.py"
