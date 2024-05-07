@@ -10,18 +10,18 @@ services:
 #      - "80:80"
 #      - "8000:8000"
 
-#  frontend:
-#    container_name: ui
-#    build:
-#      context: ./react_app
-#      dockerfile: ./Dockerfile
-#    restart: always
-#    command: >
-#      sh -c "npm install -i --save --force
-#      && npm run build
-#      && node server.js"
-#    ports:
-#      - "3000:3000"
+  frontend:
+    container_name: ui
+    build:
+      context: ./react_app
+      dockerfile: ./Dockerfile
+    restart: always
+    command: >
+      sh -c "npm install -i --save --force
+      && npm run build
+      && node server.js"
+    ports:
+      - "3000:3000"
 
 
   db:
