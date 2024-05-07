@@ -75,20 +75,10 @@ async def upload_files(bts: io.BytesIO):
     files = {}
     with ZipFile(bts, "r") as zip_file:
         for xlxs_file in zip_file.filelist:
-            if not '__MACOSX' in xlxs_file.filename:
-                # or read csv -> faster
-                # files[xlxs_file.filename] = pd.read_excel(
-                #     io=io.BytesIO(zip_file.open(xlxs_file.filename).read()),
-                #     sheet_name=None,
-                # )
-
+            if '__MACOSX' not in xlxs_file.filename:
                 files[xlxs_file.filename] = pd.ExcelFile(
                     io.BytesIO(zip_file.open(xlxs_file.filename).read()),
                 )
                 job.meta['stage'] += 5
                 job.save_meta()
-                # df1 = pd.read_excel(files.get(xlxs_file.filename), 'Sheet1')
-                # # df1 = files.get(xlxs_file.filename).get('Sheet1')
-                # x = files[xlxs_file.filename]['Sheet1'].to_sql(name='users', con=sync_db, if_exists='replace',
-                #                                                index=False)
         prepare_dataset(files=files)

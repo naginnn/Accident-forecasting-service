@@ -1,7 +1,11 @@
 import time
-from sqlalchemy import Column, Integer, String, Boolean, BigInteger, ForeignKey, DateTime, Float, UUID, func, ARRAY
+from sqlalchemy import (Column, Integer, String,
+                        Boolean, BigInteger, ForeignKey,
+                        DateTime, Float, UUID, func, ARRAY)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
-from utils.models import BaseModel
+
+from models.utils import BaseModel
 
 
 class ObjConsumerStation(BaseModel):
@@ -141,3 +145,13 @@ class ObjArea(BaseModel):
     consumer_station = relationship('ObjConsumerStation', uselist=True, lazy='dynamic')
     source_station = relationship('ObjSourceStation', uselist=True, lazy='dynamic')
     consumers = relationship('ObjConsumer', uselist=True, lazy='dynamic')
+
+
+class ObjConsumerWeather(BaseModel):
+    __tablename__ = "obj_consumer_weathers"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    obj_consumer_id = Column(Integer, ForeignKey('obj_consumers.id'), nullable=True)
+    temp_dropping = Column(JSONB, nullable=True, default='{}')
+    is_actual = Column(String, nullable=True)
+    created = Column(DateTime(timezone=True), nullable=True)

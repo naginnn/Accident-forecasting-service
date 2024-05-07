@@ -57,6 +57,8 @@ func Init(appName string) (*gorm.DB, error) {
 			&models.ObjConsumerEvent{},
 			&models.ObjDistrict{},
 			&models.ObjArea{},
+			&models.ObjConsumerWeather{},
+			&models.ObjAccidents{},
 		)
 	}
 

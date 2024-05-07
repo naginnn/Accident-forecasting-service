@@ -1,6 +1,5 @@
 import uuid
 from datetime import timedelta, datetime
-
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm.collections import InstrumentedList
 

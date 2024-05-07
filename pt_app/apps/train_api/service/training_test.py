@@ -2,19 +2,38 @@ import pandas as pd
 import numpy as np
 from sklearn import preprocessing
 from rq.job import Job, get_current_job
+from sqlalchemy import text as sa_text, select
+from sqlalchemy.orm import sessionmaker, Session
 
-from apps.train_api.service.utils import get_word, MultiColumnLabelEncoder, reverse_date, check_in_type, alpabet
+from apps.train_api.service.agregate import agr_for_view, agr_for_model
+from apps.train_api.service.receive import collect_data, predict_data
+from apps.train_api.service.update import save_for_view, save_for_predict
+from apps.train_api.service.utils import (get_word, MultiColumnLabelEncoder,
+                                          reverse_date, check_in_type, alpabet)
+from models.objects import ObjConsumerWeather, ObjDistrict, ObjArea
 from pkg.utils import FakeJob
-from settings.db import DB_URL
+from pkg.ya_api import get_one_coordinate
+from settings.db import DB_URL, get_sync_session, sync_db as db
 
 
-def prepare_dataset(files: dict):
-    # job = get_current_job()
-    ###### save struct to db
-    to_db(files=files)
-    ###### save struct to db
-
+def prepare_dataset(files: dict = None):
     job = FakeJob.get_current_job()
+    session = get_sync_session()
+    if files:
+        df = agr_for_view(session=session, df_all=files)
+        save_for_view(session=session, df=df)
+
+    df = collect_data(db=db)
+    df = agr_for_model(session=session, df=df)
+    save_for_predict(session=session, df=df)
+    predict_data(df=df)
+
+    drop_weather_data(session=session)
+    session.commit()
+    pass
+
+    # job = get_current_job()
+
     # try:
     df = pd.read_excel(files.get('1.xlsx'), sheet_name='Sheet1')
     job.meta['stage'] = 30
@@ -159,10 +178,11 @@ def prepare_dataset(files: dict):
     # big_df.to_csv('/Users/sergeyesenin/PycharmProjects/hakaton2/backend/services/upload_data/src/servicedata_for_model2.csv', sep=',', index=False)
 
 
-def to_db(files: dict = None):
-    df = pd.read_excel('1.xlsx', sheet_name='Sheet1')
-    print(df)
+def drop_weather_data(session: Session):
+    session.execute(sa_text(f"truncate table {ObjConsumerWeather.__tablename__}"))
+    # session.commit()
+
 
 if __name__ == '__main__':
     files = {}
-    to_db()
+    prepare_dataset()
