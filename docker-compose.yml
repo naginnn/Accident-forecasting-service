@@ -28,7 +28,7 @@ services:
     container_name: db
     restart: always
     env_file:
-      - ./env_docker
+      - ./.env_docker
     ports:
       - "5432:5432"
 #    volumes:
@@ -50,7 +50,7 @@ services:
     ports:
       - "2223:2223"
     env_file:
-      - ./env_docker
+      - ./.env_docker
     volumes:
       - ./models:/models
     depends_on:
@@ -66,28 +66,28 @@ services:
     ports:
       - "2224:2224"
     env_file:
-      - ./env_docker
+      - ./.env_docker
     volumes:
       - ./models:/models
     depends_on:
       - db
 
-#  cb:
-#    container_name: cb-api
-#    build:
-#      context: ./go_app
-#      dockerfile: ./internal/app/cb-api/Dockerfile
-#    restart: always
-#    ports:
-#      - "2225:2225"
-#    env_file:
-#      - ./env_docker
-#    volumes:
-#      - ./models:/models
-#    depends_on:
-#      - db
-#    links:
-#      - db
+  cb:
+    container_name: cb-api
+    build:
+      context: ./go_app
+      dockerfile: ./internal/app/cb-api/Dockerfile
+    restart: always
+    ports:
+      - "2225:2225"
+    env_file:
+      - ./.env_docker
+    volumes:
+      - ./models:/models
+    depends_on:
+      - db
+    links:
+      - db
 
 
   train:
@@ -102,7 +102,7 @@ services:
     ports:
       - "2226:2226"
     env_file:
-      - ./env_docker
+      - ./.env_docker
     volumes:
       - ./models:/models
     depends_on:
@@ -120,7 +120,7 @@ services:
     command: >
       sh -c "python3 apps/train_api/worker.py"
     env_file:
-      - ./env_docker
+      - ./.env_docker
     volumes:
       - ./models:/models
     depends_on:
