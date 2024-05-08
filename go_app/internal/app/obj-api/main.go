@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -23,6 +24,7 @@ func main() {
 
 	//gin.SetMode(gin.ReleaseMode)
 	gin.SetMode(gin.DebugMode)
+	fmt.Println("test")
 	appName := "obj-api"
 	c, err := presets.GetConfig(appName)
 	if err != nil {
