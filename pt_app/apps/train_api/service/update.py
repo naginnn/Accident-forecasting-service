@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, text as sa_text, select
 from sqlalchemy.orm import sessionmaker, Session
 from models.objects import ObjDistrict, ObjArea, ObjConsumerStation, ObjSourceStation, ObjConsumer, ObjConsumerWeather
 from pkg.utils import FakeJob
-from pkg.ya_api import get_one_coordinate, get_coordinates
+from pkg.ya_api import get_one_coordinate, get_coordinates, get_weather
 
 
 def get_district(session: Session, data: dict):
@@ -19,10 +19,12 @@ def get_area(session: Session, data: dict):
     area = session.execute(select(ObjArea).filter(ObjArea.name == data.get('area'))).scalar()
     if area is None:
         pos = get_one_coordinate(data.get('area'))
-        area = ObjArea(name=data.get('area'), coordinates=pos, fact_temp=0.0)
+        temp_data = get_weather(pos.split(' ')[0], pos.split(' ')[1])
+        area = ObjArea(name=data.get('area'), coordinates=pos, temp_data=temp_data)
     return area
 
 
+# передать плоскую таблицу
 def save_for_view(session: Session, df: pd.DataFrame):
     job = FakeJob.get_current_job()
     start_time = time.time()
@@ -82,8 +84,6 @@ def save_for_view(session: Session, df: pd.DataFrame):
                 total_area=row['Площадь'],
                 living_area=row['Жилая площадь'],
                 not_living_area=row['Не жилая площадь'],
-                fact_temp=0.0,
-                outside_temp=0.0,
                 energy_class=row['Класс энерг. Эфф.'],
                 type=row['Тип объекта'],
                 operating_mode=row['Время работы'],
@@ -112,3 +112,13 @@ def save_for_predict(session: Session, df: pd.DataFrame):
 
 def save_predicated(session: Session, df: pd.DataFrame):
     pass
+
+
+def update_coordinates(session: Session):
+    pass
+
+
+if __name__ == '__main__':
+    print()
+    df = pd.read_excel('test.xlsx', sheet_name='full')
+    save_for_view(df=df)

@@ -1,14 +1,19 @@
 import os
 import requests
 
-def get_weather():
-    acs_key = os.environ.get('YA_WEATHER_KEY')
-    hdr = {
-        'X-Yandex-Weather-Key': acs_key
-    }
-    r = requests.get('https://api.weather.yandex.ru/v2/forecast?lat=55.635416&lon=37.541000',
-                     headers=hdr)
-    print(r.json())
+
+def get_weather(lat: str, lon: str):
+    forecasts = None
+    try:
+        acs_key = os.environ.get('YA_WEATHER_KEY')
+        hdr = {
+            'X-Yandex-Weather-Key': acs_key
+        }
+        r = requests.get(f'https://api.weather.yandex.ru/v2/forecast?lat={lat}&lon={lon}',
+                         headers=hdr)
+        forecasts = r.json().get('forecasts')
+    finally:
+        return forecasts
 
 
 def get_one_coordinate(adr: str):

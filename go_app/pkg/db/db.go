@@ -50,16 +50,40 @@ func Init(appName string) (*gorm.DB, error) {
 			db.Create(&models.UsrData{Name: "usr", Pwd: pwdUsr, Roles: "ro"})
 		}
 	case "obj-api":
+
+		// Locations
+		err = db.AutoMigrate(
+			&models.LocationDistrict{},
+			&models.LocationArea{},
+		)
+
+		// Weather
+		err = db.AutoMigrate(
+			&models.WeatherArea{},
+			&models.WeatherConsumerFall{},
+		)
+
 		err = db.AutoMigrate(
 			&models.ObjConsumerStation{},
 			&models.ObjSourceStation{},
 			&models.ObjConsumer{},
-			&models.ObjConsumerEvent{},
-			&models.ObjDistrict{},
-			&models.ObjArea{},
-			&models.ObjConsumerWeather{},
-			&models.ObjAccidents{},
 		)
+		// Locations
+		err = db.AutoMigrate(
+			&models.LocationDistrict{},
+			&models.LocationArea{},
+		)
+		// Materials
+		err = db.AutoMigrate(
+			&models.MaterialWall{},
+			&models.MaterialRoof{},
+		)
+
+		//Events
+		err = db.AutoMigrate(
+			&models.EventConsumer{},
+		)
+
 	}
 
 	if err != nil {
