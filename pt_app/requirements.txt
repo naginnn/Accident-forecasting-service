@@ -43,6 +43,7 @@ SQLAlchemy==2.0.29
 starlette==0.37.2
 tenacity==8.2.3
 threadpoolctl==3.4.0
+transliterate==1.10.2
 typing_extensions==4.11.0
 tzdata==2024.1
 urllib3==2.2.1
