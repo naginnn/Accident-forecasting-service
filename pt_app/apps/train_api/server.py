@@ -4,6 +4,8 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+from apps.train_api.service.training_test import prepare_dataset
 from apps.train_api.src.routers import train_router
 from fastapi.openapi.docs import (
     get_swagger_ui_html,
@@ -68,4 +70,8 @@ async def custom_swagger_ui_html():
     )
 
 if __name__ == '__main__':
+    import pandas as pd
+    files = {}
+    files["test.xlsx"] = pd.ExcelFile("test.xlsx", )
+    prepare_dataset(files=files)
     uvicorn.run(app=app, host=os.environ.get('TRAIN_API_HOST'), port=int(os.environ.get('TRAIN_API_PORT')))

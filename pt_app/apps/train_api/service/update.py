@@ -1,112 +1,189 @@
+import sys
 import time
 
 import pandas as pd
 from sqlalchemy import create_engine, text as sa_text, select
 from sqlalchemy.orm import sessionmaker, Session
-from models.objects import ObjDistrict, ObjArea, ObjConsumerStation, ObjSourceStation, ObjConsumer, ObjConsumerWeather
+from sqlalchemy.dialects.postgresql import insert as ins
+from models.locations import *
+from models.accidents import *
+from models.events import *
+from models.objects import *
+from models.materials import *
+from models.weathers import *
 from pkg.utils import FakeJob
 from pkg.ya_api import get_one_coordinate, get_coordinates, get_weather
 
 
 def get_district(session: Session, data: dict):
-    district = session.execute(select(ObjDistrict).filter(ObjDistrict.name == data.get('district'))).scalar()
+    district = session.execute(select(LocationDistrict).filter(LocationDistrict.name == data.get('district'))).scalar()
     if district is None:
-        district = ObjDistrict(name=data.get('district'))
+        district = LocationDistrict(name=data.get('district'))
     return district
 
 
 def get_area(session: Session, data: dict):
-    area = session.execute(select(ObjArea).filter(ObjArea.name == data.get('area'))).scalar()
+    area = session.execute(select(LocationArea).filter(LocationArea.name == data.get('area'))).scalar()
     if area is None:
         pos = get_one_coordinate(data.get('area'))
         temp_data = get_weather(pos.split(' ')[0], pos.split(' ')[1])
-        area = ObjArea(name=data.get('area'), coordinates=pos, temp_data=temp_data)
+        area = LocationArea(name=data.get('area'), coordinates=pos, temp_data=temp_data)
     return area
 
 
-# передать плоскую таблицу
-def save_for_view(session: Session, df: pd.DataFrame):
-    job = FakeJob.get_current_job()
-    start_time = time.time()
-    for index, row in df.iterrows():
-        obj_consumer_station = session.execute(select(ObjConsumerStation)
-                                               .filter(ObjConsumerStation.name == row['Nº ЦТП (ИТП)'])).scalar()
-        if not obj_consumer_station:
-            data = get_coordinates(adr=row['Адрес ЦТП (ИТП)'])
-            obj_district = get_district(session, data=data)
-            obj_area = get_area(session, data=data)
-            obj_consumer_station = ObjConsumerStation(
-                name=row['Nº ЦТП (ИТП)'],
-                address=row['Адрес ЦТП (ИТП)'],
-                coordinates=data.get('pos')
+class SaveView:
+    @staticmethod
+    def save_locations(session: Session, df: pd.DataFrame):
+        location_districts = list(set(
+            df['okrug_potrebitelja'].unique().tolist()
+            + df['okrug_tstp_itp'].unique().tolist()
+        ))
+        # location_areas
+        districts = {}
+        for district in location_districts:
+            location_district = ins(LocationDistrict).values(
+                name=district,
             )
-            session.add(obj_district)
-            session.add(obj_area)
-            session.flush()
+            do_upd_upd = location_district.on_conflict_do_update(
+                constraint='uni_location_districts_name',
+                set_={'name': district}
+            ).returning(LocationDistrict.id)
+            districts[district] = session.execute(do_upd_upd).scalar()
 
-            obj_area.obj_district_id = obj_district.id
-            obj_consumer_station.obj_district_id = obj_district.id
-            obj_consumer_station.obj_area_id = obj_area.id
-
-            # db_session.add(obj_consumer_station)
-
-        obj_source_station = session.execute(select(ObjSourceStation)
-                                             .filter(ObjSourceStation.name == row['Источник'])).scalar()
-        if not obj_source_station:
-            data = get_coordinates(adr=row['Адрес источника'])
-            obj_district = get_district(session, data=data)
-            obj_area = get_area(session, data=data)
-            obj_source_station = ObjSourceStation(
-                name=row['Источник'],
-                address=row['Адрес источника'],
-                coordinates=data.get('pos')
+        areas = {}
+        loc_area_consumer = df['rajon_potrebitelja'].unique().tolist()
+        loc_area_source = df['rajon_tstp_itp'].unique().tolist()
+        for area_cons, area_source in zip(loc_area_consumer, loc_area_source):
+            loc_area = df[(df['rajon_potrebitelja'] == area_cons)]
+            location_area = ins(LocationArea).values(
+                name=area_cons,
             )
+            do_upd_upd = location_area.on_conflict_do_update(
+                constraint='uni_location_areas_name',
+                set_={'name': area_cons,
+                      'coordinates': loc_area['koordinaty_potrebitelja'].iloc[0,],
+                      'location_district_id': districts.get(loc_area['okrug_potrebitelja'].iloc[0,]),
+                      }
+            ).returning(LocationArea.id)
+            areas[area_cons] = session.execute(do_upd_upd).scalar()
 
-            session.add(obj_district)
-            session.add(obj_area)
-            session.flush()
-            obj_area.obj_district_id = obj_district.id
-            obj_source_station.obj_district_id = obj_district.id
-            obj_source_station.obj_area_id = obj_area.id
-
-        obj_consumer = session.execute(select(ObjConsumer)
-                                       .filter(ObjConsumer.address == row['Адрес потребителя'])).scalar()
-        if not obj_consumer:
-            data = get_coordinates(adr=row['Адрес потребителя'])
-            obj_district = get_district(session, data=data)
-            obj_area = get_area(session, data=data)
-            obj_consumer = ObjConsumer(
-                name=row['Назначение здания потребителя'],
-                address=row['Адрес потребителя'],
-                coordinates=data.get('pos'),
-                wall_material=row['Материал стен'],
-                roof_material=row['Материал кровли'],
-                total_area=row['Площадь'],
-                living_area=row['Жилая площадь'],
-                not_living_area=row['Не жилая площадь'],
-                energy_class=row['Класс энерг. Эфф.'],
-                type=row['Тип объекта'],
-                operating_mode=row['Время работы'],
+            loc_area = df[(df['rajon_tstp_itp'] == area_source)]
+            location_area = ins(LocationArea).values(
+                name=area_source,
             )
-            session.add(obj_district)
-            session.add(obj_area)
-            session.flush()
-
-            obj_area.obj_district_id = obj_district.id
-            obj_consumer.obj_district_id = obj_district.id
-            obj_consumer.obj_area_id = obj_area.id
-
-        obj_consumer_station.source_station.append(obj_source_station)
-        obj_consumer_station.consumers.append(obj_consumer)
-
-        session.add(obj_consumer_station)
+            do_upd_upd = location_area.on_conflict_do_update(
+                constraint='uni_location_areas_name',
+                set_={'name': area_source,
+                      'coordinates': loc_area['koordinaty_tstp_itp'].iloc[0,],
+                      'location_district_id': districts.get(loc_area['okrug_tstp_itp'].iloc[0,]),
+                      }
+            ).returning(LocationArea.id)
+            areas[area_cons] = session.execute(do_upd_upd).scalar()
         session.commit()
-        # break
-    print(time.time() - start_time)
+        return dict(districts=districts, areas=areas)
+
+    @staticmethod
+    def save_objects(session: Session, df: pd.DataFrame, locations: dict):
+        districts, areas = locations.get('districts'), locations.get('areas')
+        for index, row in df.iterrows():
+            obj_consumer_station = ins(ObjConsumerStation).values(
+                name=row['n_tstp_itp'],
+                address=row['adres_tstp_itp'],
+                location_district_id=districts.get(row['okrug_tstp_itp']),
+                location_area_id=areas.get(row['rajon_tstp_itp']),
+                coordinates=row['koordinaty_tstp_itp'],
+
+            )
+
+            do_upd_upd = obj_consumer_station.on_conflict_do_update(
+                constraint='uni_obj_consumer_stations_name',
+                set_={
+                    "address": row['adres_tstp_itp'],
+                    "coordinates": row['koordinaty_tstp_itp'],
+                    "location_district_id": districts.get(row['okrug_tstp_itp']),
+                    "location_area_id": areas.get(row['rajon_tstp_itp']),
+                }
+            ).returning(ObjConsumerStation)
+            obj_consumer_station = session.execute(do_upd_upd).scalar()
+
+            obj_source_station = ins(ObjSourceStation).values(
+                name=row['istochnik'],
+                address=row['adres_istochnika'],
+                location_district_id=districts.get(row['okrug_tstp_itp']),
+                location_area_id=areas.get(row['rajon_tstp_itp']),
+                coordinates=row['koordinaty_istochnika'],
+
+            )
+
+            do_upd_upd = obj_source_station.on_conflict_do_update(
+                constraint='uni_obj_source_stations_name',
+                set_={
+                    "address": row['adres_istochnika'],
+                    "coordinates": row['koordinaty_istochnika'],
+                    "location_district_id": districts.get(row['okrug_tstp_itp']),
+                    "location_area_id": areas.get(row['rajon_tstp_itp']),
+                }
+            ).returning(ObjSourceStation)
+
+            obj_source_station = session.execute(do_upd_upd).scalar()
+            try:
+                obj_source_station.consumer_stations.append(obj_consumer_station)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+
+            obj_consumer = ins(ObjConsumer).values(
+                name=row['naznachenie_zdanija_potrebitelja'],
+                address=row['adres_potrebitelja'],
+                coordinates=row['koordinaty_potrebitelja'],
+                # wall_material=row['material_sten'],
+                # roof_material=row['material_krovli'],
+                total_area=row['ploschad'],
+                living_area=row['zhilaja_ploschad'],
+                not_living_area=row['ne_zhilaja_ploschad'],
+                energy_class=row['klass_energ_eff'],
+                type=row['tip_obekta'],
+                operating_mode=row['vremja_raboty'],
+                priority=row['priority'],
+                obj_consumer_station_id=obj_consumer_station.id,
+                location_district_id=districts.get(row['okrug_potrebitelja']),
+                location_area_id=areas.get(row['rajon_potrebitelja']),
+            )
+
+            do_upd_upd = obj_consumer.on_conflict_do_update(
+                constraint='uni_obj_consumers_address',
+                set_=dict(name=row['naznachenie_zdanija_potrebitelja'],
+                          coordinates=row['koordinaty_potrebitelja'],
+                          # wall_material=row['material_sten'],
+                          # roof_material=row['material_krovli'],
+                          total_area=row['ploschad'],
+                          living_area=row['zhilaja_ploschad'],
+                          not_living_area=row['ne_zhilaja_ploschad'],
+                          energy_class=row['klass_energ_eff'],
+                          type=row['tip_obekta'],
+                          operating_mode=row['vremja_raboty'],
+                          priority=row['priority'],
+                          obj_consumer_station_id=obj_consumer_station.id,
+                          location_district_id=districts.get(row['okrug_potrebitelja']),
+                          location_area_id=areas.get(row['rajon_potrebitelja']), )
+            ).returning(ObjConsumer)
+            # obj_consumer = session.execute(do_upd_upd).scalar()
+            session.execute(do_upd_upd).scalar()
+            session.commit()
+
+
+# сохранить без подгрузки координат
+def save_for_view(session: Session, tables: dict):
+    job = FakeJob.get_current_job()
+    df = tables.get("full")
+    locations = SaveView.save_locations(session=session, df=df)
+    SaveView.save_objects(session=session, df=df, locations=locations)
     print('Success')
 
 
-def save_for_predict(session: Session, df: pd.DataFrame):
+
+
+def save_for_predict(session: Session, tables: dict):
     pass
 
 
@@ -118,7 +195,7 @@ def update_coordinates(session: Session):
     pass
 
 
-if __name__ == '__main__':
-    print()
-    df = pd.read_excel('test.xlsx', sheet_name='full')
-    save_for_view(df=df)
+# if __name__ == '__main__':
+#     print()
+#     df = pd.read_excel('test.xlsx', sheet_name='full')
+#     save_for_view(df=df)

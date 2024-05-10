@@ -1,34 +1,34 @@
 package models
 
 type ObjConsumerStation struct {
-	ID             uint64               `gorm:"primaryKey" json:"id"`
-	ObjDistrictId  uint64               `json:"obj_district_id"`
-	ObjAreaId      uint64               `json:"obj_area_id"`
-	Name           string               `json:"name"`
-	Address        string               `json:"address"`
-	Coordinates    string               `json:"coordinates"`
-	SourceStations []*ObjSourceStation  `gorm:"many2many:obj_source_consumer_stations" json:"source_stations"`
-	Consumers      []ObjConsumer        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"consumers"`
-	Accidents      []PredictionAccident `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"accidents"`
+	ID                 uint64               `gorm:"primaryKey" json:"id"`
+	LocationDistrictId uint64               `json:"location_district_id"`
+	LocationAreaId     uint64               `json:"location_area_id"`
+	Name               string               `gorm:"unique" json:"name"`
+	Address            string               `json:"address"`
+	Coordinates        string               `json:"coordinates"`
+	SourceStations     []*ObjSourceStation  `gorm:"many2many:obj_source_consumer_stations" json:"source_stations"`
+	Consumers          []ObjConsumer        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"consumers"`
+	Accidents          []PredictionAccident `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"accidents"`
 }
 
 type ObjSourceStation struct {
-	ID               uint64                `gorm:"primaryKey" json:"id"`
-	ObjDistrictId    uint64                `json:"obj_district_id"`
-	ObjAreaId        uint64                `json:"obj_area_id"`
-	Name             string                `json:"name"`
-	Address          string                `json:"address"`
-	Coordinates      string                `json:"coordinates"`
-	ConsumerStations []*ObjConsumerStation `gorm:"many2many:obj_source_consumer_stations" json:"consumer_stations"`
+	ID                 uint64                `gorm:"primaryKey" json:"id"`
+	LocationDistrictId uint64                `json:"location_district_id"`
+	LocationAreaId     uint64                `json:"location_area_id"`
+	Name               string                `gorm:"unique" json:"name"`
+	Address            string                `json:"address"`
+	Coordinates        string                `json:"coordinates"`
+	ConsumerStations   []*ObjConsumerStation `gorm:"many2many:obj_source_consumer_stations" json:"consumer_stations"`
 }
 
 type ObjConsumer struct {
 	ID                   uint64  `gorm:"primaryKey" json:"id"`
 	ObjConsumerStationId uint64  `json:"obj_consumer_station_id"`
-	ObjDistrictId        uint64  `json:"obj_district_id"`
-	ObjAreaId            uint64  `json:"obj_area_id"`
+	LocationDistrictId   uint64  `json:"location_district_id"`
+	LocationAreaId       uint64  `json:"location_area_id"`
 	Name                 string  `json:"name"`
-	Address              string  `json:"address"`
+	Address              string  `gorm:"unique" json:"address"`
 	Coordinates          string  `json:"coordinates"`
 	TotalArea            float64 `json:"total_area"`
 	LivingArea           float64 `json:"living_area"`

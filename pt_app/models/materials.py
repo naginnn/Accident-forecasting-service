@@ -9,13 +9,13 @@ from sqlalchemy.orm import *
 from models.utils import BaseModel, Base
 
 # many to many fields to consumer
-material_consumer_wall = Table(
+material_consumer_walls = Table(
     'material_consumer_walls', Base.metadata,
     Column('material_wall_id', Integer(), ForeignKey('material_walls.id'), primary_key=True),
     Column('obj_consumer_id', Integer(), ForeignKey('obj_consumers.id'), primary_key=True)
 )
 
-material_consumer_roof = Table(
+material_consumer_roofs = Table(
     'material_consumer_roofs', Base.metadata,
     Column('material_roof_id', Integer(), ForeignKey('material_roofs.id'), primary_key=True),
     Column('obj_consumer_id', Integer(), ForeignKey('obj_consumers.id'), primary_key=True)
