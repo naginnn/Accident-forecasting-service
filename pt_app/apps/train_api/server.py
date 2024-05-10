@@ -72,6 +72,6 @@ async def custom_swagger_ui_html():
 if __name__ == '__main__':
     import pandas as pd
     files = {}
-    files["test.xlsx"] = pd.ExcelFile("test.xlsx", )
+    files["test.xlsx"] = pd.ExcelFile(f"{os.getcwd()}/test.xlsx", )
     prepare_dataset(files=files)
     uvicorn.run(app=app, host=os.environ.get('TRAIN_API_HOST'), port=int(os.environ.get('TRAIN_API_PORT')))
