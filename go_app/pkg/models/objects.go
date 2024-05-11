@@ -48,8 +48,10 @@ type ObjConsumer struct {
 }
 
 type TempCondition struct {
-	Summer float64
-	Winter float64
+	SummerHigh float64 `json:"summer_high"`
+	SummerLow  float64 `json:"summer_low"`
+	WinterHigh float64 `json:"winter_high"`
+	WinterLow  float64 `json:"winter_low"`
 }
 
 func (s *TempCondition) Scan(v interface{}) error {

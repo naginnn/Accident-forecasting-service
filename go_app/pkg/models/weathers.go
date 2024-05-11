@@ -195,31 +195,7 @@ type Forecasts struct {
 			FreshSnowMm  int         `json:"fresh_snow_mm"`
 		} `json:"night_short"`
 	} `json:"parts"`
-	Hours []Hours `json:"hours"`
-	//Hours []struct {
-	//	Hour         string      `json:"hour"`
-	//	HourTs       int         `json:"hour_ts"`
-	//	Temp         int         `json:"temp"`
-	//	FeelsLike    int         `json:"feels_like"`
-	//	Icon         string      `json:"icon"`
-	//	Condition    string      `json:"condition"`
-	//	Cloudness    float64     `json:"cloudness"`
-	//	PrecType     int         `json:"prec_type"`
-	//	PrecStrength float64     `json:"prec_strength"`
-	//	IsThunder    interface{} `json:"is_thunder"`
-	//	WindDir      string      `json:"wind_dir"`
-	//	WindSpeed    float64     `json:"wind_speed"`
-	//	WindGust     float64     `json:"wind_gust"`
-	//	PressureMm   int         `json:"pressure_mm"`
-	//	PressurePa   int         `json:"pressure_pa"`
-	//	Humidity     int         `json:"humidity"`
-	//	UvIndex      int         `json:"uv_index"`
-	//	SoilTemp     int         `json:"soil_temp"`
-	//	SoilMoisture float64     `json:"soil_moisture"`
-	//	PrecMm       float64     `json:"prec_mm"`
-	//	PrecPeriod   int         `json:"prec_period"`
-	//	PrecProb     int         `json:"prec_prob"`
-	//} `json:"hours"`
+	Hours  []Hours `json:"hours"`
 	Biomet struct {
 		Index     int    `json:"index"`
 		Condition string `json:"condition"`
@@ -254,13 +230,12 @@ type Hours struct {
 type WeatherConsumerFall struct {
 	ID            uint64       `gorm:"primaryKey" json:"id"`
 	ObjConsumerId uint64       `json:"obj_consumer_id"`
-	TempDropping  TempDropping `gorm:"type:jsonb;default:'{}';" json:"temp_dropping"`
+	TempDropping  TempDropping `gorm:"serializer:json;type:jsonb;default:'{}';" json:"temp_dropping"`
 	Created       time.Time    `gorm:"autoUpdateTime" json:"created"`
 }
 
 type TempDropping struct {
-	Temp []float64 `json:"temp"`
-	Hour []int     `json:"hour"`
+	TempData []TempData `json:"temp_data"`
 }
 
 func (s *TempDropping) Scan(v interface{}) error {
@@ -269,4 +244,9 @@ func (s *TempDropping) Scan(v interface{}) error {
 		return err
 	}
 	return nil
+}
+
+type TempData struct {
+	Temp   float64 `json:"temp"`
+	DateTs int64   `json:"date_ts"`
 }

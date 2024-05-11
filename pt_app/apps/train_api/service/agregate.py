@@ -81,13 +81,33 @@ class Utils:
     def temp_conditions(x):
         match x:
             case "Социальный":
-                return dict(summer=22.0, winter=20.0)
+                return dict(
+                    summer_high=25.0,
+                    summer_low=22.0,
+                    winter_high=22.0,
+                    winter_low=20.0,
+                )
             case "МКД":
-                return dict(summer=18.0, winter=18.0)
+                return dict(
+                    summer_high=22.0,
+                    summer_low=20.0,
+                    winter_high=20.0,
+                    winter_low=18.0,
+                )
             case "Индустриальный":
-                return dict(summer=18.0, winter=18.0)
+                return dict(
+                    summer_high=20.0,
+                    summer_low=18.0,
+                    winter_high=21.0,
+                    winter_low=19.0,
+                )
             case _:
-                return dict(summer=18.0, winter=18.0)
+                return dict(
+                    summer_high=22.0,
+                    summer_low=20.0,
+                    winter_high=20.0,
+                    winter_low=18.0,
+                )
 
         # match x:
         #     case "Детский сад":

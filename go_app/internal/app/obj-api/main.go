@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"os"
 	"services01/internal/app/obj-api/pkg/objects"
+	"services01/internal/app/obj-api/pkg/temp"
 	"services01/pkg/middlewares"
 	"services01/pkg/presets"
+	"services01/pkg/weather"
+	"time"
 )
 
 func main() {
@@ -29,11 +32,26 @@ func main() {
 		log.Fatal(err)
 	}
 	r := gin.Default()
+
 	r.Use(middlewares.Cors())
 	r.Use(middlewares.NoCache())
+	temp.RegRoutes(r, c)
 	r.Use(middlewares.Auth())
-
 	objects.RegRoutes(r, c)
+
+	go func() {
+		err := weather.UpdateTempDataArea(c.DB)
+		if err != nil {
+			log.Println(err)
+		}
+		for {
+			err = weather.CalculateFallTemp(c.DB)
+			if err != nil {
+				log.Println(err)
+			}
+			time.Sleep(1 * time.Hour)
+		}
+	}()
 
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, "not found")
