@@ -12,23 +12,6 @@ from models.objects import *
 from models.materials import *
 from models.weathers import *
 from pkg.utils import FakeJob
-from pkg.ya_api import get_one_coordinate, get_coordinates, get_weather
-
-
-def get_district(session: Session, data: dict):
-    district = session.execute(select(LocationDistrict).filter(LocationDistrict.name == data.get('district'))).scalar()
-    if district is None:
-        district = LocationDistrict(name=data.get('district'))
-    return district
-
-
-def get_area(session: Session, data: dict):
-    area = session.execute(select(LocationArea).filter(LocationArea.name == data.get('area'))).scalar()
-    if area is None:
-        pos = get_one_coordinate(data.get('area'))
-        temp_data = get_weather(pos.split(' ')[0], pos.split(' ')[1])
-        area = LocationArea(name=data.get('area'), coordinates=pos, temp_data=temp_data)
-    return area
 
 
 class SaveView:
@@ -145,6 +128,7 @@ class SaveView:
                 type=row['tip_obekta'],
                 operating_mode=row['vremja_raboty'],
                 priority=row['priority'],
+                temp_conditions=row['temp_conditions'],
                 obj_consumer_station_id=obj_consumer_station.id,
                 location_district_id=districts.get(row['okrug_potrebitelja']),
                 location_area_id=areas.get(row['rajon_potrebitelja']),
@@ -163,6 +147,7 @@ class SaveView:
                           type=row['tip_obekta'],
                           operating_mode=row['vremja_raboty'],
                           priority=row['priority'],
+                          temp_conditions=row['temp_conditions'],
                           obj_consumer_station_id=obj_consumer_station.id,
                           location_district_id=districts.get(row['okrug_potrebitelja']),
                           location_area_id=areas.get(row['rajon_potrebitelja']), )
@@ -181,8 +166,6 @@ def save_for_view(session: Session, tables: dict):
     print('Success')
 
 
-
-
 def save_for_predict(session: Session, tables: dict):
     pass
 
@@ -193,7 +176,6 @@ def save_predicated(session: Session, df: pd.DataFrame):
 
 def update_coordinates(session: Session):
     pass
-
 
 # if __name__ == '__main__':
 #     print()

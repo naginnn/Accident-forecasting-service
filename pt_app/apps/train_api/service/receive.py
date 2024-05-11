@@ -11,6 +11,7 @@ unprocessed_schema_name = "unprocessed"
 
 
 def save_unprocessed_data(db: Engine, files: dict) -> None:
+    """Сохранить не обработанные таблицы"""
     with db.connect() as connection:
         connection.execute(CreateSchema(unprocessed_schema_name, if_not_exists=True))
         connection.commit()

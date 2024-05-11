@@ -13,4 +13,5 @@ type LocationArea struct {
 	Name               string        `gorm:"unique" json:"name"`
 	Coordinates        string        `json:"coordinates"`
 	Weather            []WeatherArea `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"weather"`
+	Consumers          []ObjConsumer `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"consumers"`
 }

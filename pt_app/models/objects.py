@@ -1,7 +1,7 @@
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from models.utils import BaseModel, Base
-
+from sqlalchemy.dialects.postgresql import JSONB
 obj_source_consumer_stations = Table(
     'obj_source_consumer_stations', Base.metadata,
     Column('obj_source_station_id', Integer(), ForeignKey('obj_source_stations.id'), primary_key=True),
@@ -75,6 +75,7 @@ class ObjConsumer(BaseModel):
     operating_mode = Column(String, nullable=True)
     priority = Column(Integer, nullable=True)
 
+    temp_conditions = Column(JSONB, nullable=True, default='{}')
     accidents = relationship('PredictionAccident', uselist=True, lazy='dynamic')
     events = relationship('EventConsumer', uselist=True, lazy='dynamic')
     weather_fall = relationship('WeatherConsumerFall', uselist=True, lazy='dynamic')

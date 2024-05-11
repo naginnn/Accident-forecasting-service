@@ -51,9 +51,9 @@ def drop_weather_data(session: Session):
 #     # session.commit()
 
 
-# if __name__ == '__main__':
-#     files = {}
-#     # processed_data = pd.read_excel('test.xlsx', sheet_name='full')
-#     files["test.xlsx"] = pd.ExcelFile("test.xlsx", )
-#     prepare_dataset(files=files)
-#     # prepare_dataset(files=None)
+if __name__ == '__main__':
+    files = {}
+    # processed_data = pd.read_excel('test.xlsx', sheet_name='full')
+    files["test.xlsx"] = pd.ExcelFile("test.xlsx", )
+    prepare_dataset(files=files)
+    # prepare_dataset(files=None)
