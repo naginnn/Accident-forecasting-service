@@ -40,6 +40,7 @@ func main() {
 	objects.RegRoutes(r, c)
 
 	go func() {
+		time.Sleep(2 * time.Minute)
 		err := weather.UpdateTempDataArea(c.DB)
 		if err != nil {
 			log.Println(err)
@@ -49,7 +50,7 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
-			time.Sleep(1 * time.Hour)
+			time.Sleep(5 * time.Minute)
 		}
 	}()
 
