@@ -82,6 +82,7 @@ func Init(appName string) (*gorm.DB, error) {
 		//Events
 		err = db.AutoMigrate(
 			&models.EventConsumer{},
+			&models.PredictionAccident{},
 		)
 
 	}

@@ -16,5 +16,23 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 		DB: c.DB,
 	}
 	routers := r.Group("/api/v1/obj")
-	routers.GET("", middlewares.RoleChecker(h.GetObj, "ro,rw"))
+	// Areas
+	//GetAreas
+	routers.GET("/areas", middlewares.RoleChecker(h.GetAreas, "ro,rw"))
+	// Source Station
+	routers.GET("/source-stations", middlewares.RoleChecker(h.GetSourceStations, "ro,rw"))
+	routers.GET("/source-stations/:id", middlewares.RoleChecker(h.GetSourceStation, "ro,rw"))
+
+	// Consumer Station
+	routers.GET("/consumer-stations", middlewares.RoleChecker(h.GetConsumerStations, "ro,rw"))
+	routers.GET("/consumer-stations/:id", middlewares.RoleChecker(h.GetConsumerStation, "ro,rw"))
+
+	// Consumer routers
+	routers.GET("/consumers", middlewares.RoleChecker(h.GetConsumers, "ro,rw"))
+	routers.GET("/consumers/:id", middlewares.RoleChecker(h.GetConsumer, "ro,rw"))
+
+	// Accidents
+	routers.GET("/accidents", middlewares.RoleChecker(h.GetAccidents, "ro,rw"))
+	routers.GET("/accidents/:id", middlewares.RoleChecker(h.GetAccident, "ro,rw"))
+	routers.PUT("/accidents/:id", middlewares.RoleChecker(h.UpdateAccident, "rw"))
 }
