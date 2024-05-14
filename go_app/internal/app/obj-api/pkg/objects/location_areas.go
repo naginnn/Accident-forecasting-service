@@ -15,7 +15,7 @@ func (h handler) GetAreas(c *gin.Context) {
 		Preload("Weather", func(tx *gorm.DB) *gorm.DB {
 			return tx.Last(&models.WeatherArea{})
 		}).
-		Preload("SourceStations.ConsumerStations.Consumers").
+		Preload("SourceStations.ConsumerStations.Consumers.WeatherFall").
 		//Preload("Consumers").Find(&areas).Error
 		//Preload("Consumers.WeatherFall").
 		Preload(clause.Associations).Find(&areas).Error
