@@ -50,7 +50,7 @@ func main() {
 			if err != nil {
 				log.Println(err)
 			}
-			time.Sleep(5 * time.Minute)
+			time.Sleep(2 * time.Minute)
 		}
 	}()
 
