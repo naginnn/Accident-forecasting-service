@@ -128,10 +128,6 @@ func adjustCooling(k, weatherEffect, windSpeed, windDegrees, humidity float64) f
 	return k + weatherEffect + windEffect + humidityEffect + directionEffect
 }
 
-func getSeason() {
-
-}
-
 type NewtonParams struct {
 	K, WindSpeed, Humidity, TInitial, TEnv float64
 	Weather, WindDirection                 string
@@ -146,58 +142,4 @@ func NewtonCooling(nParams *NewtonParams) float64 {
 		nParams.Humidity)
 	tNew := nParams.TEnv + (nParams.TInitial-nParams.TEnv)*math.Exp(-nParams.K*float64(1))
 	return tNew
-
-	//temperatures := make([]float64, 0) // Создаем слайс с начальной ёмкостью равной hours+1
-	//temperatures := make([]float64, 0, hours+1)   // Создаем слайс с начальной ёмкостью равной hours+1
-	//temperatures = append(temperatures, tInitial) // Начальная температура
-
-	//for hour := 1; hour <= hours; hour++ {
-	//	TNew := TEnv + (temperatures[len(temperatures)-1]-TEnv)*math.Exp(-k*float64(hour))
-	//	temperatures = append(temperatures, TNew)
-	//}
-	//k = adjustCooling(k, weather, windSpeed, windDirection, humidity)
-
-	//hour := 1
-	//for {
-	//	tNew := tEnv + (temperatures[len(temperatures)-1]-tEnv)*math.Exp(-k*float64(hour))
-	//	if tNew == temperatures[len(temperatures)-1] {
-	//		break
-	//	}
-	//
-	//	temperatures = append(temperatures, tNew)
-	//	// пороговое значение
-	//	if tNew > lowerTemp && tNew < lowerTemp+1 || tNew < lowerTemp {
-	//		break
-	//	}
-	//	hour++
-	//}
-
 }
-
-//func main() {
-//	tInitial := 22.0 // начальная температура в градусах Цельсия
-//	tEnv := -2.0     // температура окружающей среды в градусах Цельсия
-//	k := 0.01        // коэффициент охлаждения
-//	//lowerTemp := 2.9 // нижняя граница расчета
-//
-//	weather := "cloudy"
-//	windSpeed := 5.0 // м/с скорость ветра
-//	//windDirection := SouthEast // Направление ветра в градусах
-//	windDirection := "se" // Направление ветра в градусах
-//	//buildingDirection := 90.0 // Направление, в котором наиболее эффективно охлаждение
-//	humidity := 70.0 // влажность
-//
-//	//k = adjustCooling(k, ConvertCondition(weather), windSpeed, ConvertToDegrees(windDirection), humidity)
-//	//temperatures := NewtonCooling(k, weather, windSpeed, windDirection, humidity, tInitial, tEnv)
-//	//fmt.Println(temperatures)
-//	//for i, temp := range temperatures {
-//	//	fmt.Printf("Час %d: температура = %v°C\n", i, temp)
-//	//}
-//	//fmt.Println(fmt.Sprintf("Часов потребуется: %v", len(temperatures)-1))
-//	//fmt.Println(temperatures)
-//	//fmt.Println(temperatures[1:])
-//
-//}
-
-// list ["00:00", "01:00", "02:00"]
-// list ["22.0", "21.0", "20.0"]
