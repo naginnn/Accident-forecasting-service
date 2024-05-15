@@ -16,6 +16,9 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 		DB: c.DB,
 	}
 	routers := r.Group("/api/v1/obj")
+	// TableView
+	routers.GET("/table_view", middlewares.RoleChecker(h.GetTableView, "ro,rw"))
+	//GetTableView
 	// Areas
 	//GetAreas
 	routers.GET("/areas", middlewares.RoleChecker(h.GetAreas, "ro,rw"))
