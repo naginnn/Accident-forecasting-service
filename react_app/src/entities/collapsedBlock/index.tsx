@@ -1,0 +1,1 @@
+export {CollapsedBlock} from './ui/CollapsedBlock'

@@ -1,4 +1,7 @@
 export {apiBase} from "./api/apiBase"
-export {BASE_URL, AUTH_URL} from "./const/urls"
+export {BASE_URL, AUTH_URL, OBJ_URL} from "./const/urls"
 export {getRequestOptions} from "./utils/getRequestOptions"
 export {handleErrorResponse} from "./utils/handleErrorResponse"
+export {getAuthHeader} from "./utils/getAuthHeader"
+export {isCustomFetchBaseQueryError} from "./types/isCustomFetchBaseQueryError"
+export {type CustomFetchBaseQueryErrT} from "./types/customFetchBaseQueryError"

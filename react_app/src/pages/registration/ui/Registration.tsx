@@ -9,8 +9,7 @@ import {Button, Grid, MenuItem} from "@mui/material";
 
 import {AuthHeader, AuthWrapper} from "@src/features/authentication";
 import {AuthPassShow} from "@src/features/authentication";
-import {TextInput} from "@src/features/controlledInput/ui/TextInput";
-import {SelectInput} from "@src/features/controlledInput";
+import {TextInput, SelectInput} from "@src/shared/ui/reactHookFormInputs";
 import {routerPaths} from "@src/shared/config/router";
 import {getErrorMessage} from "@src/shared/lib/getErrorMessage";
 
@@ -45,13 +44,14 @@ export const Registration = () => {
             login: '',
             password: '',
             confirmPass: '',
-            roles: 'user'
+            roles: rolesOpt[0].value
         }
     });
 
     useEffect(() => {
         // блок обработки ошибок
         if (errorRegistration) {
+            debugger
             if ('status' in errorRegistration && errorRegistration.status === 401) {
                 setError('login', {type: 'custom', message: 'Данный пользователь уже существует'})
             } else {

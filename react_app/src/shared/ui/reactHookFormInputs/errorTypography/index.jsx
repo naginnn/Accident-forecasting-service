@@ -1,0 +1,1 @@
+export {ErrorTypography} from './ErrorTypography';

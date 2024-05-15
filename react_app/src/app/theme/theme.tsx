@@ -18,6 +18,7 @@ export const theme = createTheme(
                 'Helvetica Neue',
             ].join(','),
             button: {
+                height: '40px',
                 textTransform: 'none',
                 fontWeight: 400,
             },
@@ -33,6 +34,7 @@ export const theme = createTheme(
             MuiInputBase: {
                 defaultProps: {
                     sx: {
+                        height: '40px',
                         borderRadius: '8px'
                     }
                 }

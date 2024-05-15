@@ -1,6 +1,6 @@
 type Mods = Record<string, string | boolean>
 
-export const classNames = (cls: string = '', mods: Mods = {}, additional: string[] = []): string => {
+export const classNames = (cls: string = '', mods: Mods = {}, additional: Array<string | undefined> = []): string => {
     return [
         cls,
         ...Object.entries(mods)

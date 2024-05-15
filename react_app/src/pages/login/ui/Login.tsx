@@ -10,7 +10,7 @@ import {Grid, Button} from "@mui/material";
 import {AuthHeader, AuthWrapper} from "@src/features/authentication";
 import {AuthPassShow} from "@src/features/authentication";
 import {getErrorMessage} from "@src/shared/lib/getErrorMessage";
-import {TextInput} from "@src/features/controlledInput";
+import {TextInput} from "@src/shared/ui/reactHookFormInputs";
 import {routerPaths} from "@src/shared/config/router";
 
 import {useLazyLoginQuery} from '../api/makeLogin'

@@ -7,7 +7,6 @@ export const {useLazyLoginQuery} = apiBase.injectEndpoints({
                 url: AUTH_URL + `/api/v1/auth/token`,
                 ...getRequestOptions({
                     Authorization: 'Basic ' + btoa(`${login}:${password}`)
-
                 })
             }),
             transformErrorResponse: handleErrorResponse,
