@@ -38,7 +38,7 @@ func main() {
 	temp.RegRoutes(r, c)
 	r.Use(middlewares.Auth())
 	objects.RegRoutes(r, c)
-
+	err = weather.UpdateTempDataArea(c.DB)
 	go func() {
 		time.Sleep(2 * time.Minute)
 		err := weather.UpdateTempDataArea(c.DB)

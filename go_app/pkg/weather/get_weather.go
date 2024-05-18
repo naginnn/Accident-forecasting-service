@@ -47,7 +47,7 @@ func getWeather(apiKey string, lat, lon float64) (*models.WeatherArea, error) {
 
 		}
 	}(resp.Body)
-
+	fmt.Println(resp.StatusCode)
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
