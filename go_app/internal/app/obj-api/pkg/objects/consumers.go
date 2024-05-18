@@ -33,5 +33,6 @@ func (h handler) GetConsumer(c *gin.Context) {
 		c.JSON(http.StatusNotFound, "not found")
 		return
 	}
+
 	c.JSON(http.StatusOK, &consumer)
 }

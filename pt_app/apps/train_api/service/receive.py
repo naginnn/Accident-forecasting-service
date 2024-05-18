@@ -41,7 +41,9 @@ def get_processed_data(db: Engine) -> dict[str, DataFrame]:
     query = sa_text(f"""select
     ss.id source_station_id,
     cs.id cs_id, cs.location_district_id cs_location_district_id, cs.location_area_id cs_location_area_id,
-    c.location_district_id c_district_id, c.location_area_id c_location_area_id, c.id consumer_id, c.name consumer_name, c.address consumer_address,
+    c.location_district_id c_district_id, c.location_area_id c_location_area_id, c.id consumer_id,
+     c.name consumer_name, c.address consumer_address, c.total_area, c.living_area, c.not_living_area,
+     c.priority,
     ec.id event_id, ec.name event_name, ec.created event_created, ec.closed event_closed
 from obj_consumers as c
          join public.location_districts ld on ld.id = c.location_district_id

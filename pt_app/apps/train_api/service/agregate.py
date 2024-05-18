@@ -25,6 +25,7 @@ def agr_for_train(tables: dict) -> tuple:
     df = AgrTrain.agr_date(df)
     df = AgrTrain.get_work_class(df)
     # Преобразуем в числовые параметры
+    # close time не учитывать при обучении, интервал тоже
     df = MultiColumnLabelEncoder(columns=[
         'consumer_address', 'consumer_name',
     ]).fit_transform(df)
