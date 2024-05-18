@@ -2,9 +2,10 @@ package objects
 
 import (
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm/clause"
+	"log"
 	"net/http"
 	"services01/pkg/models"
-	"time"
 )
 
 func (h handler) GetAccidents(c *gin.Context) {
@@ -27,25 +28,21 @@ func (h handler) GetAccident(c *gin.Context) {
 }
 
 func (h handler) UpdateAccident(c *gin.Context) {
-	var accidentStruct struct {
-		ObjConsumerStationId uint64    `json:"obj_consumer_station_id"`
-		ObjConsumerId        uint64    `json:"obj_consumer_id"`
-		IsAccident           bool      `json:"is_accident"`
-		Percent              float64   `json:"percent"`
-		IsApproved           bool      `json:"is_approved"`
-		IsActual             bool      `json:"is_actual"`
-		Created              time.Time `json:"created"`
-		Closed               time.Time `json:"closed"`
-	}
-	c.Bind(&accidentStruct)
 	var accident models.PredictionAccident
-	id := c.Param("id")
-
-	if err := h.DB.Select("*").Where("id = ?", id).Find(&accident).Error; err != nil {
-		c.JSON(http.StatusNotFound, "Accident not found")
+	err := c.Bind(&accident)
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusNotModified, err)
 		return
 	}
-
-	h.DB.Model(&accident).Updates(accidentStruct)
-	c.JSON(http.StatusOK, &accident)
+	err = h.DB.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"is_approved", "is_closed"}),
+	}).Create(&accident).Error
+	if err != nil {
+		log.Println(err)
+		c.JSON(http.StatusNotModified, err)
+		return
+	}
+	c.JSON(http.StatusAccepted, "updated")
 }

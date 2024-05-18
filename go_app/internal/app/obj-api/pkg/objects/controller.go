@@ -37,5 +37,5 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	// Accidents
 	routers.GET("/accidents", middlewares.RoleChecker(h.GetAccidents, "ro,rw"))
 	routers.GET("/accidents/:id", middlewares.RoleChecker(h.GetAccident, "ro,rw"))
-	routers.PUT("/accidents/:id", middlewares.RoleChecker(h.UpdateAccident, "rw"))
+	routers.PUT("/accidents/update", middlewares.RoleChecker(h.UpdateAccident, "rw"))
 }

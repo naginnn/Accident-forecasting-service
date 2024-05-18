@@ -10,6 +10,7 @@ type PredictionAccident struct {
 	Percent              float64   `json:"percent"`
 	IsApproved           bool      `json:"is_approved"`
 	IsActual             bool      `json:"is_actual"`
+	IsClosed             bool      `json:"is_closed"`
 	Created              time.Time `json:"created"`
 	Closed               time.Time `json:"closed"`
 }

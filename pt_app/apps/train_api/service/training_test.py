@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from apps.train_api.service.agregate import agr_for_view, agr_for_train
 from apps.train_api.service.receive import (collect_data, predict_data, save_unprocessed_data,
-                                            get_unprocessed_data)
+                                            get_unprocessed_data, get_processed_data)
 from apps.train_api.service.train import train_model
 from apps.train_api.service.update import save_for_view, save_for_predict, save_predicated
 from apps.train_api.service.utils import (get_word, MultiColumnLabelEncoder,
@@ -26,11 +26,13 @@ def prepare_dataset(files: dict = None) -> None:
     if files:
         save_unprocessed_data(db=db, files=files)
     tables = get_unprocessed_data(db=db)
-
+    #
     agr_view_tables = agr_for_view(tables=tables)
     save_for_view(session=session, tables=agr_view_tables)
-
-    agr_train_tables, agr_predict_tables = agr_for_train(tables=tables)
+    # maybe get_processed_data for train and predict
+    processed = get_processed_data(db=db)
+    agr_train_tables, agr_predict_tables = agr_for_train(tables=processed)
+    # agr_train_tables, agr_predict_tables = agr_for_train(tables=tables)
     save_for_predict(session=session, tables=agr_predict_tables)
 
     model = train_model(tables=agr_train_tables)
@@ -54,6 +56,6 @@ def drop_weather_data(session: Session):
 if __name__ == '__main__':
     files = {}
     # processed_data = pd.read_excel('test.xlsx', sheet_name='full')
-    files["test.xlsx"] = pd.ExcelFile("test.xlsx", )
-    prepare_dataset(files=files)
-    # prepare_dataset(files=None)
+    # files["test.xlsx"] = pd.ExcelFile("test.xlsx", )
+    # prepare_dataset(files=files)
+    prepare_dataset(files=None)

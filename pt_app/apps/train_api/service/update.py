@@ -66,7 +66,7 @@ class SaveView:
         return dict(districts=districts, areas=areas)
 
     @staticmethod
-    def save_objects(session: Session, df: pd.DataFrame, locations: dict):
+    def save_objects(session: Session, df: pd.DataFrame, locations: dict, all_events: pd.DataFrame):
         districts, areas = locations.get('districts'), locations.get('areas')
         for index, row in df.iterrows():
             obj_consumer_station = ins(ObjConsumerStation).values(
@@ -153,7 +153,16 @@ class SaveView:
                           location_area_id=areas.get(row['rajon_potrebitelja']), )
             ).returning(ObjConsumer)
             # obj_consumer = session.execute(do_upd_upd).scalar()
-            session.execute(do_upd_upd).scalar()
+            obj_consumer = session.execute(do_upd_upd).scalar()
+            events = all_events[all_events['unom'] == row['unom']]
+            for index, row in events.iterrows():
+                event_consumer = EventConsumer()
+                event_consumer.obj_consumer_id = obj_consumer.id
+                event_consumer.source = row['source']
+                event_consumer.name = row['work_name']
+                event_consumer.created = row['create_date']
+                event_consumer.closed = row['close_date']
+                session.add(event_consumer)
             session.commit()
 
 
@@ -161,8 +170,9 @@ class SaveView:
 def save_for_view(session: Session, tables: dict):
     job = FakeJob.get_current_job()
     df = tables.get("full")
+    events = tables.get("events_all")
     locations = SaveView.save_locations(session=session, df=df)
-    SaveView.save_objects(session=session, df=df, locations=locations)
+    SaveView.save_objects(session=session, df=df, locations=locations, all_events=events)
     print('Success')
 
 

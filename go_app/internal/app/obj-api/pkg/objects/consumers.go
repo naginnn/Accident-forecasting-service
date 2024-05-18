@@ -23,6 +23,12 @@ func (h handler) GetConsumer(c *gin.Context) {
 		Preload("WeatherFall", func(tx *gorm.DB) *gorm.DB {
 			return tx.Last(&models.WeatherConsumerFall{})
 		}).
+		Preload("Accidents", func(tx *gorm.DB) *gorm.DB {
+			return tx.Last(&models.PredictionAccident{})
+		}).
+		Preload("Events", func(tx *gorm.DB) *gorm.DB {
+			return tx.Last(&models.EventConsumer{})
+		}).
 		Where("id = ?", id).Find(&consumer).RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, "not found")
 		return
