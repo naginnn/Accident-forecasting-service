@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
@@ -84,6 +85,40 @@ func Init(appName string) (*gorm.DB, error) {
 			&models.EventConsumer{},
 			&models.PredictionAccident{},
 		)
+		//EventsType
+		err = db.AutoMigrate(
+			&models.EventConsumer{},
+			&models.PredictionAccident{},
+			&models.EventType{},
+		)
+		events := []string{
+			"P1 <= 0",
+			"P2 <= 0",
+			"T1 > max",
+			"T1 < min",
+			"Авария",
+			"Недостаточная температура подачи ЦО (Недотоп)",
+			"Превышение температуры подачи ЦО (Перетоп)",
+			"Утечка теплоносителя",
+			"Течь в системе отопления",
+			"Температура в квартире ниже нормативной",
+			"Крупные пожары",
+			"Температура в помещении общего пользования ниже нормативной",
+			"Аварийная протечка труб в подъезде",
+			"Протечка труб в подъезде",
+			"Отсутствие отопления в доме",
+			"Сильная течь в системе отопления",
+		}
+		var defaultEvents []*models.EventType
+		for i, eventName := range events {
+			defaultEvents = append(defaultEvents, &models.EventType{ID: uint64(i + 1), EventName: eventName})
+		}
+		//for _, eventType := range events {
+		err = db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "event_name"}},
+			DoUpdates: clause.AssignmentColumns([]string{"event_name"}),
+		}).Create(&defaultEvents).Error
+		//}
 
 	}
 

@@ -159,7 +159,11 @@ class SaveView:
                 event_consumer = EventConsumer()
                 event_consumer.obj_consumer_id = obj_consumer.id
                 event_consumer.source = row['source']
-                event_consumer.name = row['work_name']
+                event_consumer.description = row['work_name']
+                event_consumer.is_approved = True
+                event_consumer.is_closed = True
+                event_consumer.probability = 100.0
+                event_consumer.days_of_work = row['days_of_work']
                 event_consumer.created = row['create_date']
                 event_consumer.closed = row['close_date']
                 session.add(event_consumer)

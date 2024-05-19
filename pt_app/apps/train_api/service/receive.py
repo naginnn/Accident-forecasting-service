@@ -44,7 +44,7 @@ def get_processed_data(db: Engine) -> dict[str, DataFrame]:
     c.location_district_id c_district_id, c.location_area_id c_location_area_id, c.id consumer_id,
      c.name consumer_name, c.address consumer_address, c.total_area, c.living_area, c.not_living_area,
      c.priority,
-    ec.id event_id, ec.name event_name, ec.created event_created, ec.closed event_closed
+    ec.id event_id, ec.description event_description, ec.created event_created, ec.closed event_closed
 from obj_consumers as c
          join public.location_districts ld on ld.id = c.location_district_id
          join public.location_areas la on ld.id = c.location_area_id
@@ -53,8 +53,8 @@ from obj_consumers as c
          join public.obj_source_stations ss on ss.id = scs.obj_source_station_id
          left join public.event_consumers ec on c.id = ec.obj_consumer_id""")
     tables["view_table"] = pd.read_sql(query, db)
-    # query = sa_text(f"select * from public.event_consumers")
-    # tables["events"] = pd.read_sql(query, db)
+    query = sa_text(f"select * from public.event_types")
+    tables["event_types"] = pd.read_sql(query, db)
     return tables
 
 

@@ -27,17 +27,17 @@ def prepare_dataset(files: dict = None) -> None:
         save_unprocessed_data(db=db, files=files)
     tables = get_unprocessed_data(db=db)
     #
-    # agr_view_tables = agr_for_view(tables=tables)
-    # save_for_view(session=session, tables=agr_view_tables)
-    # maybe get_processed_data for train and predict
+    agr_view_tables = agr_for_view(tables=tables)
+    save_for_view(session=session, tables=agr_view_tables)
+    #
     processed = get_processed_data(db=db)
-    agr_train_tables, agr_predict_tables = agr_for_train(tables=processed)
-    # agr_train_tables, agr_predict_tables = agr_for_train(tables=tables)
-    save_for_predict(session=session, tables=agr_predict_tables)
+    #
+    agr_predict_df, agr_train_df = agr_for_train(tables=processed)
+    # save_for_predict(session=session, tables=agr_predict_df)
 
-    model = train_model(tables=agr_train_tables)
+    model = train_model(tables=agr_train_df)
 
-    predicated = predict_data(model=model, tables=agr_predict_tables)
+    predicated = predict_data(model=model, tables=agr_predict_df)
     save_predicated(session=session, df=predicated)
 
 
