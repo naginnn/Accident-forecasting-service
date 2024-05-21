@@ -1,6 +1,6 @@
 import datetime
 from typing import Tuple
-
+import numpy as np
 from sqlalchemy import text as sa_text, select
 from sqlalchemy.orm import sessionmaker, Session
 import pandas as pd
@@ -195,10 +195,17 @@ class AgrTrain:
 
     @staticmethod
     def get_predict_data(df: pd.DataFrame) -> pd.DataFrame:
+        time_now = datetime.datetime.now()
         df_predict = df.groupby("consumer_id", as_index=False).last(True)  # 83125
         df_predict['last_event_id'] = df_predict['event_id']
-        df_predict['event_created'] = datetime.datetime.now()
+        # # between block
+        # df_predict['event_created'] = df_predict.apply(lambda x: Utils.collect_the_date(x), axis=1)
+        # df_predict['between_created'] = df_predict['event_created'].apply(lambda x: (time_now - x).days)
+        # # between block
+
+        df_predict['event_created'] = time_now
         df_predict = AgrTrain.agr_date(df_predict)
+
         df_predict = df_predict.drop(columns='event_created')
         df_predict = df_predict[df.columns.tolist()]
         df_predict = df_predict.drop(columns='event_id')
@@ -209,7 +216,9 @@ class AgrTrain:
         df['event_id'] = df['accident']
         consumers = df['consumer_id'].unique().tolist()
         df['last_event_id'] = 0
+        # df['between_created'] = 0
         train_df = pd.DataFrame()
+        last = 0
         for consumer in consumers:
             consumers_df = df[df['consumer_id'] == consumer].sort_values(by='event_created', ascending=True)
             consumers_df = consumers_df.reset_index()
@@ -217,12 +226,29 @@ class AgrTrain:
                 if i > 0:
                     last = consumers_df.at[i - 1, 'event_id']
                     consumers_df.at[i, 'last_event_id'] = last
-            train_df = pd.concat([train_df, consumers_df])  # 83124
+                else:
+                    consumers_df.at[i, 'last_event_id'] = last
+            consumers_df = consumers_df[(consumers_df['event_id'] != 0) | (consumers_df['last_event_id'] != 0)]
+            # consumers_df['event_count'] = np.arange(len(consumers_df)) + 1
+            # # between block
+            # consumers_df = consumers_df.reset_index()
+            # for i, row in consumers_df.iterrows():
+            #     if i > 0:
+            #         last = consumers_df.at[i - 1, 'event_id']
+            #         consumers_df.at[i, 'between_created'] = (
+            #                     consumers_df.at[i, 'event_created'] - consumers_df.at[i - 1, 'event_created']).days
+            #     else:
+            #         consumers_df.at[i, 'between_created'] = 0
+            # # between block
+            train_df = pd.concat([train_df, consumers_df])
         train_df.drop([
             'index',
             'event_created',
             'accident',
+            # 'level_0',
+            # 'between_created',
         ], axis=1, inplace=True)
+        train_df.dropna(axis=0, how='any', inplace=True)
         return train_df
 
 
@@ -317,7 +343,12 @@ class Utils:
     def put_down_class(x: str, events: dict, keys: list) -> int:
         if x in keys:
             return events.get(x)
+            # return 1
         return 0
+
+    @staticmethod
+    def collect_the_date(x):
+        return datetime.datetime(int(x['year']), int(x['month']), int(x['day']))
 
     # @staticmethod
     # def put_down_class(x: str, events: list) -> int:

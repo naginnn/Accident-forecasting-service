@@ -1,3 +1,4 @@
+import datetime
 import sys
 import time
 
@@ -180,12 +181,28 @@ def save_for_view(session: Session, tables: dict):
     print('Success')
 
 
-def save_for_predict(session: Session, tables: dict):
-    pass
+def save_for_predict(db: Engine, df_predict: pd.DataFrame):
+    df_predict.to_sql(name="data_for_prediction", con=db, if_exists="replace", index=False)
 
 
-def save_predicated(session: Session, df: pd.DataFrame):
-    pass
+def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd.DataFrame):
+    events_df.rename(columns={"id": "event_id"}, inplace=True)
+    # predicated_df = predicated_df.join(events_df, on="event_id", how="inner")
+    predicated_df = predicated_df.merge(events_df, on='event_id', how='inner')
+    # ограничение по точности
+    predicated_df = predicated_df[predicated_df['percent'] > 0.7]
+    predicated_df.reset_index()
+    for i, row in predicated_df.iterrows():
+        event = EventConsumer()
+        event.obj_consumer_id = row['consumer_id']
+        event.source = "Модель"
+        event.is_closed = False
+        event.description = row['event_name']
+        event.created = datetime.datetime.now()
+        event.probability = round(row['percent'], 2)
+        event.is_approved = False
+        session.add(event)
+    session.commit()
 
 
 def update_coordinates(session: Session):
