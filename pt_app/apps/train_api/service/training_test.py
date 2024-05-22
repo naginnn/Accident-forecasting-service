@@ -25,10 +25,10 @@ def prepare_dataset(files: dict = None) -> None:
     session = get_sync_session()
     if files:
         save_unprocessed_data(db=db, files=files)
-    # tables = get_unprocessed_data(db=db)
-    # #
-    # agr_view_tables = agr_for_view(tables=tables)
-    # save_for_view(session=session, tables=agr_view_tables)
+    tables = get_unprocessed_data(db=db)
+    #
+    agr_view_tables = agr_for_view(tables=tables)
+    save_for_view(session=session, tables=agr_view_tables)
     #
     processed = get_processed_data(db=db)
     #
@@ -40,6 +40,7 @@ def prepare_dataset(files: dict = None) -> None:
     predicated_df = predict_data(model=model, predict_df=agr_predict_df)
     save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('event_types'))
 
+    # get_weather
 
     # drop_weather_data(session=session)
     # session.commit()
