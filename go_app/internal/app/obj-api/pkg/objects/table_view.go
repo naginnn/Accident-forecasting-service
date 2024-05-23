@@ -64,3 +64,8 @@ order by is_warning desc;`
 	}
 	c.JSON(http.StatusOK, &result)
 }
+
+type Res struct {
+	LocationDistrictConsumerId   int64  `json:"location_district_consumer_id"`
+	LocationDistrictConsumerName string `json:"location_district_consumer_name"`
+}
