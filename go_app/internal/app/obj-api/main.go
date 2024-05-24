@@ -5,8 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"services01/internal/app/obj-api/pkg/objects"
+	"services01/internal/app/obj-api/pkg/events"
 	"services01/internal/app/obj-api/pkg/temp"
+	"services01/internal/app/obj-api/pkg/view"
 	"services01/pkg/middlewares"
 	"services01/pkg/presets"
 	"services01/pkg/weather"
@@ -37,7 +38,8 @@ func main() {
 	r.Use(middlewares.NoCache())
 	temp.RegRoutes(r, c)
 	r.Use(middlewares.Auth())
-	objects.RegRoutes(r, c)
+	view.RegRoutes(r, c)
+	events.RegRoutes(r, c)
 	go func() {
 		time.Sleep(4 * time.Minute)
 		err := weather.UpdateTempDataArea(c.DB)
