@@ -38,4 +38,9 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	routers.GET("/accidents", middlewares.RoleChecker(h.GetAccidents, "ro,rw"))
 	routers.GET("/accidents/:id", middlewares.RoleChecker(h.GetAccident, "ro,rw"))
 	routers.PUT("/accidents/update", middlewares.RoleChecker(h.UpdateAccident, "rw"))
+
+	// Events
+	routers.GET("/events", middlewares.RoleChecker(h.GetEvents, "ro"))
+	routers.GET("/events/:id", middlewares.RoleChecker(h.GetEvent, "ro"))
+	routers.PATCH("/events/:id", middlewares.RoleChecker(h.UpdateEvent, "rw"))
 }
