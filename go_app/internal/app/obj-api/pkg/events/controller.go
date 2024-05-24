@@ -16,6 +16,5 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 		DB: c.DB,
 	}
 	routers := r.Group("/api/v1/obj")
-	// TableView
 	routers.POST("/events", middlewares.RoleChecker(h.UpdateEvent, "rw"))
 }
