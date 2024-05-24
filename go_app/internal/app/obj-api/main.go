@@ -26,6 +26,7 @@ func main() {
 	//}
 
 	//gin.SetMode(gin.ReleaseMode)
+
 	gin.SetMode(gin.DebugMode)
 	appName := "obj-api"
 	c, err := presets.GetConfig(appName)
