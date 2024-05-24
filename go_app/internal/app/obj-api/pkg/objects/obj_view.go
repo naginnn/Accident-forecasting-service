@@ -21,24 +21,64 @@ func (h handler) GetObjView(c *gin.Context) {
 	var consumerStation models.ObjConsumerStation
 	var consumerWarn, consumersDep []models.ObjConsumer
 	if h.DB.Where("id = ?", objConsumerStationId).
-		//Preload("Weather", func(tx *gorm.DB) *gorm.DB {
-		//	return tx.Last(&models.WeatherArea{})
-		//}).
+		Preload("Weather", func(tx *gorm.DB) *gorm.DB {
+			return tx.Last(&models.WeatherArea{})
+		}).
 		Preload("SourceStations").
-		Preload("Consumers.WeatherFall", func(tx *gorm.DB) *gorm.DB {
-			//return tx.Order("Created desc")
-			return tx.Last(&models.WeatherConsumerFall{})
-		}).
+		//Preload("Consumers.WeatherFall", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Order("Created desc")
+		//	//return tx.Last(&models.WeatherConsumerFall{})
+		//	//return tx.Order("Created desc").Limit(1)
+		//}).
 		Preload("Consumers.Events", func(tx *gorm.DB) *gorm.DB {
-			//return tx.Where("is_closed = ? ", false)
-			return tx.Order("Created desc").Limit(5)
-			//return tx.Last(&models.WeatherConsumerFall{})
+			return tx.Raw("select ec.* FROM event_consumers as ec " +
+				"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+				"FROM event_consumers WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+				"USING(id, obj_consumer_id) JOIN obj_consumers c " +
+				"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
 		}).
-		Preload("Consumers.WallMaterial").
+		Preload("Consumers.WeatherFall", func(tx *gorm.DB) *gorm.DB {
+			return tx.Raw("select ec.* FROM weather_consumer_falls as ec " +
+				"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+				"FROM weather_consumer_falls WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+				"USING(id, obj_consumer_id) JOIN obj_consumers c " +
+				"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
+		}).
+		//Preload("Consumers").
 		Find(&consumerStation).RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, "not found")
 		return
 	}
+
+	//	err := h.DB.
+	//		Preload("Events", func(db *gorm.DB) *gorm.DB {
+	//			return db.Raw(`select
+	//--     c.*, -- content from conversations
+	//    ec.* -- content from conversations
+	//FROM event_consumers as ec
+	//    JOIN
+	//    (SELECT MAX(id) AS id, obj_consumer_id
+	//    FROM event_consumers
+	//    WHERE 1 IN(1) -- the number is the userid, should be dynamic
+	//    GROUP BY obj_consumer_id) sub
+	//    USING(id, obj_consumer_id)
+	//    JOIN obj_consumers c ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = 7
+	//ORDER BY
+	//    ec.id DESC;`)
+	//			//return db.Raw("select ec.created, ec.* from event_consumers as ec where ec.obj_consumer_id=id order by ec.created desc limit 1")
+	//			//			return db.Raw(`select *
+	//			//from public.event_consumers as ec
+	//			//    left join public.obj_consumers oc
+	//			//        on ec.obj_consumer_id = oc.id where oc.obj_consumer_station_id=7 order by ec.created desc limit 1`)
+	//			//return db.Where("obj_consumer_id IN ? ")
+	//			//return tx.Order("Events.created Desc").Limit(1)
+	//			//return db.Table("event_consumers").Order("created Desc").Limit(1)
+	//		}).
+	//		//Where("obj_consumer_station_id = ?", consumerStation.ID).
+	//		Where("obj_consumer_station_id = ?", 7).
+	//		Find(&consumersDep).Error
+	//	fmt.Println(err)
+
 	var area models.LocationArea
 	if h.DB.Where("id = ?", consumerStation.LocationAreaId).
 		Preload("Weather", func(tx *gorm.DB) *gorm.DB {
