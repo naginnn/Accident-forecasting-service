@@ -1,0 +1,5 @@
+export const BANNER_CHILD_NAME = "Banner"
+export const SORT_CELL_CHILD_NAME = "SortCell"
+export const SELECT_CELL_CHILD_NAME = "SelectCell"
+export const TOGGLE_CELL_CHILD_NAME = "ToggleCell"
+export const BASE_CELL_CHILD_NAME = "Cell"

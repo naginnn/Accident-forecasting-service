@@ -32,7 +32,6 @@ export const Map = () => {
         }
     }, [setLocation, location])
 
-    console.log(data, error)
     return (
         <MapContext.Provider value={contextVal}>
             <div className={classNames(cls.map_wrapper)}>

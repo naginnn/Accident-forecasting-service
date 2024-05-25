@@ -7,6 +7,10 @@ const baseQueryWithRequesId: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQ
     let result = await baseQuery(args, api, extraOptions)
     let requestId = uuidv4()
 
+    if (result?.error?.status === 401 || result?.meta?.response?.status === 401) {
+        localStorage.removeItem('token')
+    }
+
     return {
         ...result,
         meta: result.meta && {...result.meta, requestId}

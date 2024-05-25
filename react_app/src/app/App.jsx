@@ -7,14 +7,16 @@ import {ThemeProvider} from "@mui/material";
 import {router} from '@src/shared/config/router'
 import {store} from '@src/shared/model/store'
 import {NotistackAlert} from "@src/shared/ui/notistackAlert";
+import {ErrorBoundary} from "@src/shared/ui/errorBoundary";
 
-import {ErrorBoundary} from "./providers/errorBoundary";
+import {ErrorLayout} from "@src/entities/errorWrapper";
+
 import {theme} from './theme'
 
 // Точка инициализации
 function App() {
     return (
-        <ErrorBoundary>
+        <ErrorBoundary fallback={<ErrorLayout/>}>
             <Provider store={store}>
                 <SnackbarProvider
                     autoHideDuration={5000}
