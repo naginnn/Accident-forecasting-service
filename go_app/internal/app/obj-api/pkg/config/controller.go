@@ -18,9 +18,9 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	routers := r.Group("/api/v1/obj/config")
 	// event_types
 	routers.GET("/events", middlewares.RoleChecker(h.GetEventsTypes, "rw"))
-	routers.PUT("/create_event", middlewares.RoleChecker(h.CreateEventsTypes, "rw"))
-	routers.DELETE("/delete_event", middlewares.RoleChecker(h.DeleteEventsTypes, "rw"))
-	routers.POST("/update_event", middlewares.RoleChecker(h.UpdateEventsTypes, "rw"))
+	routers.PUT("/events", middlewares.RoleChecker(h.CreateEventsTypes, "rw"))
+	routers.DELETE("/events", middlewares.RoleChecker(h.DeleteEventsTypes, "rw"))
+	routers.POST("/events", middlewares.RoleChecker(h.UpdateEventsTypes, "rw"))
 
 	//wall materials
 	routers.GET("/wall_materials", middlewares.RoleChecker(h.GetWallMaterials, "rw"))
@@ -30,5 +30,5 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 
 	// weather condition
 	routers.GET("/weather_conditions", middlewares.RoleChecker(h.GetWeatherCondition, "rw"))
-	routers.POST("/update_weather_condition", middlewares.RoleChecker(h.UpdateWeatherCondition, "rw"))
+	routers.POST("/weather_conditions", middlewares.RoleChecker(h.UpdateWeatherCondition, "rw"))
 }
