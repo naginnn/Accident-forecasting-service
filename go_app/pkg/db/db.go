@@ -62,7 +62,33 @@ func Init(appName string) (*gorm.DB, error) {
 		err = db.AutoMigrate(
 			&models.WeatherArea{},
 			&models.WeatherConsumerFall{},
+			&models.WeatherCondition{},
 		)
+		defaultWeatherCondition := []*models.WeatherCondition{
+			&models.WeatherCondition{Name: "clear", K: 0.01, Description: "ясно"},
+			&models.WeatherCondition{Name: "partly-cloudy", K: 0.01, Description: "переменная облачность"},
+			&models.WeatherCondition{Name: "cloudy", K: 0.01, Description: "облачно"},
+			&models.WeatherCondition{Name: "overcast", K: 0.01, Description: "с прояснениями"},
+			&models.WeatherCondition{Name: "drizzle", K: 0.01, Description: "моросящий дождь"},
+			&models.WeatherCondition{Name: "light-rain", K: 0.01, Description: "небольшой дождь"},
+			&models.WeatherCondition{Name: "rain", K: 0.01, Description: "умеренный дождь"},
+			&models.WeatherCondition{Name: "moderate-rain", K: 0.01, Description: "сильный дождь"},
+			&models.WeatherCondition{Name: "heavy-rain", K: 0.01, Description: "непрерывный"},
+			&models.WeatherCondition{Name: "continuous-heavy-rain", K: 0.01, Description: "дождь"},
+			&models.WeatherCondition{Name: "showers", K: 0.01, Description: "сильный ливень"},
+			&models.WeatherCondition{Name: "wet-snow", K: 0.01, Description: "мокрый снег"},
+			&models.WeatherCondition{Name: "light-snow", K: 0.01, Description: "небольшой снег"},
+			&models.WeatherCondition{Name: "snow", K: 0.01, Description: "метель"},
+			&models.WeatherCondition{Name: "snow-showers", K: 0.01, Description: "ливень"},
+			&models.WeatherCondition{Name: "hail", K: 0.01, Description: "с градом"},
+			&models.WeatherCondition{Name: "thunderstorm", K: 0.01, Description: "гроза"},
+			&models.WeatherCondition{Name: "thunderstorm-with-rain", K: 0.01, Description: "гроза с дождем"},
+			&models.WeatherCondition{Name: "thunderstorm-with-hail", K: 0.01, Description: "гроза с градом"},
+		}
+		err = db.Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "name"}},
+			DoUpdates: clause.AssignmentColumns([]string{"k", "description"}),
+		}).Create(&defaultWeatherCondition).Error
 
 		err = db.AutoMigrate(
 			&models.ObjConsumerStation{},
@@ -91,6 +117,12 @@ func Init(appName string) (*gorm.DB, error) {
 			&models.PredictionAccident{},
 			&models.EventType{},
 		)
+
+		//ModelInfo
+		err = db.AutoMigrate(
+			&models.ModelInfo{},
+		)
+
 		events := []string{
 			"P1 <= 0",
 			"P2 <= 0",
