@@ -30,15 +30,15 @@ def prepare_dataset(files: dict = None) -> None:
     agr_view_tables = agr_for_view(tables=tables)
     save_for_view(session=session, tables=agr_view_tables)
     # #
-    # processed = get_processed_data(db=db)
-    # #
-    # agr_predict_df, agr_train_df = agr_for_train(tables=processed)
-    # save_for_predict(db=db, df_predict=agr_predict_df)
+    processed = get_processed_data(db=db)
     #
-    # model, accuracy_score = train_model(train_df=agr_train_df)
-    # #
-    # predicated_df = predict_data(model=model, predict_df=agr_predict_df)
-    # save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('event_types'))
+    agr_predict_df, agr_train_df = agr_for_train(tables=processed)
+    save_for_predict(db=db, df_predict=agr_predict_df)
+
+    model, accuracy_score = train_model(train_df=agr_train_df)
+    #
+    predicated_df = predict_data(model=model, predict_df=agr_predict_df)
+    save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('event_types'))
 
 
 
