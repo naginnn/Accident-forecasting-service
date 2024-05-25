@@ -25,7 +25,6 @@ services:
 
   db:
     image: postgres:alpine
-    read_only: true
     container_name: db
     restart: always
     env_file:
@@ -37,7 +36,6 @@ services:
   
 #
   redis:
-    read_only: true
     image: redis:alpine
     restart: always
     ports:
