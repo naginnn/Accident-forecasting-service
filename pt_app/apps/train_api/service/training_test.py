@@ -12,7 +12,7 @@ from apps.train_api.service.agregate import agr_for_view, agr_for_train
 from apps.train_api.service.receive import (collect_data, predict_data, save_unprocessed_data,
                                             get_unprocessed_data, get_processed_data)
 from apps.train_api.service.train import train_model
-from apps.train_api.service.update import save_for_view, save_for_predict, save_predicated
+from apps.train_api.service.update import save_for_view, save_for_predict, save_predicated, save_model_info
 from apps.train_api.service.utils import (get_word, MultiColumnLabelEncoder,
                                           reverse_date, check_in_type, alpabet)
 from pkg.utils import FakeJob
@@ -35,7 +35,8 @@ def prepare_dataset(files: dict = None) -> None:
     agr_predict_df, agr_train_df = agr_for_train(tables=processed)
     save_for_predict(db=db, df_predict=agr_predict_df)
 
-    model, accuracy_score = train_model(train_df=agr_train_df)
+    model, accuracy_score, feature_importances = train_model(train_df=agr_train_df)
+    save_model_info(session=session, model=model, accuracy_score=accuracy_score, feature_importances=feature_importances)
     #
     predicated_df = predict_data(model=model, predict_df=agr_predict_df)
     save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('event_types'))

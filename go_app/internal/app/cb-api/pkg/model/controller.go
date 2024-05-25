@@ -16,5 +16,5 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 		DB: c.DB,
 	}
 	routers := r.Group("/api/v1/cb")
-	routers.GET("", middlewares.RoleChecker(h.GetPredict, "ro,rw"))
+	routers.GET("/predict/:id", middlewares.RoleChecker(h.GetPredict, "ro,rw"))
 }

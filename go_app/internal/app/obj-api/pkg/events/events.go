@@ -7,15 +7,6 @@ import (
 	"time"
 )
 
-func (h handler) GetEvents(c *gin.Context) {
-	var events []models.EventConsumer
-	if h.DB.Find(&events).RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, "Events not found")
-		return
-	}
-	c.JSON(http.StatusOK, &events)
-}
-
 func (h handler) GetEvent(c *gin.Context) {
 	id := c.Param("id")
 	var event models.EventConsumer

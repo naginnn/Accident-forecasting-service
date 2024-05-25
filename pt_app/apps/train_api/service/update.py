@@ -1,7 +1,8 @@
 import datetime
 import sys
 import time
-
+import os
+from catboost import CatBoostClassifier
 import pandas as pd
 from sqlalchemy import create_engine, text as sa_text, select
 from sqlalchemy.orm import sessionmaker, Session
@@ -9,6 +10,7 @@ from sqlalchemy.dialects.postgresql import insert as ins
 from models.locations import *
 from models.accidents import *
 from models.events import *
+from models.ml_info import ModelInfo
 from models.objects import *
 from models.materials import *
 from models.weathers import *
@@ -231,6 +233,19 @@ def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd
         event.probability = round(row['percent'], 2)
         event.is_approved = False
         session.add(event)
+    session.commit()
+
+
+def save_model_info(session: Session, model: CatBoostClassifier, accuracy_score: float, feature_importances: dict):
+    model_info = ModelInfo(
+        name="events.cbm",
+        path=os.getenv("MODEL_PATH") + "/events.cbm",
+        metrics="",
+        accuracy=round(accuracy_score, 2),
+        feature_importance=feature_importances,
+        created=datetime.datetime.now(),
+    )
+    session.add(model_info)
     session.commit()
 
 
