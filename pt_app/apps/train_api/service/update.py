@@ -116,6 +116,20 @@ class SaveView:
             except Exception as e:
                 session.rollback()
 
+            material_wall = ins(MaterialWall).values(
+                name=row['wall_material_description'],
+                k=row['coef'],
+            )
+
+            do_upd_upd = material_wall.on_conflict_do_update(
+                constraint='uni_material_walls_name',
+                set_={
+                    "k": row['coef'],
+                }
+            ).returning(MaterialWall)
+
+            material_wall = session.execute(do_upd_upd).scalar()
+
             obj_consumer = ins(ObjConsumer).values(
                 name=row['naznachenie_zdanija_potrebitelja'],
                 address=row['adres_potrebitelja'],
@@ -154,7 +168,14 @@ class SaveView:
                           location_area_id=areas.get(row['rajon_potrebitelja']), )
             ).returning(ObjConsumer)
             # obj_consumer = session.execute(do_upd_upd).scalar()
+
             obj_consumer = session.execute(do_upd_upd).scalar()
+            try:
+                obj_consumer.wall_material.append(material_wall)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+
             events = all_events[all_events['unom'] == row['unom']]
             for index, row in events.iterrows():
                 event_consumer = EventConsumer()
@@ -169,6 +190,14 @@ class SaveView:
                 event_consumer.closed = row['close_date']
                 session.add(event_consumer)
             session.commit()
+
+    # @staticmethod
+    # def save_wall_materials(session: Session, df: pd.DataFrame) -> pd.DataFrame:
+    #     for index, row in df.iterrows():
+    #         wall_materials = list(set(
+    #             df['okrug_potrebitelja'].unique().tolist()
+    #             + df['okrug_tstp_itp'].unique().tolist()
+    #         ))
 
 
 # сохранить без подгрузки координат

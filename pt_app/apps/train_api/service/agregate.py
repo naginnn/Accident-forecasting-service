@@ -14,15 +14,17 @@ pd.options.mode.chained_assignment = None  # default='warn'
 def agr_for_view(tables: dict) -> dict:
     """Агрегация данных"""
     agr_tables = {}
+    df_wall_materials = tables.get("test_wall_materials")
     df_full = tables.get('test_full')
-
     df_full = AgrView.get_ranking(df_full)
     df_full = AgrView.get_temp_conditions(df_full)
     df_full = AgrView.split_address(df_full)
+    df_full = AgrView.split_wall_materials(df_full, df_wall_materials)
     df_events = tables.get('test_events_all')
     df_events = AgrView.get_work_days(df_events)
     agr_tables["full"] = df_full
     agr_tables["events_all"] = df_events
+
     return agr_tables
 
 
@@ -88,6 +90,11 @@ class AgrView:
     def get_work_days(df: pd.DataFrame) -> pd.DataFrame:
         df['days_of_work'] = (df['close_date'] - df['create_date']).dt.days.astype(float)
         return df
+
+    @staticmethod
+    def split_wall_materials(df: pd.DataFrame, df_wall_materials: pd.DataFrame) -> pd.DataFrame:
+        df_wall_materials = df_wall_materials.rename(columns={"id": "material_sten", "name": "wall_material_description"})
+        return df.merge(df_wall_materials, how='left', on='material_sten')
 
 
 class AgrTrain:

@@ -31,7 +31,7 @@ class MaterialWall(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=True)
     k = Column(Float, nullable=True)
-
+    UniqueConstraint(name, name='uni_material_walls_name')
 
 class MaterialRoof(BaseModel):
     name: str

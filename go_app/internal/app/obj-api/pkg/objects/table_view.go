@@ -1,7 +1,6 @@
 package objects
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -55,8 +54,6 @@ from obj_consumers as c
          left join (select ecc.obj_consumer_id, max(ecc.id) as id from public.event_consumers as ecc group by obj_consumer_id) ec on ec.obj_consumer_id = cs.id
          left join public.event_consumers ecf on ecf.id = ec.id
 order by is_warning desc;`
-
-	fmt.Println(q)
 
 	if h.DB.Raw(q).Scan(&result).RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, "not found")

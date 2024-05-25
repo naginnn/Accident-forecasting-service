@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+type WeatherCondition struct {
+	ID          uint64  `gorm:"primaryKey" json:"id"`
+	Name        string  `gorm:"unique" json:"name"`
+	Description string  `json:"description"`
+	K           float64 `json:"k"`
+}
+
 type WeatherArea struct {
 	ID             uint64    `gorm:"primaryKey" json:"id"`
 	LocationAreaId uint64    `json:"location_area_id"`
