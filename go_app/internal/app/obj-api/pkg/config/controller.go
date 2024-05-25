@@ -29,6 +29,8 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	routers.POST("/wall_materials", middlewares.RoleChecker(h.UpdateWallMaterials, "rw"))
 
 	// weather condition
-	routers.GET("/weather_conditions", middlewares.RoleChecker(h.GetWeatherCondition, "rw"))
-	routers.POST("/update_weather_condition", middlewares.RoleChecker(h.UpdateWeatherCondition, "rw"))
+	routers.GET("/weather_conditions", middlewares.RoleChecker(h.GetWeatherConditions, "rw"))
+	routers.GET("/weather_conditions/:id", middlewares.RoleChecker(h.GetWeatherCondition, "rw"))
+	routers.POST("/weather_conditions/:id", middlewares.RoleChecker(h.UpdateWeatherCondition, "rw"))
+	routers.DELETE("/weather_conditions/:id", middlewares.RoleChecker(h.DeleteWeatherCondition, "rw"))
 }
