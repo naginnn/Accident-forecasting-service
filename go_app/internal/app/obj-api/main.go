@@ -8,6 +8,7 @@ import (
 	"services01/internal/app/obj-api/pkg/analytics"
 	"services01/internal/app/obj-api/pkg/config"
 	"services01/internal/app/obj-api/pkg/events"
+	"services01/internal/app/obj-api/pkg/objects"
 	"services01/internal/app/obj-api/pkg/temp"
 	"services01/internal/app/obj-api/pkg/view"
 	"services01/pkg/middlewares"
@@ -44,6 +45,7 @@ func main() {
 	events.RegRoutes(r, c)
 	analytics.RegRoutes(r, c)
 	config.RegRoutes(r, c)
+	objects.RegRoutes(r, c)
 
 	go func() {
 		time.Sleep(4 * time.Minute)

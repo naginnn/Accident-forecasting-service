@@ -15,14 +15,8 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	h := &handler{
 		DB: c.DB,
 	}
-	routers := r.Group("/api/v1/obj")
-	// TableView
-	routers.GET("/table_view", middlewares.RoleChecker(h.GetTableView, "ro,rw"))
-	routers.GET("/obj_view/:obj_consumer_station_id", middlewares.RoleChecker(h.GetObjView, "ro,rw"))
-	//GetTableView
-	// Areas
-	//GetAreas
-	routers.GET("/areas", middlewares.RoleChecker(h.GetAreas, "ro,rw"))
+	routers := r.Group("/api/v1/obj/objects")
+
 	// Source Station
 	routers.GET("/source-stations", middlewares.RoleChecker(h.GetSourceStations, "ro,rw"))
 	routers.GET("/source-stations/:id", middlewares.RoleChecker(h.GetSourceStation, "ro,rw"))
@@ -31,12 +25,8 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	routers.GET("/consumer-stations", middlewares.RoleChecker(h.GetConsumerStations, "ro,rw"))
 	routers.GET("/consumer-stations/:id", middlewares.RoleChecker(h.GetConsumerStation, "ro,rw"))
 
-	// Consumer routers
+	// Consumer
 	routers.GET("/consumers", middlewares.RoleChecker(h.GetConsumers, "ro,rw"))
 	routers.GET("/consumers/:id", middlewares.RoleChecker(h.GetConsumer, "ro,rw"))
 
-	// Accidents
-	routers.GET("/accidents", middlewares.RoleChecker(h.GetAccidents, "ro,rw"))
-	routers.GET("/accidents/:id", middlewares.RoleChecker(h.GetAccident, "ro,rw"))
-	routers.PUT("/accidents/update", middlewares.RoleChecker(h.UpdateAccident, "rw"))
 }
