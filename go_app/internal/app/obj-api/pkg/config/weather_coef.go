@@ -13,6 +13,7 @@ func (h handler) GetWeatherCondition(c *gin.Context) {
 		c.JSON(http.StatusNotFound, "WeatherCondition not found")
 		return
 	}
+
 	c.JSON(http.StatusOK, &weatherCondition)
 }
 
