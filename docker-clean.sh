@@ -1,4 +1,5 @@
 #!/bin/bash
+docker system prune --volumes -a || true
 docker stop `docker ps -qa` || true
 docker rmi -f $(docker images -aq) || true
 docker volume rm $(docker volume ls -qf) || true
