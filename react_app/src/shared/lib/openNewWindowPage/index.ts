@@ -1,0 +1,1 @@
+export {openNewWindowPage} from './utils/openNewWindowPage'

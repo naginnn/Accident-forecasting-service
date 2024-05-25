@@ -1,0 +1,1 @@
+export {TableConsumers as Consumers} from './ui/TableConsumers'

@@ -51,7 +51,6 @@ export const Registration = () => {
     useEffect(() => {
         // блок обработки ошибок
         if (errorRegistration) {
-            debugger
             if ('status' in errorRegistration && errorRegistration.status === 401) {
                 setError('login', {type: 'custom', message: 'Данный пользователь уже существует'})
             } else {

@@ -1,0 +1,1 @@
+export {sortArr} from './utils/sortArr'

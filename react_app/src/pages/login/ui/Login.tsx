@@ -12,6 +12,7 @@ import {AuthPassShow} from "@src/features/authentication";
 import {getErrorMessage} from "@src/shared/lib/getErrorMessage";
 import {TextInput} from "@src/shared/ui/reactHookFormInputs";
 import {routerPaths} from "@src/shared/config/router";
+import {AppRoutes} from "@src/shared/config/router/ui/router";
 
 import {useLazyLoginQuery} from '../api/makeLogin'
 
@@ -60,6 +61,7 @@ export const Login = () => {
             }
         } else if (isSuccessLogin && token) {
             localStorage.setItem('token', token)
+            navigate(routerPaths[AppRoutes.CONSUMERS])
         }
 
      }, [errorLogin, isSuccessLogin, isFetchingLogin, token, navigate, resetField, setError])
