@@ -18,9 +18,9 @@ services:
     restart: always
     command: >
       sh -c "npm install -i --save --force
-      && npm start"
-#      && npm run build
-#      && node server.js"
+      && npm run build
+      && node server.js"
+#      && npm start"
     ports:
       - "3000:3010"
 
