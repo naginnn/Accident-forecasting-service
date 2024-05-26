@@ -10,6 +10,9 @@ from fastapi.openapi.docs import (
     get_swagger_ui_html,
 )
 from fastapi.openapi.utils import get_openapi
+
+from apps.train_api.src.tasks import prepare_dataset
+
 # app = FastAPI(redoc_url=None)
 app = FastAPI(docs_url=None,
               redoc_url=None,
@@ -69,14 +72,14 @@ async def custom_swagger_ui_html():
     )
 
 if __name__ == '__main__':
-    # import pandas as pd
-    # import warnings
-    # from sqlalchemy import exc as sa_exc
-    #
-    # with warnings.catch_warnings():
-    #     warnings.simplefilter("ignore", category=sa_exc.SAWarning)
-    #     files = {}
-    #     files["test.xlsx"] = pd.ExcelFile(f"{os.getcwd()}/autostart/test.xlsx", )
-    #     # files["test.xlsx"] = pd.ExcelFile(f"../../autostart/test.xlsx", )
-    #     prepare_dataset(files=files)
+    import pandas as pd
+    import warnings
+    from sqlalchemy import exc as sa_exc
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=sa_exc.SAWarning)
+        files = {}
+        files["test.xlsx"] = pd.ExcelFile(f"{os.getcwd()}/autostart/test.xlsx", )
+        # files["test.xlsx"] = pd.ExcelFile(f"../../autostart/test.xlsx", )
+        prepare_dataset(files=files)
     uvicorn.run(app=app, host=os.environ.get('TRAIN_API_HOST'), port=int(os.environ.get('TRAIN_API_PORT')))
