@@ -53,7 +53,8 @@ export const TableConsumers: FC = ({}) => {
             >
                 <ErrorWrapper
                     fullSizeError={{
-                        error: errorConsumers
+                        error: errorConsumers,
+                        blockContent: true
                     }}
                 >
                     <PaperWrapper sx={{m: '20px'}}>
@@ -65,8 +66,8 @@ export const TableConsumers: FC = ({}) => {
                             getTableBodyLayout={getTableBodyLayout}
                             withPagination
                         >
-                            <TableFilter.SelectCell keyName='critical_status' id='critical_status'sx={{width: '50px'}} topic=''/>
                             <TableFilter.Banner withSearch withManageColumn/>
+                            <TableFilter.SelectCell keyName='critical_status' id='critical_status'sx={{width: '50px'}} topic=''/>
                             <TableFilter.Cell keyName='consumer_address' id='consumer_address' topic='Адрес потребителя'/>
                             <TableFilter.SelectCell keyName='consumer_name' id='consumer_name' topic='Тип потребителя'/>
                             <TableFilter.SelectCell

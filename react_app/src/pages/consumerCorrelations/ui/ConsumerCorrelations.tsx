@@ -8,11 +8,12 @@ import {PageWrapper} from "@src/entities/pageWrapper";
 import {YMap} from "@src/widgets/YMap";
 import {LoadingWrapper} from "@src/entities/loadingWrapper";
 import {ErrorWrapper} from "@src/entities/errorWrapper";
-import {PaperWrapper} from "@src/shared/ui/paperWrapper";
 import {coordinates} from "@src/widgets/YMap/const/coordinates";
 
 import {useGetConsumersCorrelationsQuery} from "../api/getConsumerCorrelations";
 import {CommonInfoBlock} from "./CommonInfoBlock";
+import {ConsumerTablesWrapper} from "./ConsumerTablesWrapper";
+import {Consumer} from "@src/pages/consumerCorrelations/types/consumerCorrelationsInfo";
 
 export const ConsumerCorrelations: FC = () => {
     const {consumer_stations_id} = useParams()
@@ -36,9 +37,10 @@ export const ConsumerCorrelations: FC = () => {
                         <>
                             <Grid container columnSpacing={2}>
                                 <Grid item xs>
-                                    <PaperWrapper>
-                                        main
-                                    </PaperWrapper>
+                                    <ConsumerTablesWrapper
+                                        consumers={data.consumers_dep}
+                                        consumersWarn={data.consumer_warn}
+                                    />
                                 </Grid>
                                 <Grid item sx={{flex: '0 0 500px'}}>
                                     <CommonInfoBlock

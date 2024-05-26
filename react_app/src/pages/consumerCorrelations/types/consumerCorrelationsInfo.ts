@@ -43,7 +43,7 @@ type EventConsumer = {
     closed: string
 }
 
-type Consumer = {
+export type Consumer = {
     id: number
     obj_consumer_station_id: number
     location_district_id: number
@@ -82,8 +82,8 @@ export type Weather = {
 export type ConsumerCorrelationsInfo = {
     area: Area | null
     consumer_stations: ConsumerStations | null
-    consumer_warn: Consumer | null
-    consumers_dep: Consumer | null
+    consumer_warn: Consumer[] | null
+    consumers_dep: Consumer[] | null
     source_stations: SourceStations[] | null
     weather: Weather | null
 }

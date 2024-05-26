@@ -32,7 +32,7 @@ export const CommonInfoBlock: FC<CommonInfoBlockProps> = (
             <Divider/>
             {
                 areaName &&
-                <Typography sx={{mt: '8px'}} gutterBottom>
+                <Typography sx={{mt: '8px'}} gutterBottom component='div'>
                     <Typography sx={{display: 'inline-block', fontWeight: 500}}>
                         Местоположение:&nbsp;
                     </Typography>
@@ -41,7 +41,7 @@ export const CommonInfoBlock: FC<CommonInfoBlockProps> = (
             }
             {
                 (consumerStationName || consumerStationAddr) &&
-                <Typography sx={{mt: '8px'}} gutterBottom>
+                <Typography sx={{mt: '8px'}} gutterBottom component='div'>
                     <Typography sx={{display: 'inline-block', fontWeight: 500}}>
                         ЦТП:&nbsp;
                     </Typography>
@@ -55,7 +55,7 @@ export const CommonInfoBlock: FC<CommonInfoBlockProps> = (
             }
             {
                 weather &&
-                <Weather weather={weather}/>
+                <WeatherInfo weather={weather}/>
             }
         </PaperWrapper>
     );
@@ -66,31 +66,31 @@ const SrcStations: FC<{ data: SourceStations[] }> = ({data}) => {
         <CollapsedBlock topicName='Источники тепла' textPlacement='right'>
             {
                 data.map(srcStation => {
-                    return <>
-                        <Typography sx={{mt: '8px'}} gutterBottom key={srcStation.id}>
+                    return <React.Fragment key={srcStation.id}>
+                        <Typography sx={{mt: '8px'}} gutterBottom>
                             {srcStation.name}, &nbsp;
                             {srcStation.address}
                         </Typography>
                         <Divider/>
-                    </>
+                    </React.Fragment>
                 })
             }
         </CollapsedBlock>
     )
 }
 
-const Weather: FC<{ weather: Weather }> = ({weather}) => {
+const WeatherInfo: FC<{ weather: Weather }> = ({weather}) => {
     return <>
         <Typography gutterBottom sx={{fontWeight: 500}} variant='h6'>
             Погода
         </Typography>
-        <Typography gutterBottom>
+        <Typography gutterBottom component='div'>
             <Typography sx={{display: 'inline-block', fontWeight: 500}}>
                 Температура:&nbsp;
             </Typography>
             {weather.temp} &deg;C, {conditionRuVal[weather.condition]}
         </Typography>
-        <Typography gutterBottom>
+        <Typography gutterBottom component='div'>
             <Typography sx={{display: 'inline-block', fontWeight: 500}}>
                 Cкорость ветра:&nbsp;
             </Typography>
@@ -98,7 +98,7 @@ const Weather: FC<{ weather: Weather }> = ({weather}) => {
         </Typography>
         {
             weather.wind_dir in windDirRuVal &&
-            <Typography gutterBottom>
+            <Typography gutterBottom component='div'>
                 <Typography sx={{display: 'inline-block', fontWeight: 500}}>
                     Направление ветра:&nbsp;
                 </Typography>

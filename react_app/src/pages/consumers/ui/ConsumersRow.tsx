@@ -15,14 +15,14 @@ import {CriticalStatusName, TransformConsumers} from "../api/getConsumers";
 import {EditStatusButton} from "./EditStatusButton";
 import {openNewWindowPage} from "@src/shared/lib/openNewWindowPage";
 
-interface IObjRowProps {
+interface IConsumersProps {
     info: TransformConsumers
     visibleColumn: VisibleColumnT<TransformConsumers>
     updateStatus: React.Dispatch<React.SetStateAction<TransformConsumers[]>>
     criticalStatus: CriticalStatusName
 }
 
-export const ConsumersRow: FC<IObjRowProps> = ({info, visibleColumn, updateStatus, criticalStatus}) => {
+export const ConsumersRow: FC<IConsumersProps> = ({info, visibleColumn, updateStatus, criticalStatus}) => {
     const navigate = useNavigate()
 
     const onOpenConsumerCortnsPage = () => {
