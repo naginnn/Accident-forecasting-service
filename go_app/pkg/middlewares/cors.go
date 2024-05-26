@@ -9,7 +9,7 @@ import (
 
 func Cors() gin.HandlerFunc {
 	return cors.New(cors.Config{
-		AllowOrigins: []string{os.Getenv("CORS")},
+		AllowOrigins: []string{os.Getenv("CORS"), "http://95.163.229.202:3000"},
 		AllowMethods: []string{"PUT", "PATCH", "POST", "GET", "DELETE"},
 		AllowHeaders: []string{"Origin", "Authorization", "Content-Type", "Accept-Encoding"},
 		ExposeHeaders: []string{
