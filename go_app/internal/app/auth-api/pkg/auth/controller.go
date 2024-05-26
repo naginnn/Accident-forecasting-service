@@ -18,3 +18,5 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	routers.POST("/add_usr", h.AddUsr)
 	routers.GET("/token", h.GetTkn)
 }
+
+// /api/v1/
