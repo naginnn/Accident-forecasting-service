@@ -9,7 +9,12 @@ export default defineConfig(() => {
     const baseUrl = path.resolve(__dirname, "src")
 
     return {
-        esbuild: {jsxInject: `import React from 'react'`},
+        esbuild: {
+            jsxInject: `import React from 'react'`,
+            supported: {
+                'top-level-await': true
+            },
+        },
         build: {outDir: 'build'},
         plugins: [
             react({jsxRuntime: 'classic'}),

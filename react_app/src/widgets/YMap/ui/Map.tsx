@@ -1,4 +1,5 @@
-import {useMemo, useState} from "react";
+import {FC, useMemo, useState} from "react";
+import {LngLat} from "ymaps3";
 
 import cls from './map.module.scss'
 
@@ -20,8 +21,12 @@ import {
 } from '../const/mapInit'
 import {useGetAreasQuery} from "../api/getAreas";
 
-export const Map = () => {
-    const [location, setLocation] = useState<YMapLocationRequest>({center: coordinates.moscow, zoom: 11})
+interface IMapProps {
+    initLocation: YMapLocationRequest
+}
+
+export const Map: FC<IMapProps> = ({initLocation}) => {
+    const [location, setLocation] = useState<YMapLocationRequest>(initLocation || {center: coordinates.moscow, zoom: 11})
 
     const {data, isFetching, error} = useGetAreasQuery()
 
@@ -35,13 +40,13 @@ export const Map = () => {
     return (
         <MapContext.Provider value={contextVal}>
             <div className={classNames(cls.map_wrapper)}>
-                <ErrorWrapper
-                    snackBarErrors={{
-                        errors: [{error: true, message: 'Не удалось загрузить данные'}]
-                    }}
-                >
-                    <MapMenu/>
-                </ErrorWrapper>
+                {/*<ErrorWrapper*/}
+                {/*    snackBarErrors={{*/}
+                {/*        errors: [{error: true, message: 'Не удалось загрузить данные'}]*/}
+                {/*    }}*/}
+                {/*>*/}
+                {/*    <MapMenu/>*/}
+                {/*</ErrorWrapper>*/}
                 <div className={classNames(cls.map)}>
                     <YMap
                         location={location}

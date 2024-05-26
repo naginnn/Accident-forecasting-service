@@ -3,7 +3,7 @@ import {useToggle} from "@src/shared/hooks/useToggle";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
-import {Divider, Grid, Tooltip, Box, Typography, useTheme} from "@mui/material";
+import {Divider, Grid, Tooltip, Typography} from "@mui/material";
 
 import {SxProps, Theme} from "@mui/material/styles";
 import {TooltipProps} from "@mui/material/Tooltip/Tooltip";
@@ -86,7 +86,7 @@ export const CollapsedBlock = (
                           sx={{
                               '&:hover': {
                                   cursor: 'pointer',
-                                  color: '#616161'
+                                  color: (theme) => theme.palette.primary.main
                               }
                           }}
                     >
