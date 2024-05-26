@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -39,14 +38,13 @@ type Event struct {
 func TransformPredictable(data any) []float32 {
 	var arr []float32
 	reflectValue := reflect.ValueOf(data)
-
 	// Проверяем, является ли нам переданный интерфейс структурой
 	if reflectValue.Kind() == reflect.Struct {
 		// Количество полей в структуре
-		typeOfPerson := reflectValue.Type()
+		//typeOfPerson := reflectValue.Type()
 		for i := 0; i < reflectValue.NumField(); i++ {
 			field := reflectValue.Field(i)
-			fmt.Printf("%s (%s): %v\n", typeOfPerson.Field(i).Name, field.Type(), field.Interface())
+			//fmt.Printf("%s (%s): %v\n", typeOfPerson.Field(i).Name, field.Type(), field.Interface())
 			arr = append(arr, float32(field.Interface().(int)))
 		}
 	}
@@ -67,9 +65,9 @@ func (h handler) GetPredict(c *gin.Context) {
 		}
 	}(model)
 	id := c.Param("id")
-	var predicatable Predictable
-	err = h.DB.Raw("select * from data_for_prediction where consumer_id = ?", id).Scan(&predicatable).Error
-	data := TransformPredictable(predicatable)
+	var predictable Predictable
+	err = h.DB.Raw("select * from data_for_prediction where consumer_id = ?", id).Scan(&predictable).Error
+	data := TransformPredictable(predictable)
 	floats := [][]float32{data}
 	cats := [][]string{}
 	prediction, err := model.CalcModelPredictionProba(floats, cats)
@@ -81,10 +79,8 @@ func (h handler) GetPredict(c *gin.Context) {
 	events[0] = "Нет"
 	//var eventTypes []models.EventType
 	//err = h.DB.Find(&eventTypes).Error
-	b := slices.Index(prediction, slices.Max(prediction))
-	fmt.Println(data)
-	fmt.Println(b)
-	fmt.Println(err)
+	res := slices.Index(prediction, slices.Max(prediction))
+
 	//var param catboost.ClassParams
 	//// get metadata from model
 	//err = model.GetMetaData("class_params", &param)
@@ -116,6 +112,6 @@ func (h handler) GetPredict(c *gin.Context) {
 	//fmt.Println("result_predict", prediction)
 	//fmt.Println("max_predict", slices.Max(prediction))
 
-	c.JSON(http.StatusOK, gin.H{"predict": prediction})
+	c.JSON(http.StatusOK, gin.H{"predict": events[res], "index": res})
 
 }
