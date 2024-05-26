@@ -41,7 +41,8 @@ def train_model(train_df: pd.DataFrame) -> tuple[CatBoostClassifier, float, dict
         feature_importances_dict["feature_importances"].append({"name": name, "score": round(score, 2)})
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
-    model.save_model(os.getenv("MODEL_PATH") + "/events.cbm")
+    # model.save_model(os.getenv("MODEL_PATH") + "/events.cbm")
+    model.save_model("events.cbm")
 
     return model, accuracy, feature_importances_dict
 

@@ -9,7 +9,9 @@ from fastapi import APIRouter, Depends, UploadFile
 from redis import Redis
 from rq import Queue, get_current_job
 from pydantic import BaseModel
-from apps.train_api.src.utils import start_train, check_train_state, upload_files
+
+from apps.train_api.src.tasks import upload_files
+from apps.train_api.src.utils import start_task, check_task_state
 from pkg.auth import Authorization
 from settings.db import sync_db, get_sync_session
 from settings.rd import get_redis_client
@@ -19,41 +21,24 @@ train_router = APIRouter(tags=["train"],
                          responses=None)
 
 
-@train_router.get("/get_recommendations", status_code=200,
-                  dependencies=[Depends(Authorization(role='rw'))])
-async def train_model() -> dict:
-    start = time.time()
-    # result = await start_train()
-    return {"adress": "Байкальская", "unom": 123332, "server_time": time.time() - start}
-
-
-@train_router.post("/", status_code=200)
-async def train_model() -> dict:
-    result = await start_train()
-    return result
-
-
-
-
-
-@train_router.post("/state", status_code=200)
-async def check_state() -> dict:
-    result = await check_train_state()
-    return result
-    # return {}
-
+# @train_router.get("/get_recommendations", status_code=200,
+#                   dependencies=[Depends(Authorization(role='rw'))])
 
 @train_router.post("/upload", status_code=200)
 async def upload_data(file: UploadFile):
     """ Загрузка Zip файла """
+    res, ok = await check_task_state(job_id='upload_files')
+    if ok:
+        return {'result': res, 'state': ok}
+
     contents = await file.read()
     bts = io.BytesIO(contents)
-    q = Queue(connection=Redis(host=os.environ.get('REDIS_HOST'),
-                               port=int(os.environ.get('REDIS_PORT')))
-              )
-    await upload_files(bts)
-    # job = q.enqueue(upload_files, bts, job_timeout=50000, job_id='upload_files')
-    # return {'id': job.id}
-    return {'id': 'ok'}
+    res, ok = await start_task(f=upload_files, job_id='upload_files', bts=bts)
+    return {'result': res, 'state': ok}
 
 
+@train_router.get("/upload_state", status_code=200)
+async def upload_state():
+    """ Загрузка Zip файла """
+    res, ok = await check_task_state(job_id='upload_files')
+    return {'result': res, 'state': ok}

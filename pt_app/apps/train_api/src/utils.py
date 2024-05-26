@@ -1,5 +1,6 @@
 import io
 from datetime import timedelta
+from typing import Tuple, Dict, Any, Callable
 from zipfile import ZipFile
 
 import pandas as pd
@@ -9,8 +10,7 @@ from rq.command import send_stop_job_command
 from rq.exceptions import *
 from rq.job import Job, get_current_job
 
-from apps.train_api.service.training_test import prepare_dataset
-from apps.train_api.src.tasks import train
+from apps.train_api.src.tasks import update_progress
 from pkg.utils import get_elapsed_time, FakeJob
 from settings.rd import get_redis_client
 
@@ -20,30 +20,38 @@ job_name = "train_job"
 # states = ["queued", "started", "deferred", "finished", "stopped", "scheduled", "canceled", "failed"]
 
 
-async def start_train() -> dict:
+async def start_task(f: Callable, job_id: str, **kwargs) -> Tuple[dict, bool]:
     redis = get_redis_client()
     q = Queue(connection=redis, default_timeout=-1)
     try:
-        send_stop_job_command(redis, job_name)
-        job = q.enqueue(f=train, job_id=job_name)
+        send_stop_job_command(redis, job_id)
+        job = q.enqueue(f=f, job_id=job_id, **kwargs)
     except NoSuchJobError:
-        job = q.enqueue(f=train, job_id=job_name)
+        job = q.enqueue(f=f, job_id=job_id, **kwargs)
     except Exception as e:
-        return dict(error=str(e))
+        return dict(error=str(e)), False
+    update_progress(job=job, progress=5, msg="Подготовка")
     status = job.get_status()
     if status in ["started", "queued"]:
-        return dict(state="started")
+        return job.get_meta(), True
     else:
-        return dict(state=job.get_status())
+        return dict(state=job.get_status()), False
 
 
-async def check_train_state(job_name='upload_files') -> dict:
+async def check_task_state(job_id: str) -> Tuple[dict, bool] | Tuple[None, bool]:
     redis = get_redis_client()
     try:
-        job = Job.fetch(id=job_name, connection=redis)
-        return dict(**job.get_meta())
+        job = Job.fetch(id=job_id, connection=redis)
+        status = job.get_status()
+        if status in ["started", "queued"]:
+            return job.get_meta(), True
+        if status in ["finished"]:
+            return {"state": "finish"}, True
+        else:
+            return None, False
     except NoSuchJobError:
-        return dict(error="no such job, training was not started")
+        return None, False
+        # return dict(error="no such job, job was not started"), False
 
 
 # async def check_train_state(job_name='upload_files') -> dict:
@@ -64,21 +72,4 @@ async def check_train_state(job_name='upload_files') -> dict:
 #         return dict(error="no such job, training was not started")
 
 
-async def upload_files(bts: io.BytesIO):
-    """ Переодическая задача, разбор архива и вызов парсинга """
-    # job = get_current_job()
-    job = FakeJob.get_current_job()
-    # Загрузка файлов
-    job.meta['stage'] = 0.0
-    job.save_meta()
 
-    files = {}
-    with ZipFile(bts, "r") as zip_file:
-        for xlxs_file in zip_file.filelist:
-            if '__MACOSX' not in xlxs_file.filename:
-                files[xlxs_file.filename] = pd.ExcelFile(
-                    io.BytesIO(zip_file.open(xlxs_file.filename).read()),
-                )
-                job.meta['stage'] += 5
-                job.save_meta()
-        prepare_dataset(files=files)
