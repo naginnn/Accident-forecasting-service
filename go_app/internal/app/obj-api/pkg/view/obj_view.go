@@ -80,7 +80,6 @@ func (h handler) GetObjView(c *gin.Context) {
 			}
 		}
 	}
-	// f
 	area.Weather = nil
 	consumersDep = consumerStation.Consumers
 	consumerStation.Consumers = nil
