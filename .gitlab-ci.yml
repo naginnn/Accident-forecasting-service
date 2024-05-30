@@ -24,4 +24,3 @@
       - ssh $SSH_USR@$SSH_ADDR "cd $CI_PROJECT_NAME && docker compose up -d --build --force-recreate"
     only:
       - develop
-
