@@ -85,7 +85,7 @@ func (h handler) GetObjView(c *gin.Context) {
 	consumerStation.Consumers = nil
 	sourceStations := consumerStation.SourceStations
 	consumerStation.SourceStations = nil
-
+	// dsa
 	for _, cons := range consumersDep {
 		for _, event := range cons.Events {
 			if !event.IsClosed {
