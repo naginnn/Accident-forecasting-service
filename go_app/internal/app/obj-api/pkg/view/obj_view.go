@@ -47,9 +47,10 @@ func (h handler) GetObjView(c *gin.Context) {
 	}
 
 	if h.DB.Where("id = ?", consumerStation.LocationAreaId).
-		Preload("Weather", func(tx *gorm.DB) *gorm.DB {
-			return tx.Last(&models.WeatherArea{})
-		}).
+		Preload("Weather").
+		//Preload("Weather", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Last(&models.WeatherArea{})
+		//}).
 		Find(&area).RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, "not found")
 		return
@@ -80,13 +81,12 @@ func (h handler) GetObjView(c *gin.Context) {
 			}
 		}
 	}
-
 	area.Weather = nil
 	consumersDep = consumerStation.Consumers
 	consumerStation.Consumers = nil
 	sourceStations := consumerStation.SourceStations
 	consumerStation.SourceStations = nil
-
+	// dsa
 	for _, cons := range consumersDep {
 		for _, event := range cons.Events {
 			if !event.IsClosed {

@@ -1,5 +1,6 @@
 import io
 import sys
+import time
 from zipfile import ZipFile
 
 import rq
@@ -24,6 +25,7 @@ import os
 
 
 def update_progress(job: Job, progress: float, msg: str):
+    print(progress, msg)
     job.meta['stage'] = progress
     job.meta['msg'] = msg
     job.save_meta()
@@ -58,12 +60,14 @@ def prepare_dataset(**kwargs) -> None:
     db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
     session = Session(db)
     files = kwargs.get('files')
-    # job = FakeJob.get_current_job()
-    job = get_current_job()
+    job = FakeJob.get_current_job()
+    # job = get_current_job()
     # session = get_sync_session()
+    start = time.time()
     if files:
-        save_unprocessed_data(db=db, files=files)
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
+        save_unprocessed_data(db=db, files=files)
+
     update_progress(job=job, progress=25, msg="Получение необработанных данных")
     tables = get_unprocessed_data(db=db)
     #
@@ -92,11 +96,11 @@ def prepare_dataset(**kwargs) -> None:
     save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('event_types'))
 
     update_progress(job=job, progress=100, msg="Выполнено успешно")
-
+    print(time.time() - start)
 
 if __name__ == '__main__':
     files = {}
     # processed_data = pd.read_excel('test.xlsx', sheet_name='full')
-    # files["test.xlsx"] = pd.ExcelFile("../../../autostart/test.xlsx", )
-    # prepare_dataset(files=files)
-    prepare_dataset(files=None)
+    files["test.xlsx"] = pd.ExcelFile("../../../autostart/test.xlsx", )
+    prepare_dataset(files=files)
+    # prepare_dataset(files=None)

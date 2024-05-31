@@ -10,6 +10,9 @@ from fastapi.openapi.docs import (
     get_swagger_ui_html,
 )
 from fastapi.openapi.utils import get_openapi
+
+from apps.train_api.src.tasks import prepare_dataset
+
 # app = FastAPI(redoc_url=None)
 app = FastAPI(docs_url=None,
               redoc_url=None,

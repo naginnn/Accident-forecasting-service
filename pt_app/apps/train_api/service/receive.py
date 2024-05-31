@@ -24,6 +24,7 @@ def save_unprocessed_data(db: Engine, files: dict) -> None:
                           df.columns]
             table_name = f"{file_name.split('.')[0].replace('-', '_')}_{sheet_name.replace('-', '_')}"
             df.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
+    # files = None
 
 
 def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame]]:
