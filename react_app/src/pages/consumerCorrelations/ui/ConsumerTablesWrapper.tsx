@@ -43,7 +43,7 @@ export const ConsumerTablesWrapper: FC<ConsumerTablesWrapperProps> = ({consumers
                 <BookmarksTab
                     value={TabNames.WARNING_CONSUMERS}
                 >
-                    Потребители с возможными инцидентами
+                    Потребители в зоне аварии
                 </BookmarksTab>
             </BookmarksTabsList>
             <BookmarksTabPanel value={TabNames.CONSUMERS}>

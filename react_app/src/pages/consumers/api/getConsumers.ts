@@ -1,6 +1,5 @@
 import {apiBase, OBJ_URL, getAuthHeader, getRequestOptions, handleErrorResponse} from "@src/shared/api/apiBase";
 import {type Consumers} from "../types/consumers"
-
 export const enum CriticalStatusName {
     IS_APPROVED = 'Подтвержденный инцидент',
     IS_WARNING = 'Риск возникновения инцидента',
