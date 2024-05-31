@@ -36,12 +36,6 @@ export const ConsumerCorrelations: FC = () => {
                         data &&
                         <>
                             <Grid container columnSpacing={2}>
-                                <Grid item xs>
-                                    <ConsumerTablesWrapper
-                                        consumers={data.consumers_dep}
-                                        consumersWarn={data.consumer_warn}
-                                    />
-                                </Grid>
                                 <Grid item sx={{flex: '0 0 500px'}}>
                                     <CommonInfoBlock
                                         weather={data.weather}
@@ -53,6 +47,10 @@ export const ConsumerCorrelations: FC = () => {
                                 </Grid>
                             </Grid>
                             <Box sx={{height: '600px', width: '100%', position: 'relative', mt: '16px'}}>
+                                <ConsumerTablesWrapper
+                                    consumers={data.consumers_dep}
+                                    consumersWarn={data.consumer_warn}
+                                />
                                 <YMap initLocation={{
                                     center: data.area?.coordinates
                                         .split(' ')

@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 
 import {classNames} from "@src/shared/lib/classNames";
 import {PaperWrapper} from "@src/shared/ui/paperWrapper";
+import {CenteredBox} from "@src/shared/ui/centeredBox";
 
 interface IAuthWrapper {
     children: React.ReactNode;
@@ -12,11 +13,11 @@ interface IAuthWrapper {
 export const AuthWrapper = ({children}: IAuthWrapper) => {
     return (
         <div className={classNames(cls.auth_wrapper)}>
-            <Box sx={{height: '100%', pt: '20%'}}>
+            <CenteredBox position='absolute'>
                 <PaperWrapper sx={{width: '450px'}}>
                     {children}
                 </PaperWrapper>
-            </Box>
+            </CenteredBox>
         </div>
     )
 }
