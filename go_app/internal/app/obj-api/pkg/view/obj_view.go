@@ -62,7 +62,9 @@ func (h handler) GetObjView(c *gin.Context) {
 			break
 		}
 		tNow := time.Now().Format("2006-01-02")
-		tForecast := time.Unix(int64(forecast.DateTs), 0).Format("2006-01-02")
+		//tForecast := time.Unix(int64(forecast.DateTs), 0).Format("2006-01-02")
+		//tForecast, _ := time.Parse("2006-01-02", forecast.Date)
+		tForecast := forecast.Date
 		if tNow == tForecast {
 			if tNow == tForecast {
 				hNow := time.Now()
