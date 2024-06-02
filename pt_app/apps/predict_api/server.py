@@ -6,8 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from pt_app.apps.predict_api.src.routers import predict_router
 app = FastAPI(
-    # redoc_url=None
-    # openapi_url
+    redoc_url=None
 )
 
 """ Настройки CORS """
