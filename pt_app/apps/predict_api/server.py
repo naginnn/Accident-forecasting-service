@@ -4,9 +4,11 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from apps.predict_api.src.routers import predict_router
-
-app = FastAPI(redoc_url=None)
+from pt_app.apps.predict_api.src.routers import predict_router
+app = FastAPI(
+    # redoc_url=None
+    # openapi_url
+)
 
 """ Настройки CORS """
 

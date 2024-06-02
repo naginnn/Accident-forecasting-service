@@ -2,8 +2,8 @@ import os
 import pickle
 import pandas as pd
 from catboost import CatBoostClassifier, Pool
-from settings.db import sync_db
-from settings.rd import get_redis_client
+from pt_app.settings.db import sync_db
+from pt_app.settings.rd import get_redis_client
 
 
 class PredictionService:

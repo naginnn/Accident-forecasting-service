@@ -1,6 +1,6 @@
 import sqlalchemy
 
-from apps.predict_api.src.service.prediction import PredictionService
+from pt_app.apps.predict_api.src.service.prediction import PredictionService
 
 
 async def get_recommendations(fields: str, model_name: str) -> list[dict]:
