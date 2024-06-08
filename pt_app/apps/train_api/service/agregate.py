@@ -148,9 +148,18 @@ def agr_for_unprocessed(tables: dict) -> dict:
         'geoData': 'obj_consumer_geodata',
         'geodata_center': 'obj_consumer_geodata_center',
     }, inplace=True)
+
+    obj_source_columns = (
+        'obj_source_e_power',
+        'obj_source_t_power',
+        'obj_source_boiler_count',
+        'obj_source_turbine_count'
+    )
+    res2[[*obj_source_columns]] = res2['obj_source_name'].apply(lambda x: pd.Series(Utils.get_source_data(x)))
+
     res2 = res2[[
         # source station
-        'obj_source_name', 'obj_source_launched', 'obj_source_address', 'obj_source_geodata_center',
+        'obj_source_name', 'obj_source_launched', 'obj_source_address', 'obj_source_geodata_center', *obj_source_columns,
         # consumer_station
         'obj_consumer_station_location_district', 'obj_consumer_station_location_area', 'obj_consumer_station_name',
         'obj_consumer_station_address', 'obj_consumer_station_type',
@@ -627,6 +636,20 @@ class Utils:
     def get_addr(x):
         adr = x.pop(0)
         return adr
+
+    @staticmethod
+    def get_source_data(source: str) -> tuple[int, int, int, int]:
+        # (Электрическая мощность, Тепловая мощность, Котлы, Турбогенераторы)
+        return {
+            'ТЭЦ №23': (1420, 3709, 23, 8),
+            'РТС Перово': (0, 391, 4, 0),
+            'ТЭЦ №22': (1070, 3402, 22, 11),
+            'ТЭЦ №11': (330, 868, 7, 3),
+            'КТС-42': (0, 25, 4, 0),
+            'КТС Акулово': (0, 8, 4, 0),
+            'КТС-28': (0, 28, 4, 0),
+        }.get(source, (0, 0, 0, 0))
+
     # @staticmethod
     # def put_down_class(x: str, events: list) -> int:
     #     if x in events:
