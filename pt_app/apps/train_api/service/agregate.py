@@ -1,4 +1,5 @@
 import datetime
+import threading
 from typing import Tuple
 import numpy as np
 from sqlalchemy import text as sa_text, select
@@ -24,7 +25,6 @@ def agr_for_view(tables: dict) -> dict:
     df_events = AgrView.get_work_days(df_events)
     agr_tables["full"] = df_full
     agr_tables["events_all"] = df_events
-
     return agr_tables
 
 
@@ -48,6 +48,170 @@ def agr_for_train(tables: dict) -> tuple:
     # agr_train_tables["full"] = tables.get('test_full')
     # agr_predict_tables["full"] = tables.get('test_full')
     return agr_predict_df, agr_train_df
+
+
+def read_excel(tables: dict, file, sheet_name: str = None):
+    df = pd.read_excel(tables[file], sheet_name=sheet_name)
+    tables[file] = df
+
+
+def agr_for_unprocessed(tables: dict) -> dict:
+    agr_tables = {}
+
+    # threads = {
+    #     '5.xlsx': threading.Thread(target=read_excel, args=(tables, '5.xlsx', 'Выгрузка',)),
+    #     '5.1.xlsx': threading.Thread(target=read_excel, args=(tables, '5.1.xlsx', 'Выгрузка',)),
+    #     '8.xlsx': threading.Thread(target=read_excel, args=(tables, '8.xlsx',)),
+    #     '13.xlsx': threading.Thread(target=read_excel, args=(tables, "13.xlsx",)),
+    # }
+    # for k, v in threads.items():
+    #     v.start()
+
+    main_df = pd.read_excel(tables.get('7.xlsx'))
+
+    bti_df = AgrUnprocessed.agr_bti(pd.read_excel(tables.get('9.xlsx')))
+    big_df = main_df.merge(bti_df[[
+        'UNOM', 'Адрес строения',
+        'Административный округ', 'Муниципальный округ',
+        'Улица', 'Тип номера дом', 'Номер дома',
+        'Номер корпуса', 'Тип номера строения/сооружения',
+        'Номер строения',
+        'Материал', 'Назначение', 'Класс', 'Тип', 'Этажность', 'Общая площадь',
+        # ]], how="left", on='Адрес строения')
+    ]], how="inner", on='Адрес строения')
+    tp_df = bti_df.__deepcopy__()
+    tp_df.columns = ['id_ТП', 'Город_ТП', 'Административный округ_ТП',
+                     'Муниципальный округ_ТП', 'Населенный пункт_ТП',
+                     'Улица_ТП', 'Тип номера дом_ТП', 'Номер дома_ТП',
+                     'Номер корпуса_ТП', 'Тип номера строения/сооружения_ТП',
+                     'Номер строения_ТП', 'UNOM_ТП', 'UNAD_ТП',
+                     'Материал_ТП', 'Назначение_ТП', 'Класс_ТП', 'Тип_ТП', 'Этажность_ТП', 'Признак_ТП',
+                     'Общая площадь_ТП', 'Адрес строения ТП', 'Адрес ТП'
+                     ]
+    with_tp_df = big_df.merge(tp_df[['UNOM_ТП', 'Адрес ТП']], how="inner", on='Адрес ТП')
+
+    # threads['13.xlsx'].join()
+    df_coord = pd.read_excel(tables.get("13.xlsx"))
+    df_coord = df_coord[1:]
+    df_coord['UNOM'] = df_coord['UNOM'].astype(float)
+    res = with_tp_df.merge(df_coord[['geoData', 'geodata_center', 'UNOM']], how="inner", on='UNOM')
+    df_coord = df_coord.rename(
+
+        columns={'UNOM': 'UNOM_ТП', 'geoData': 'geoData_ТП', 'geodata_center': 'geodata_center_ТП'}).__deepcopy__()
+
+    res2 = res.merge(df_coord[['geoData_ТП', 'geodata_center_ТП', 'UNOM_ТП']], how="inner", on='UNOM_ТП')
+    res2['geodata_center'] = res2['geodata_center'].apply(lambda x: Utils.get_coord(x))
+    res2['geoData'] = res2['geoData'].apply(lambda x: Utils.get_coord(x, darr=True))
+    res2['geodata_center_ТП'] = res2['geodata_center_ТП'].apply(lambda x: Utils.get_coord(x))
+    res2['geoData_ТП'] = res2['geoData_ТП'].apply(lambda x: Utils.get_coord(x, darr=True))
+    res2['Источник теплоснабжения'].unique().tolist()
+    res2['geoData_ТЭЦ'] = res2['Источник теплоснабжения'].apply(lambda x: Utils.set_obj_source_station_coord(x))
+    res2["Адрес ТЭЦ"] = res2['geoData_ТЭЦ'].apply(lambda x: Utils.get_addr(x))
+    res2.rename(columns={
+        'Источник теплоснабжения': 'obj_source_name',
+        'Дата ввода в эксплуатацию': 'obj_source_launched',
+        'Адрес ТЭЦ': 'obj_source_address',
+        'geoData_ТЭЦ': 'obj_source_geodata_center',
+        # obj_consumer_station
+        'Административный округ (ТП)': 'obj_consumer_station_location_district',
+        'Муниципальный район': 'obj_consumer_station_location_area',
+        'Номер ТП': 'obj_consumer_station_name',
+        'Адрес ТП': 'obj_consumer_station_address',
+        'Вид ТП': 'obj_consumer_station_type',
+        'Тип по размещению': 'obj_consumer_station_place_type',
+        'UNOM_ТП': 'obj_consumer_station_unom',
+        'geoData_ТП': 'obj_consumer_station_geodata',
+        'geodata_center_ТП': 'obj_consumer_station_geodata_center',
+        # obj_consumer
+        'Адрес строения': 'obj_consumer_address',
+        'Балансодержатель': 'obj_consumer_balance_holder',
+        'Тепловая нагрузка ГВС ср.': 'obj_consumer_gvs_load_avg',
+        'Тепловая нагрузка ГВС факт.': 'obj_consumer_gvs_load_fact',
+        'Тепловая нагрузка отопления строения': 'obj_consumer_heat_build_load',
+        'Тепловая нагрузка вентиляции строения': 'obj_consumer_vent_build_load',
+        'Диспетчеризация': 'obj_consumer_is_dispatch',
+        'UNOM': 'obj_consumer_unom',
+        'Административный округ': 'obj_consumer_location_district',
+        'Муниципальный округ': 'obj_consumer_location_area',
+        'Улица': 'obj_consumer_street',
+        'Тип номера дом': 'obj_consumer_house_type',
+        'Номер дома': 'obj_consumer_house_number',
+        'Номер корпуса': 'obj_consumer_corpus_number',
+        'Тип номера строения/сооружения': 'obj_consumer_soor_type',
+        'Номер строения': 'obj_consumer_soor_number',
+        'Материал': 'wall_material',
+        'Назначение': 'obj_consumer_target',
+        'Класс': 'obj_consumer_class',
+        'Тип': 'obj_consumer_build_type',
+        'Этажность': 'obj_consumer_build_floors',
+        'Общая площадь': 'obj_consumer_total_area',
+        'geoData': 'obj_consumer_geodata',
+        'geodata_center': 'obj_consumer_geodata_center',
+    }, inplace=True)
+    res2 = res2[[
+        # source station
+        'obj_source_name', 'obj_source_launched', 'obj_source_address', 'obj_source_geodata_center',
+        # consumer_station
+        'obj_consumer_station_location_district', 'obj_consumer_station_location_area', 'obj_consumer_station_name',
+        'obj_consumer_station_address', 'obj_consumer_station_type',
+        'obj_consumer_station_place_type', 'obj_consumer_station_unom', 'obj_consumer_station_geodata',
+        'obj_consumer_station_geodata_center',
+        # s
+        # obj_consumer
+        'obj_consumer_address',
+        'obj_consumer_balance_holder',
+        'obj_consumer_gvs_load_avg',
+        'obj_consumer_gvs_load_fact',
+        'obj_consumer_heat_build_load',
+        'obj_consumer_vent_build_load',
+        'obj_consumer_is_dispatch',
+        'obj_consumer_unom',
+        'obj_consumer_location_district',
+        'obj_consumer_location_area',
+        'obj_consumer_street',
+        'obj_consumer_house_type',
+        'obj_consumer_house_number',
+        'obj_consumer_corpus_number',
+        'obj_consumer_soor_type',
+        'obj_consumer_soor_number',
+        'wall_material',
+        'obj_consumer_target',
+        'obj_consumer_class',
+        'obj_consumer_build_type',
+        'obj_consumer_build_floors',
+        'obj_consumer_total_area',
+        'obj_consumer_geodata',
+        'obj_consumer_geodata_center',
+    ]]
+    # threads['8.xlsx'].join()
+    ods_df = AgrUnprocessed.agr_ods(pd.read_excel(tables.get('8.xlsx')))
+    res2 = res2.merge(ods_df[['obj_consumer_station_name',
+                              'obj_consumer_station_ods_name',
+                              'obj_consumer_station_ods_address',
+                              'obj_consumer_station_ods_manager_company',
+                              ]], how='left', on='obj_consumer_station_name')
+    res2.fillna("Нет данных", inplace=True)
+    # threads['5.xlsx'].join()
+    # threads['5.1.xlsx'].join()
+    events = pd.read_excel(tables.get('5.xlsx'), sheet_name='Выгрузка')
+    events2 = pd.read_excel(tables.get('5.1.xlsx'), sheet_name='Выгрузка')
+    events2.rename(columns={'Дата и время завершения события': 'Дата и время завершения события во внешней системе'},
+                   inplace=True)
+    events = pd.concat([events, events2])
+    events.rename(columns={
+        'Наименование': 'event_description',
+        'Источник': 'event_source',
+        'Дата создания во внешней системе': 'event_created',
+        'Дата закрытия': 'event_closed_ext',
+        'Округ': 'location_area',
+        'УНОМ': 'unom',
+        'Адрес': 'address',
+        'Дата и время завершения события во внешней системе': 'event_closed',
+    }, inplace=True)
+
+    agr_tables['flat_table'] = res2
+    agr_tables['events_all'] = events
+    return agr_tables
 
 
 class AgrView:
@@ -93,7 +257,8 @@ class AgrView:
 
     @staticmethod
     def split_wall_materials(df: pd.DataFrame, df_wall_materials: pd.DataFrame) -> pd.DataFrame:
-        df_wall_materials = df_wall_materials.rename(columns={"id": "material_sten", "name": "wall_material_description"})
+        df_wall_materials = df_wall_materials.rename(
+            columns={"id": "material_sten", "name": "wall_material_description"})
         return df.merge(df_wall_materials, how='left', on='material_sten')
 
 
@@ -259,6 +424,36 @@ class AgrTrain:
         return train_df
 
 
+class AgrUnprocessed:
+    @staticmethod
+    def agr_bti(bti_df: pd.DataFrame) -> pd.DataFrame:
+        bti_df.columns = bti_df.iloc[0]
+        bti_df = bti_df[1:]
+        bti_df.dropna(subset=['Улица'], inplace=True)
+        bti_df.fillna("Нет данных", inplace=True)
+        bti_df.columns = ['id', 'Город', 'Административный округ',
+                          'Муниципальный округ', 'Населенный пункт',
+                          'Улица', 'Тип номера дом', 'Номер дома',
+                          'Номер корпуса', 'Тип номера строения/сооружения',
+                          'Номер строения', 'UNOM', 'UNAD',
+                          'Материал', 'Назначение', 'Класс', 'Тип', 'Этажность', 'Признак', 'Общая площадь',
+                          ]
+        bti_df['Адрес строения'] = bti_df.apply(lambda x: Utils.compare_addr(x), axis=1)
+        bti_df['Адрес ТП'] = bti_df['Адрес строения'].__deepcopy__()
+        return bti_df
+
+    @staticmethod
+    def agr_ods(ods_df: pd.DataFrame) -> pd.DataFrame:
+        ods_df.rename(columns={
+            'ЦТП': 'obj_consumer_station_name',
+            '№ ОДС': 'obj_consumer_station_ods_name',
+            'Адрес ОДС': 'obj_consumer_station_ods_address',
+            'Потребитель (или УК)': 'obj_consumer_station_ods_manager_company',
+        }, inplace=True)
+        ods_df.drop_duplicates(subset=['obj_consumer_station_name'], inplace=True)
+        return ods_df
+
+
 class Utils:
     @staticmethod
     def priority(x):
@@ -357,6 +552,81 @@ class Utils:
     def collect_the_date(x):
         return datetime.datetime(int(x['year']), int(x['month']), int(x['day']))
 
+    @staticmethod
+    def compare_addr(x):
+        # print(x['Улица'], x['Номер дома'])
+        st = x['Улица']
+        if 'улица' in x['Улица']:
+            st = re.sub("улица" + ' *', '', x['Улица']).strip() + " ул.,"
+        if 'проспект' in x['Улица']:
+            st = re.sub("проспект" + ' *', '', x['Улица']).strip() + " просп.,"
+        if 'проезд' in x['Улица']:
+            st = re.sub("проезд" + ' *', '', x['Улица']).strip() + " пр.,"
+        if 'переулок' in x['Улица']:
+            st = re.sub("переулок" + ' *', '', x['Улица']).strip() + " пер.,"
+        if 'аллея' in x['Улица']:
+            st = "аллея " + re.sub("аллея" + ' *', '', x['Улица']).strip()
+        if 'шоссе' in x['Улица']:
+            st = re.sub("шоссе" + ' *', '', x['Улица']).strip() + " шоссе,"
+        if 'дом' in x['Тип номера дом']:
+            if x['Номер дома'] != 'Нет данных':
+                st += " д." + str(x['Номер дома'])
+        if 'владение' in x['Тип номера дом']:
+            if x['Номер дома'] != 'Нет данных':
+                st += " вл." + str(x['Номер дома'])
+        if x['Номер корпуса'] != 'Нет данных':
+            st += ", корп." + str(x['Номер корпуса'])
+        if x['Тип номера строения/сооружения'] != 'Нет данных':
+            st += ", стр." + str(x['Номер строения'])
+        return st
+
+    @staticmethod
+    def get_coord(x, darr=False):
+        res = []
+        if isinstance(x, str):
+            numbers = re.findall(r'[\d\.\-]+', x)
+            print(numbers)
+            try:
+                if darr:
+                    tmp = []
+                    for i in numbers:
+                        tmp.append(float(i))
+                        if len(tmp) == 2:
+                            tmp.reverse()
+                            res.append(tmp)
+                            tmp = []
+                else:
+                    res = [float(num) for num in numbers]
+                    res.reverse()
+            except ValueError:
+                return x
+            else:
+                return res
+        else:
+            return x
+
+    @staticmethod
+    def set_obj_source_station_coord(x):
+        coord = []
+        match x:
+            case 'ТЭЦ №23':
+                coord = ["Монтажная ул., 1/4с1", 55.821649, 37.764117]
+            case 'ТЭЦ №22':
+                coord = ["ул. Энергетиков, 5, Дзержинский", 55.630469, 37.816665]
+            case 'РТС Перово':
+                coord = ["Кетчерская ул., 11А", 55.747464, 37.837246]
+            case 'ТЭЦ №11':
+                coord = ["шоссе Энтузиастов, 32с1", 55.752803, 37.730223]
+            case 'КТС-42':
+                coord = ["Гражданская 4-я ул., д. 41", 55.807567, 37.719944]
+            case 'КТС-28':
+                coord = ["Бойцовая ул., д. 24", 55.814801, 37.727607]
+        return coord
+
+    @staticmethod
+    def get_addr(x):
+        adr = x.pop(0)
+        return adr
     # @staticmethod
     # def put_down_class(x: str, events: list) -> int:
     #     if x in events:

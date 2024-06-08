@@ -1,5 +1,7 @@
 import io
+import multiprocessing
 import sys
+import threading
 import time
 from zipfile import ZipFile
 
@@ -13,7 +15,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import Connection, create_engine, NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, Session
-from apps.train_api.service.agregate import agr_for_view, agr_for_train
+from apps.train_api.service.agregate import agr_for_view, agr_for_train, agr_for_unprocessed
 from apps.train_api.service.receive import (collect_data, predict_data, save_unprocessed_data,
                                             get_unprocessed_data, get_processed_data)
 from apps.train_api.service.train import train_model
@@ -66,17 +68,26 @@ def prepare_dataset(**kwargs) -> None:
     start = time.time()
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
-        save_unprocessed_data(db=db, files=files)
+        # 1. собираем и пред агрегируем входные данные
+        tables = agr_for_unprocessed(tables=files)
+        # 2. Сохраняем в схему unprocessed
+        save_unprocessed_data(db=db, tables=tables)
+        print('success')
+        return
 
     update_progress(job=job, progress=25, msg="Получение необработанных данных")
+    # 3. Получаем все таблицы из схемы unprocessed
     tables = get_unprocessed_data(db=db)
     #
     update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
+    # 4. Пред агрегируем данные для записи в нормальную структуру
     agr_view_tables = agr_for_view(tables=tables)
     update_progress(job=job, progress=45, msg="Сохранение данных")
+    # 5. Записываем
     save_for_view(session=session, tables=agr_view_tables)
     #
     update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
+    # 6. Получаем все таблицы из схемы public
     processed = get_processed_data(db=db)
     #
     update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
@@ -98,9 +109,25 @@ def prepare_dataset(**kwargs) -> None:
     update_progress(job=job, progress=100, msg="Выполнено успешно")
     print(time.time() - start)
 
+
+def load_data(files: dict, filename: str):
+    files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
+    # files[filename] = pd.read_excel(f"../../../autostart/{filename}", )
+
+
 if __name__ == '__main__':
+    start = time.time()
     files = {}
-    # processed_data = pd.read_excel('test.xlsx', sheet_name='full')
-    files["test.xlsx"] = pd.ExcelFile("../../../autostart/test.xlsx", )
+    # processes = []
+    threads = []
+    for filename in os.listdir("../../../autostart"):
+        thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
+        threads.append(thread)
+        thread.start()
+    for thread in threads:
+        thread.join()
+    print(time.time() - start)
+    # for filename in os.listdir("../../../autostart"):
+    #     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
     prepare_dataset(files=files)
     # prepare_dataset(files=None)

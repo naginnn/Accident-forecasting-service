@@ -11,20 +11,28 @@ import numpy as np
 unprocessed_schema_name = "unprocessed"
 
 
-def save_unprocessed_data(db: Engine, files: dict) -> None:
+# def save_unprocessed_data(db: Engine, files: dict) -> None:
+#     """Сохранить не обработанные таблицы"""
+#     with db.connect() as connection:
+#         connection.execute(CreateSchema(unprocessed_schema_name, if_not_exists=True))
+#         connection.commit()
+#     reg = re.compile('[^a-zA-Z_ ]')
+#     for file_name, file in files.items():
+#         for sheet_name in file.sheet_names:
+#             df = pd.read_excel(file, sheet_name=sheet_name)
+#             df.columns = [reg.sub('', translit(column, 'ru', reversed=True).replace(" ", "_").lower()) for column in
+#                           df.columns]
+#             table_name = f"{file_name.split('.')[0].replace('-', '_')}_{sheet_name.replace('-', '_')}"
+#             df.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
+# files = None
+
+def save_unprocessed_data(db: Engine, tables: dict) -> None:
     """Сохранить не обработанные таблицы"""
     with db.connect() as connection:
         connection.execute(CreateSchema(unprocessed_schema_name, if_not_exists=True))
         connection.commit()
-    reg = re.compile('[^a-zA-Z_ ]')
-    for file_name, file in files.items():
-        for sheet_name in file.sheet_names:
-            df = pd.read_excel(file, sheet_name=sheet_name)
-            df.columns = [reg.sub('', translit(column, 'ru', reversed=True).replace(" ", "_").lower()) for column in
-                          df.columns]
-            table_name = f"{file_name.split('.')[0].replace('-', '_')}_{sheet_name.replace('-', '_')}"
-            df.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
-    # files = None
+    for table_name, table in tables.items():
+        table.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
 
 
 def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame]]:
