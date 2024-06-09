@@ -237,8 +237,7 @@ class SaveView:
                     ods_address=row['obj_consumer_station_ods_address'],
                     ods_id_uu=row['obj_consumer_station_ods_id_yy'],
                     ods_manager_company=row['obj_consumer_station_ods_manager_company'],
-                    geo_data={"polygon": row["obj_consumer_station_geodata"],
-                              "center": row["obj_consumer_station_geodata_center"]},
+                    geo_data=row["obj_consumer_station_coordinates"],
                 ),
                 update_fields=dict(
                     address=row['obj_consumer_station_address'],
@@ -248,8 +247,7 @@ class SaveView:
                     ods_address=row['obj_consumer_station_ods_address'],
                     ods_id_uu=row['obj_consumer_station_ods_id_yy'],
                     ods_manager_company=row['obj_consumer_station_ods_manager_company'],
-                    geo_data={"polygon": row["obj_consumer_station_geodata"],
-                              "center": row["obj_consumer_station_geodata_center"]},
+                    geo_data=row["obj_consumer_station_coordinates"],
                 )
             )
 
@@ -267,7 +265,7 @@ class SaveView:
                     t_power=row["obj_source_t_power"],
                     boiler_count=row["obj_source_boiler_count"],
                     turbine_count=row["obj_source_turbine_count"],
-                    geo_data={"center": row["obj_source_geodata_center"]},
+                    geo_data=row["obj_source_coordinates"],
                 ),
                 update_fields=dict(
                     launched_date=row["obj_source_launched"],
@@ -276,13 +274,94 @@ class SaveView:
                     t_power=row["obj_source_t_power"],
                     boiler_count=row["obj_source_boiler_count"],
                     turbine_count=row["obj_source_turbine_count"],
-                    geo_data={"center": row["obj_source_geodata_center"]},
+                    geo_data=row["obj_source_coordinates"],
                 )
             )
 
-
             try:
                 obj_source_station.consumer_stations.append(obj_consumer_station)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+
+            material_wall = create_or_update(
+                session=session,
+                Model=MaterialWall,
+                constraint="uni_material_walls_name",
+                create_fields=dict(
+                    name=row["wall_material"],
+                    k=row["wall_material_k"],
+                ),
+                update_fields=dict(
+                    k=row["wall_material_k"],
+                )
+            )
+
+            obj_consumer = create_or_update(
+                session=session,
+                Model=ObjConsumer,
+                constraint="uni_obj_consumers_address",
+                create_fields=dict(
+                    location_district_id=location_district.id,
+                    location_area_id=location_area.id,
+                    obj_consumer_station_id=obj_consumer_station.id,
+                    address=row["obj_consumer_address"],
+                    geo_data=row["obj_consumer_coordinates"],
+
+                    street=row["obj_consumer_street"],
+                    house_type=row["obj_consumer_house_type"],
+                    house_number=row["obj_consumer_house_number"],
+                    corpus_number=row["obj_consumer_corpus_number"],
+                    soor_type=row["obj_consumer_soor_type"],
+                    soor_number=row["obj_consumer_soor_number"],
+                    balance_holder=row["obj_consumer_balance_holder"],
+                    load_gvs=row["obj_consumer_gvs_load_avg"],
+                    load_fact=row["obj_consumer_gvs_load_fact"],
+                    heat_load=row["obj_consumer_heat_build_load"],
+                    vent_load=row["obj_consumer_vent_build_load"],
+                    total_area=row["obj_consumer_total_area"],
+                    target=row["obj_consumer_target"],
+                    b_class=row["obj_consumer_class"],
+                    floors=row["obj_consumer_build_floors"],
+                    # number=row["obj_source_address"],
+                    wear_pct=row["obj_consumer_building_wear_pct "],
+                    build_year=row["obj_consumer_build_date "],
+                    type=row["obj_consumer_build_type"],
+                    energy_class=row["obj_source_address"],
+                    operating_mode="Нет данных",
+                    priority=0,
+                    is_dispatch=row["obj_consumer_is_dispatch"],
+                ),
+                update_fields=dict(
+                    geo_data=row["obj_consumer_coordinates"],
+                    street=row["obj_consumer_street"],
+                    house_type=row["obj_consumer_house_type"],
+                    house_number=row["obj_consumer_house_number"],
+                    corpus_number=row["obj_consumer_corpus_number"],
+                    soor_type=row["obj_consumer_soor_type"],
+                    soor_number=row["obj_consumer_soor_number"],
+                    balance_holder=row["obj_consumer_balance_holder"],
+                    load_gvs=row["obj_consumer_gvs_load_avg"],
+                    load_fact=row["obj_consumer_gvs_load_fact"],
+                    heat_load=row["obj_consumer_heat_build_load"],
+                    vent_load=row["obj_consumer_vent_build_load"],
+                    # total_area=row["obj_consumer_total_area"],
+                    target=row["obj_consumer_target"],
+                    b_class=row["obj_consumer_class"],
+                    floors=row["obj_consumer_build_floors"],
+                    # number=row["obj_source_address"],
+                    wear_pct=row["obj_consumer_building_wear_pct "],
+                    build_year=row["obj_consumer_build_date "],
+                    type=row["obj_consumer_build_type"],
+                    energy_class=row["obj_source_address"],
+                    operating_mode="Нет данных",
+                    priority=0,
+                    is_dispatch=True if row["obj_consumer_is_dispatch"] != "Нет данных" else False,
+                )
+            )
+
+            try:
+                obj_consumer.wall_material.append(material_wall)
                 session.commit()
             except Exception as e:
                 session.rollback()

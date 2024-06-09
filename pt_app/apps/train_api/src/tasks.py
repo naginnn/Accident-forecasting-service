@@ -84,10 +84,10 @@ def prepare_dataset(**kwargs) -> None:
     #
     update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
     # 4. Пред агрегируем данные для записи в нормальную структуру
-    # agr_view_tables = agr_for_view(tables=tables)
+    agr_view_tables = agr_for_view(tables=tables)
     update_progress(job=job, progress=45, msg="Сохранение данных")
     # 5. Записываем
-    save_for_view(session=session, tables=tables)
+    save_for_view(session=session, tables=agr_view_tables)
     #
     update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # 6. Получаем все таблицы из схемы public

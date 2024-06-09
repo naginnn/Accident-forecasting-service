@@ -21,16 +21,22 @@ pd.options.mode.chained_assignment = None  # default='warn'
 def agr_for_view(tables: dict) -> dict:
     """Агрегация данных"""
     agr_tables = {}
-    df_wall_materials = tables.get("test_wall_materials")
-    df_full = tables.get('test_full')
-    df_full = AgrView.get_ranking(df_full)
-    df_full = AgrView.get_temp_conditions(df_full)
-    df_full = AgrView.split_address(df_full)
-    df_full = AgrView.split_wall_materials(df_full, df_wall_materials)
-    df_events = tables.get('test_events_all')
-    df_events = AgrView.get_work_days(df_events)
-    agr_tables["full"] = df_full
-    agr_tables["events_all"] = df_events
+    flat_table = tables.get('flat_table')
+    events_all = tables.get('events_all')
+    events_counter_all = tables.get('events_counter_all')
+    outage = tables.get('outage')
+    flat_table = AgrView.update_coordinates(flat_table)
+    flat_table = AgrView.clean_types(flat_table)
+    # flat_table = AgrView.get_ranking(flat_table)
+    # flat_table = AgrView.get_temp_conditions(flat_table)
+    # flat_table = AgrView.split_address(flat_table)
+    # flat_table = AgrView.split_wall_materials(flat_table, df_wall_materials)
+    # df_events = tables.get('test_events_all')
+    # df_events = AgrView.get_work_days(df_events)
+    agr_tables["flat_table"] = flat_table
+    agr_tables["events_all"] = events_all
+    agr_tables["events_counter_all"] = events_counter_all
+    agr_tables["outage"] = outage
     return agr_tables
 
 
@@ -333,6 +339,46 @@ class AgrView:
             columns={"id": "material_sten", "name": "wall_material_description"})
         return df.merge(df_wall_materials, how='left', on='material_sten')
 
+    @staticmethod
+    def update_coordinates(df: pd.DataFrame) -> pd.DataFrame:
+        df['obj_source_geodata_center'] = df['obj_source_geodata_center'].apply(
+            lambda x: Utils.get_coord(x))
+        df['obj_source_coordinates'] = df.apply(
+            lambda x: Utils.compare_coord(x, 'obj_source_geodata_center', 'obj_source_geodata_center')
+            , axis=1)
+        df['obj_consumer_station_geodata_center'] = df['obj_consumer_station_geodata_center'].apply(
+            lambda x: Utils.get_coord(x))
+        df['obj_consumer_station_geodata'] = df['obj_consumer_station_geodata'].apply(
+            lambda x: Utils.get_coord(x, darr=True))
+        df['obj_consumer_geodata_center'] = df['obj_consumer_geodata_center'].apply(lambda x: Utils.get_coord(x))
+        df['obj_consumer_geodata'] = df['obj_consumer_geodata'].apply(lambda x: Utils.get_coord(x, darr=True))
+        df['obj_consumer_coordinates'] = df.apply(
+            lambda x: Utils.compare_coord(x, 'obj_consumer_geodata_center', 'obj_consumer_geodata')
+            , axis=1)
+        df['obj_consumer_station_coordinates'] = df.apply(
+            lambda x: Utils.compare_coord(x, 'obj_consumer_station_geodata_center', 'obj_consumer_station_geodata')
+            , axis=1)
+        df.drop(columns=[
+            'obj_consumer_station_geodata_center', 'obj_consumer_station_geodata',
+            'obj_consumer_geodata_center', 'obj_consumer_geodata',
+        ], inplace=True)
+        return df
+
+    @staticmethod
+    def clean_types(df: pd.DataFrame) -> pd.DataFrame:
+        df['obj_consumer_is_dispatch'] = df['obj_consumer_is_dispatch'].apply(lambda x: True if x == 'да' else False)
+        df['obj_consumer_build_floors'] = df['obj_consumer_build_floors'].apply(
+            lambda x: int(x) if x != 'Нет данных' else 1)
+        df['obj_consumer_total_area'] = df['obj_consumer_total_area'].apply(
+            lambda x: float(x.replace(',', '.')) if x != "Нет данных" else 0.0)
+        df['obj_consumer_station_ods_id_yy'] = df['obj_consumer_station_ods_id_yy'].apply(
+            lambda x: int(float(x)) if x != 'Нет данных' else 0)
+        df['obj_consumer_building_wear_pct '] = df['obj_consumer_building_wear_pct '].apply(
+            lambda x: float(x) if x != "Нет данных" else 0.0)
+        df['obj_consumer_build_date '] = df['obj_consumer_build_date '].apply(
+            lambda x: int(float(x)) if x != "Нет данных" else 0)
+        return df
+
 
 class AgrTrain:
     @staticmethod
@@ -619,6 +665,9 @@ consumer_soc_type = {
 
 
 class Utils:
+    @staticmethod
+    def compare_coord(x, center, polygon) -> dict:
+        return {"center": x[center], 'polygon': x[polygon]}
 
     @staticmethod
     def priority(x):
@@ -774,17 +823,17 @@ class Utils:
         coord = []
         match x:
             case 'ТЭЦ №23':
-                coord = ["Монтажная ул., 1/4с1", 55.821649, 37.764117]
+                coord = ["Монтажная ул., 1/4с1", 37.764117, 55.821649]
             case 'ТЭЦ №22':
-                coord = ["ул. Энергетиков, 5, Дзержинский", 55.630469, 37.816665]
+                coord = ["ул. Энергетиков, 5, Дзержинский", 37.816665, 55.630469]
             case 'РТС Перово':
-                coord = ["Кетчерская ул., 11А", 55.747464, 37.837246]
+                coord = ["Кетчерская ул., 11А", 37.837246, 55.747464]
             case 'ТЭЦ №11':
-                coord = ["шоссе Энтузиастов, 32с1", 55.752803, 37.730223]
+                coord = ["шоссе Энтузиастов, 32с1", 37.730223, 55.752803]
             case 'КТС-42':
-                coord = ["Гражданская 4-я ул., д. 41", 55.807567, 37.719944]
+                coord = ["Гражданская 4-я ул., д. 41", 37.719944, 55.807567]
             case 'КТС-28':
-                coord = ["Бойцовая ул., д. 24", 55.814801, 37.727607]
+                coord = ["Бойцовая ул., д. 24", 37.727607, 55.814801]
         return coord
 
     @staticmethod
