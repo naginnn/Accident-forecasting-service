@@ -279,8 +279,8 @@ def agr_for_unprocessed(tables: dict) -> dict:
 
     clear_shit.rename(columns={
         "Класс энергоэффективности здания": 'obj_consumer_energy_class',
-        "Фактический износ здания, %": 'obj_consumer_building_wear_pct ',
-        "Год ввода здания в эксплуатацию": 'obj_consumer_build_date ',
+        "Фактический износ здания, %": 'obj_consumer_building_wear_pct',
+        "Год ввода здания в эксплуатацию": 'obj_consumer_build_date',
     }, inplace=True)
 
     res2 = res2.merge(clear_shit, how='left', on=["obj_consumer_address"])
@@ -373,9 +373,9 @@ class AgrView:
             lambda x: float(x.replace(',', '.')) if x != "Нет данных" else 0.0)
         df['obj_consumer_station_ods_id_yy'] = df['obj_consumer_station_ods_id_yy'].apply(
             lambda x: int(float(x)) if x != 'Нет данных' else 0)
-        df['obj_consumer_building_wear_pct '] = df['obj_consumer_building_wear_pct '].apply(
+        df['obj_consumer_building_wear_pct '] = df['obj_consumer_building_wear_pct'].apply(
             lambda x: float(x) if x != "Нет данных" else 0.0)
-        df['obj_consumer_build_date '] = df['obj_consumer_build_date '].apply(
+        df['obj_consumer_build_date '] = df['obj_consumer_build_date'].apply(
             lambda x: int(float(x)) if x != "Нет данных" else 0)
         return df
 
