@@ -21,6 +21,7 @@ type Weather struct {
 func (h handler) GetObjView(c *gin.Context) {
 	objConsumerStationId := c.Param("obj_consumer_station_id")
 	var consumerStation models.ObjConsumerStation
+	var sourceStation models.ObjSourceStation
 	var consumers []models.ObjConsumer
 	var area models.LocationArea
 
@@ -44,6 +45,17 @@ func (h handler) GetObjView(c *gin.Context) {
 		c.JSON(http.StatusNotFound, "not found")
 		return
 	}
+	var weatherFall []models.WeatherConsumerFall
+	q := "select ec.* FROM weather_consumer_falls as ec " +
+		"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+		"FROM weather_consumer_falls WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+		"USING(id, obj_consumer_id) JOIN obj_consumers c " +
+		"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;"
+	err := h.DB.Raw(q).Scan(&weatherFall).Error
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	var newConsumers []models.ObjConsumer
 	for _, consumer := range consumers {
 		q := "select ec.* " +
@@ -57,17 +69,23 @@ func (h handler) GetObjView(c *gin.Context) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		q = "select ec.* FROM weather_consumer_falls as ec " +
-			"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
-			"FROM weather_consumer_falls WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
-			"USING(id, obj_consumer_id) JOIN obj_consumers c " +
-			"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + strconv.FormatUint(consumer.ObjConsumerStationId, 10) + "' ORDER BY ec.id DESC;"
-		err = h.DB.Raw(q).Scan(&consumer.WeatherFall).Error
+		consumer.WeatherFall = weatherFall
 		newConsumers = append(newConsumers, consumer)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
+
+	q = "select * from public.obj_source_stations " +
+		"join public.obj_source_consumer_stations oscs on obj_source_stations.id = oscs.obj_source_station_id " +
+		"where oscs.obj_consumer_station_id = '" + objConsumerStationId + "'"
+	h.DB.Raw(q).Scan(&sourceStation)
+
+	//if h.DB.Where("id = ?", objConsumerStationId).
+	//	Find(&sourceStation).RowsAffected == 0 {
+	//	c.JSON(http.StatusNotFound, "not found")
+	//	return
+	//}
 
 	if h.DB.Where("id = ?", objConsumerStationId).
 		//Preload("Weather", func(tx *gorm.DB) *gorm.DB {
@@ -137,7 +155,7 @@ func (h handler) GetObjView(c *gin.Context) {
 	//area.Weather = nil
 	//consumersDep = consumerStation.Consumers
 	//consumerStation.Consumers = nil
-	sourceStations := consumerStation.SourceStations
+	//sourceStations := consumerStation.SourceStations
 	//consumerStation.SourceStations = nil
 	// dsa
 
@@ -147,6 +165,6 @@ func (h handler) GetObjView(c *gin.Context) {
 		"consumer_stations": &consumerStation,
 		"consumers_dep":     &newConsumers,
 		//"consumer_warn":     &consumerWarn,
-		"source_stations": &sourceStations,
+		"source_stations": &sourceStation,
 	})
 }
