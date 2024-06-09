@@ -1,10 +1,12 @@
 package view
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
 	"services01/pkg/models"
+	"strconv"
 	"time"
 )
 
@@ -19,14 +21,59 @@ type Weather struct {
 func (h handler) GetObjView(c *gin.Context) {
 	objConsumerStationId := c.Param("obj_consumer_station_id")
 	var consumerStation models.ObjConsumerStation
-	var consumerWarn, consumersDep []models.ObjConsumer
+	var consumers []models.ObjConsumer
 	var area models.LocationArea
+
+	if h.DB.Where("obj_consumer_station_id = ?", objConsumerStationId).
+		//Preload("Events").
+		//Preload("Events", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Raw("select ec.* FROM public.event_consumers as ec " +
+		//		"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+		//		"FROM event_consumers WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+		//		"USING(id, obj_consumer_id) JOIN public.obj_consumers c " +
+		//		"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
+		//}).
+		//Preload("WeatherFall", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Raw("select ec.* FROM weather_consumer_falls as ec " +
+		//		"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+		//		"FROM weather_consumer_falls WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+		//		"USING(id, obj_consumer_id) JOIN obj_consumers c " +
+		//		"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
+		//}).
+		Find(&consumers).RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, "not found")
+		return
+	}
+	var newConsumers []models.ObjConsumer
+	for _, consumer := range consumers {
+		q := "select ec.* " +
+			"FROM public.event_consumers as ec " +
+			"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+			"FROM event_consumers WHERE 1 IN(1) " +
+			"GROUP BY obj_consumer_id) sub " +
+			"USING(id, obj_consumer_id) " +
+			"JOIN public.obj_consumers c ON c.id = ec.obj_consumer_id where c.id = " + strconv.FormatUint(consumer.ID, 10) + " ORDER BY ec.id DESC;"
+		err := h.DB.Raw(q).Scan(&consumer.Events).Error
+		if err != nil {
+			fmt.Println(err)
+		}
+		q = "select ec.* FROM weather_consumer_falls as ec " +
+			"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+			"FROM weather_consumer_falls WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+			"USING(id, obj_consumer_id) JOIN obj_consumers c " +
+			"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + strconv.FormatUint(consumer.ObjConsumerStationId, 10) + "' ORDER BY ec.id DESC;"
+		err = h.DB.Raw(q).Scan(&consumer.WeatherFall).Error
+		newConsumers = append(newConsumers, consumer)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
 
 	if h.DB.Where("id = ?", objConsumerStationId).
 		//Preload("Weather", func(tx *gorm.DB) *gorm.DB {
 		//	return tx.Last(&models.WeatherArea{})
 		//}).
-		Preload("SourceStations").
+		//Preload("SourceStations").
 		//Preload("Consumers.Events", func(tx *gorm.DB) *gorm.DB {
 		//	return tx.Raw("select ec.* FROM event_consumers as ec " +
 		//		"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
@@ -41,7 +88,8 @@ func (h handler) GetObjView(c *gin.Context) {
 		//		"USING(id, obj_consumer_id) JOIN obj_consumers c " +
 		//		"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
 		//}).
-		Preload("Consumers").
+		//Preload("Consumers").
+		//Joins("Consumers").
 		Find(&consumerStation).RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, "not found")
 		return
@@ -86,27 +134,19 @@ func (h handler) GetObjView(c *gin.Context) {
 			}
 		}
 	}
-	area.Weather = nil
-	consumersDep = consumerStation.Consumers
-	consumerStation.Consumers = nil
+	//area.Weather = nil
+	//consumersDep = consumerStation.Consumers
+	//consumerStation.Consumers = nil
 	sourceStations := consumerStation.SourceStations
-	consumerStation.SourceStations = nil
+	//consumerStation.SourceStations = nil
 	// dsa
-	for _, cons := range consumersDep {
-		for _, event := range cons.Events {
-			if !event.IsClosed {
-				consumerWarn = append(consumerWarn, cons)
-				break
-			}
-		}
-	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"weather":           &weather,
 		"area":              &area,
 		"consumer_stations": &consumerStation,
-		"consumers_dep":     &consumersDep,
-		"consumer_warn":     &consumerWarn,
-		"source_stations":   &sourceStations,
+		"consumers_dep":     &newConsumers,
+		//"consumer_warn":     &consumerWarn,
+		"source_stations": &sourceStations,
 	})
 }
