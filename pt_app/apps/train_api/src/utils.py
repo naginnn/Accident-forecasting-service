@@ -1,4 +1,6 @@
 import io
+import os
+import threading
 from datetime import timedelta
 from typing import Tuple, Dict, Any, Callable
 from zipfile import ZipFile
@@ -10,7 +12,7 @@ from rq.command import send_stop_job_command
 from rq.exceptions import *
 from rq.job import Job, get_current_job
 
-from apps.train_api.src.tasks import update_progress
+from apps.train_api.src.tasks import update_progress, prepare_dataset, load_data
 from pkg.utils import get_elapsed_time, FakeJob
 from settings.rd import get_redis_client
 
@@ -54,9 +56,20 @@ async def check_task_state(job_id: str) -> Tuple[dict, bool] | Tuple[None, bool]
         # return dict(error="no such job, job was not started"), False
 
 
+async def autostart():
+    files = {}
+    threads = []
+    for filename in os.listdir("/autostart"):
+        thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
+        threads.append(thread)
+        thread.start()
+    for thread in threads:
+        thread.join()
+    prepare_dataset(files=files)
+
 # async def check_train_state(job_name='upload_files') -> dict:
 #     redis = get_redis_client()
-#     try:
+#     mo
 #         job = Job.fetch(id=job_name, connection=redis)
 #         status = job.get_status()
 #         if status != "started":
@@ -72,4 +85,5 @@ async def check_task_state(job_id: str) -> Tuple[dict, bool] | Tuple[None, bool]
 #         return dict(error="no such job, training was not started")
 
 
+# async upload_sync():
 

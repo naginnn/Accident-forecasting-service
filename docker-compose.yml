@@ -106,6 +106,7 @@ services:
       - ./.env
     volumes:
       - ./models:/models
+      - ./autostart:/autostart
     depends_on:
       - db
     links:

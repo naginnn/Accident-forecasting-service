@@ -11,7 +11,7 @@ from rq import Queue, get_current_job
 from pydantic import BaseModel
 
 from apps.train_api.src.tasks import upload_files
-from apps.train_api.src.utils import start_task, check_task_state
+from apps.train_api.src.utils import start_task, check_task_state, autostart
 from pkg.auth import Authorization
 from settings.db import sync_db, get_sync_session
 from settings.rd import get_redis_client
@@ -41,4 +41,11 @@ async def upload_data(file: UploadFile):
 async def upload_state():
     """ Загрузка Zip файла """
     res, ok = await check_task_state(job_id='upload_files')
+    return {'result': res, 'state': ok}
+
+
+@train_router.get("/autostart", status_code=200)
+async def upload_state():
+    """ Загрузка Zip файла """
+    res, ok = await autostart()
     return {'result': res, 'state': ok}
