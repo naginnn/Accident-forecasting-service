@@ -194,7 +194,7 @@ class SaveView:
             session.commit()
 
     @staticmethod
-    def save_objects_new(session: Session, df: pd.DataFrame):
+    def save_objects_new(session: Session, df: pd.DataFrame, events: pd.DataFrame):
         for index, row in df.iterrows():
             location_district = create_or_update(
                 session=session,
@@ -297,6 +297,8 @@ class SaveView:
                 )
             )
 
+            # operation_mode, sock_type, obj_consumer_energy_class, priority
+
             obj_consumer = create_or_update(
                 session=session,
                 Model=ObjConsumer,
@@ -307,7 +309,6 @@ class SaveView:
                     obj_consumer_station_id=obj_consumer_station.id,
                     address=row["obj_consumer_address"],
                     geo_data=row["obj_consumer_coordinates"],
-
                     street=row["obj_consumer_street"],
                     house_type=row["obj_consumer_house_type"],
                     house_number=row["obj_consumer_house_number"],
@@ -324,12 +325,13 @@ class SaveView:
                     b_class=row["obj_consumer_class"],
                     floors=row["obj_consumer_build_floors"],
                     # number=row["obj_source_address"],
-                    wear_pct=row["obj_consumer_building_wear_pct "],
-                    build_year=row["obj_consumer_build_date "],
+                    wear_pct=row["obj_consumer_building_wear_pct"],
+                    build_year=row["obj_consumer_build_date"],
                     type=row["obj_consumer_build_type"],
-                    energy_class=row["obj_source_address"],
-                    operating_mode="Нет данных",
-                    priority=0,
+                    sock_type=row["sock_type"],
+                    energy_class=row["obj_consumer_energy_class"],
+                    operating_mode=row['operation_mode'],
+                    priority=row['priority'],
                     is_dispatch=row["obj_consumer_is_dispatch"],
                 ),
                 update_fields=dict(
@@ -345,18 +347,19 @@ class SaveView:
                     load_fact=row["obj_consumer_gvs_load_fact"],
                     heat_load=row["obj_consumer_heat_build_load"],
                     vent_load=row["obj_consumer_vent_build_load"],
-                    # total_area=row["obj_consumer_total_area"],
+                    total_area=row["obj_consumer_total_area"],
                     target=row["obj_consumer_target"],
                     b_class=row["obj_consumer_class"],
                     floors=row["obj_consumer_build_floors"],
                     # number=row["obj_source_address"],
-                    wear_pct=row["obj_consumer_building_wear_pct "],
-                    build_year=row["obj_consumer_build_date "],
+                    wear_pct=row["obj_consumer_building_wear_pct"],
+                    build_year=row["obj_consumer_build_date"],
                     type=row["obj_consumer_build_type"],
-                    energy_class=row["obj_source_address"],
-                    operating_mode="Нет данных",
-                    priority=0,
-                    is_dispatch=True if row["obj_consumer_is_dispatch"] != "Нет данных" else False,
+                    sock_type=row["sock_type"],
+                    energy_class=row["obj_consumer_energy_class"],
+                    operating_mode=row['operation_mode'],
+                    priority=row['priority'],
+                    is_dispatch=row["obj_consumer_is_dispatch"],
                 )
             )
 
@@ -365,8 +368,32 @@ class SaveView:
                 session.commit()
             except Exception as e:
                 session.rollback()
+
+            # events['unom'] = events['unom'].astype(int)
+            events_df = events[events['unom'] == float(row['obj_consumer_unom'])]
+            if not events.empty:
+                print(float(row['obj_consumer_unom']))
+            # events_df = events[events['unom'] == float(row['obj_consumer_station_unom'])]
+            # if not events.empty:
+            #     print()
+
+            for idx, e in events_df.iterrows():
+                work_days = 0
+                event_consumer = EventConsumer()
+                event_consumer.obj_consumer_id = obj_consumer.id
+                event_consumer.source = e['event_source']
+                event_consumer.description = e['event_description']
+                event_consumer.is_approved = True
+                event_consumer.is_closed = True
+                event_consumer.probability = 100.0
+                event_consumer.days_of_work = work_days
+                event_consumer.created = e['event_created']
+                event_consumer.closed = e['event_closed'] if e['event_closed'] else e['event_closed_ext']
+                session.add(event_consumer)
+
             session.commit()
             print()
+
 
     # @staticmethod
     # def save_wall_materials(session: Session, df: pd.DataFrame) -> pd.DataFrame:
@@ -381,10 +408,10 @@ class SaveView:
 def save_for_view(session: Session, tables: dict):
     job = FakeJob.get_current_job()
     # df = tables.get("full")
-    # events = tables.get("events_all")
+    events = tables.get("events_all")
     flat_table = tables.get("flat_table")
     # locations = SaveView.save_locations(session=session, df=df)
-    SaveView.save_objects_new(session=session, df=flat_table)
+    SaveView.save_objects_new(session=session, df=flat_table, events=events)
     # SaveView.save_objects(session=session, df=flat_table, locations=locations, all_events=events)
     print('Success')
 

@@ -43,6 +43,7 @@ def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame
     for table_name in table_names:
         query = sa_text(f"select * from {unprocessed_schema_name}.{table_name}")
         tables[table_name] = pd.read_sql(query, db)
+    tables['event_types'] = pd.read_sql(sa_text(f"select * from public.event_types"), db)
     return tables
 
 

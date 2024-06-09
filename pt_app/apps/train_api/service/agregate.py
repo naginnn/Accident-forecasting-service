@@ -23,16 +23,22 @@ def agr_for_view(tables: dict) -> dict:
     agr_tables = {}
     flat_table = tables.get('flat_table')
     events_all = tables.get('events_all')
+    event_types = tables.get('event_types')
     events_counter_all = tables.get('events_counter_all')
     outage = tables.get('outage')
     flat_table = AgrView.update_coordinates(flat_table)
     flat_table = AgrView.clean_types(flat_table)
-    # flat_table = AgrView.get_ranking(flat_table)
+    flat_table = AgrView.get_operation_mode(flat_table)
+    flat_table = AgrView.get_sock(flat_table)
+    flat_table = AgrView.get_ranking(flat_table)
     # flat_table = AgrView.get_temp_conditions(flat_table)
     # flat_table = AgrView.split_address(flat_table)
     # flat_table = AgrView.split_wall_materials(flat_table, df_wall_materials)
     # df_events = tables.get('test_events_all')
     # df_events = AgrView.get_work_days(df_events)
+    events_all = AgrView.filter_events(events_all, event_types)
+    # events_all = AgrView.get_work_days(events_all)
+
     agr_tables["flat_table"] = flat_table
     agr_tables["events_all"] = events_all
     agr_tables["events_counter_all"] = events_counter_all
@@ -279,8 +285,8 @@ def agr_for_unprocessed(tables: dict) -> dict:
 
     clear_shit.rename(columns={
         "Класс энергоэффективности здания": 'obj_consumer_energy_class',
-        "Фактический износ здания, %": 'obj_consumer_building_wear_pct ',
-        "Год ввода здания в эксплуатацию": 'obj_consumer_build_date ',
+        "Фактический износ здания, %": 'obj_consumer_building_wear_pct',
+        "Год ввода здания в эксплуатацию": 'obj_consumer_build_date',
     }, inplace=True)
 
     res2 = res2.merge(clear_shit, how='left', on=["obj_consumer_address"])
@@ -295,25 +301,25 @@ def agr_for_unprocessed(tables: dict) -> dict:
 class AgrView:
     @staticmethod
     def get_ranking(df: pd.DataFrame) -> pd.DataFrame:
-        df['work_time_prior'] = df['vremja_raboty'].apply(lambda x: Utils.priority(x))
-        df['build_type_prior'] = df['tip_obekta'].apply(lambda x: Utils.priority(x))
-        df['energy_prior'] = df['klass_energ_eff'].apply(lambda x: Utils.priority(x))
-        consumer_sources = df['adres_tstp_itp'].unique().tolist()
+        df['operation_mode_pr'] = df['operation_mode'].apply(lambda x: Utils.priority(x))
+        df['sock_type_pr'] = df['sock_type'].apply(lambda x: Utils.priority(x))
+        df['energy_class_pr'] = df['obj_consumer_energy_class'].apply(lambda x: Utils.priority(x))
+        consumer_sources = df['obj_consumer_station_name'].unique().tolist()
         all_df = pd.DataFrame()
         for source in consumer_sources:
-            new_df = df[df['adres_tstp_itp'] == source]
-            new_df['work_time_prior_rank'] = new_df[['work_time_prior']].apply(tuple, axis=1) \
+            new_df = df[df['obj_consumer_station_name'] == source]
+            new_df['work_time_prior_rank'] = new_df[['operation_mode_pr']].apply(tuple, axis=1) \
                 .rank(method='min', ascending=True).astype(int)
-            new_df['build_type_prior_rank'] = new_df[['build_type_prior']].apply(tuple, axis=1) \
+            new_df['build_type_prior_rank'] = new_df[['sock_type_pr']].apply(tuple, axis=1) \
                 .rank(method='min', ascending=True).astype(int)
-            new_df['energy_prior_rank'] = new_df[['energy_prior']].apply(tuple, axis=1) \
+            new_df['energy_prior_rank'] = new_df[['energy_class_pr']].apply(tuple, axis=1) \
                 .rank(method='min', ascending=True).astype(int)
             new_df['priority'] = new_df['work_time_prior_rank'] + new_df['build_type_prior_rank'] + new_df[
                 'energy_prior_rank']
-            new_df.sort_values(["priority", "adres_tstp_itp"], inplace=True, ascending=True)
+            new_df.sort_values(["priority", "obj_consumer_station_name"], inplace=True, ascending=True)
             all_df = pd.concat([all_df, new_df])
         all_df = all_df.drop(['work_time_prior_rank', 'build_type_prior_rank', 'energy_prior_rank',
-                              'work_time_prior', 'build_type_prior', 'energy_prior'], axis=1)
+                              'operation_mode_pr', 'sock_type_pr', 'energy_class_pr'], axis=1)
         return all_df
 
     @staticmethod
@@ -330,7 +336,22 @@ class AgrView:
 
     @staticmethod
     def get_work_days(df: pd.DataFrame) -> pd.DataFrame:
-        df['days_of_work'] = (df['close_date'] - df['create_date']).dt.days.astype(float)
+        df = df[(df['event_closed'] != 0) | (df['event_closed_ext'] != 0)]
+        def lala(x):
+            if x['event_closed']:
+                return x['event_closed']
+            else:
+                return x['event_closed_ext']
+
+        df['closed'] = df.apply(lambda x: lala(x), axis=1)
+        df['days_of_work'] = (df['closed'] - df['event_created']).dt.days.astype(float)
+        return df
+
+    @staticmethod
+    def filter_events(df: pd.DataFrame, mask: pd.DataFrame) -> pd.DataFrame:
+        masks = mask['event_name'].tolist()
+        df = df[df['event_description'].isin(masks)]
+
         return df
 
     @staticmethod
@@ -373,10 +394,20 @@ class AgrView:
             lambda x: float(x.replace(',', '.')) if x != "Нет данных" else 0.0)
         df['obj_consumer_station_ods_id_yy'] = df['obj_consumer_station_ods_id_yy'].apply(
             lambda x: int(float(x)) if x != 'Нет данных' else 0)
-        df['obj_consumer_building_wear_pct '] = df['obj_consumer_building_wear_pct '].apply(
+        df['obj_consumer_building_wear_pct'] = df['obj_consumer_building_wear_pct'].apply(
             lambda x: float(x) if x != "Нет данных" else 0.0)
-        df['obj_consumer_build_date '] = df['obj_consumer_build_date '].apply(
+        df['obj_consumer_build_date'] = df['obj_consumer_build_date'].apply(
             lambda x: int(float(x)) if x != "Нет данных" else 0)
+        return df
+
+    @staticmethod
+    def get_operation_mode(df: pd.DataFrame) -> pd.DataFrame:
+        df['operation_mode'] = df['obj_consumer_target'].apply(lambda x: Utils.get_work_time(x))
+        return df
+
+    @staticmethod
+    def get_sock(df: pd.DataFrame) -> pd.DataFrame:
+        df['sock_type'] = df['obj_consumer_target'].apply(lambda x: Utils.get_sock_type(x))
         return df
 
 
@@ -573,6 +604,78 @@ class AgrUnprocessed:
         return ods_df
 
 
+work_time = {'жилое': 'Круглосуточно', 'блокированный жилой дом': 'Круглосуточно',
+             'многоквартирный дом': 'Круглосуточно', 'гараж и котельная': 'Круглосуточно',
+             'спецназначение': 'Круглосуточно', 'типография': 'Круглосуточно', 'техкорпус': 'Круглосуточно',
+             'ТП': 'Круглосуточно', 'служ.корпусслужебное': 'Круглосуточно', 'аварийная служба': 'Круглосуточно',
+             'учреждение и производство': 'Круглосуточно', 'административно-производственное': 'Круглосуточно',
+             'административный корпус и котельная': 'Круглосуточно', 'инженерный корпус': 'Круглосуточно',
+             'бойлерная': 'Круглосуточно', 'насосная станция': 'Круглосуточно', 'гараж и проходная': 'Круглосуточно',
+             'бытовое здание': 'Круглосуточно', 'мастерская и склад': 'Круглосуточно', 'лаборатория': 'Круглосуточно',
+             'гараж и склад': 'Круглосуточно', 'АТС': 'Круглосуточно', 'пожарное депо': 'Круглосуточно',
+             'пленкохранилище': 'Круглосуточно', 'насосная': 'Круглосуточно', 'телемеханический центр': 'Круглосуточно',
+             'диспетчерская': 'Круглосуточно', 'модуль': 'Круглосуточно', 'тепловой пункт': 'Круглосуточно',
+             'блок-станция': 'Круглосуточно', 'рентгеновский архив': 'Круглосуточно', 'ВОХР': 'Круглосуточно',
+             'ЦТП': 'Круглосуточно', 'пункт охраны': 'Круглосуточно', 'ФОК': 'Круглосуточно',
+             'учебно-производственный комбинат': 'Круглосуточно', 'хозяйственный корпус': 'Круглосуточно',
+             'станция мед.газа': 'Круглосуточно', 'прочее с производством': 'Круглосуточно',
+             'проходная': 'Круглосуточно', 'котельная': 'Круглосуточно', 'склад и учреждение': 'Круглосуточно',
+             'механический цех': 'Круглосуточно', 'производственно-бытовой корпус': 'Круглосуточно',
+             'опорно-усилительная станция': 'Круглосуточно', 'склад,учреждение': 'Круглосуточно',
+             'комбинат бытового обслуживания': 'Круглосуточно', 'хозблок': 'Круглосуточно', 'склад': 'Круглосуточно',
+             'производственное': 'Круглосуточно', 'подстанция': 'Круглосуточно', 'дворец спорта': '9:00 - 21:00',
+             'санаторий': '9:00 - 21:00', 'учреждение,мастерскиеподсобное': '9:00 – 18:00',
+             'консультативная поликлинника': '9:00 - 21:00', 'детский санаторий': '9:00 – 18:00',
+             'торговое и учреждение': '9:00 – 18:00', 'медвытрезвитель': 'Круглосуточно',
+             'спортивная школа': '9:00 - 21:00', 'торговое и бытовое обслуживание': '9:00 - 21:00',
+             'техникум': '9:00 - 21:00', 'дворец пионеров': '9:00 – 18:00', 'кафе,магазин': '9:00 - 21:00',
+             'неотложная медпомощь': 'Круглосуточно', 'склад и гараж': 'Круглосуточно',
+             'гараж-стоянка': 'Круглосуточно', 'универмаг': '9:00 - 21:00', 'дом культуры': '9:00 - 21:00',
+             'молочная кухня': '9:00 – 18:00', 'хранилище': '9:00 - 21:00', 'женская консультация': '9:00 - 21:00',
+             'кухня клиническая': '9:00 - 21:00', 'академия': '9:00 - 21:00', 'плавательный бассейн': '9:00 - 21:00',
+             'ресторан': '9:00 - 21:00', 'общественное питание': '9:00 - 21:00', 'клуб': '9:00 - 21:00',
+             'кафе-столовая': '9:00 - 21:00', 'тех.школа': '9:00 – 18:00', 'общественный туалет': '9:00 - 21:00',
+             'кинотеатр': '9:00 - 21:00', 'уборная': '9:00 - 21:00', 'здание общественных организаций': '9:00 - 21:00',
+             'школа-сад': '9:00 – 18:00', 'архив': '9:00 - 21:00', 'административное здание': '9:00 – 18:00',
+             'прочее': '9:00 - 21:00', 'почта': '9:00 - 21:00', 'блок-пристройка начальных классов': '9:00 – 18:00',
+             'бытовое': '9:00 - 21:00', 'школа-интернат': '9:00 – 18:00', 'бытовое обслуживание': '9:00 - 21:00',
+             'центр реабилитации': 'Круглосуточно', 'университет': '9:00 - 21:00', 'приходская школа': '9:00 – 18:00',
+             'медучилище': '9:00 - 21:00', 'бытовой корпус': '9:00 - 21:00', 'бомбоубежище': 'Круглосуточно',
+             'подстанция скорой помощи': 'Круглосуточно', 'терапевтический корпус': 'Круглосуточно',
+             'хирургический корпус': 'Круглосуточно', 'спальный корпус': 'Круглосуточно',
+             'школа искусств': '9:00 - 21:00', 'спортивный корпус': '9:00 - 21:00', 'аптека': '9:00 - 21:00',
+             'нежилое,ГПТУ': '9:00 – 18:00', 'учебный корпус': '9:00 - 21:00',
+             'административно-бытовой корпус': '9:00 – 18:00', 'столовая': '9:00 - 21:00',
+             'наркологический диспансер': '9:00 – 18:00', 'ПТУ': '9:00 - 21:00', 'бассейн и спортзал': '9:00 - 21:00',
+             'паталого-анатомический корпус': '9:00 - 21:00', 'лечебно-трудовые мастерские': '9:00 – 18:00',
+             'интернат': '9:00 - 21:00', 'отдел милиции': 'Круглосуточно', 'пищеблок': '9:00 - 21:00',
+             'зубной кабинет': '9:00 - 21:00', 'мойка автомашин': '9:00 - 21:00', 'ГАИ': 'Круглосуточно',
+             'отделение милиции': 'Круглосуточно', 'химчистка': '9:00 - 21:00', 'спортивное': '9:00 - 21:00',
+             'булочная-кондитерская': '9:00 - 21:00', 'гостиница': 'Круглосуточно', 'банк': '9:00 - 21:00',
+             'дом ребенка': '9:00 - 21:00', 'детские ясли': '9:00 – 18:00', 'учебно-производственное': '9:00 - 21:00',
+             'институт': '9:00 - 21:00', 'детсад-ясли': '9:00 – 18:00', 'административный корпус': '9:00 – 18:00',
+             'военкомат': '9:00 – 18:00', 'лечебный корпус': '9:00 - 21:00', 'ясли-сад': '9:00 – 18:00',
+             'родильный дом': 'Круглосуточно', 'научное': '9:00 - 21:00', 'универсам': '9:00 - 21:00',
+             'станция скорой помощи': 'Круглосуточно', 'музей': '9:00 - 21:00', 'детская поликлиника': '9:00 - 21:00',
+             'профтехучилище': '9:00 - 21:00', 'стоматологическая поликлиника': '9:00 - 21:00',
+             'общежитие': 'Круглосуточно', 'спортзал': '9:00 - 21:00', 'кафе': '9:00 - 21:00',
+             'музыкальная школа': '9:00 - 21:00', 'торговое и бытовое': '9:00 - 21:00', 'школьное': '9:00 – 18:00',
+             'пекарня': '9:00 - 21:00', 'учебно-воспитательное': '9:00 - 21:00', 'учебное': '9:00 - 21:00',
+             'училище': '9:00 - 21:00', 'оздоровительный комплекс': '9:00 - 21:00',
+             'гражданская оборона': '9:00 - 21:00', 'торговый центр': '9:00 - 21:00',
+             'центр обслуживания': '9:00 - 21:00', 'культурно-просветительное': '9:00 - 21:00',
+             'дворец бракосочетания': '9:00 - 21:00', 'больница': 'Круглосуточно', 'морг': 'Круглосуточно',
+             'парикмахерская': '9:00 - 21:00', 'колледж': '9:00 - 21:00',
+             'учебно-воспитателный комбинат': '9:00 - 21:00', 'профилакторий': '9:00 - 21:00',
+             'спортивный комплекс': '9:00 - 21:00', 'лечебное': '9:00 - 21:00', 'библиотека': '9:00 - 21:00',
+             'поликлиника': '9:00 - 21:00', 'молочно-раздаточный пункт': '9:00 – 18:00',
+             'отделение связи': '9:00 - 21:00', 'магазин': '9:00 - 21:00', 'торговое': '9:00 - 21:00',
+             'административное': '9:00 – 18:00', 'гараж': 'Круглосуточно', 'учебно-научное': '9:00 - 21:00',
+             'мастерская': '9:00 - 21:00', 'учреждение': '9:00 - 21:00', 'школа': '9:00 – 18:00',
+             'физкультурно-оздоровительный комплекс': '9:00 - 21:00', 'ателье': '9:00 - 21:00',
+             'детское дошкольное учреждение': '9:00 – 18:00', 'гимназия': '9:00 – 18:00', 'детский сад': '9:00 – 18:00',
+             'церковь': '9:00 - 21:00', 'нежилое': 'Круглосуточно'}
+
 material_dict = {
     'из железобетонных сегментов': 0.849775847370430,
     'панели керамзитобетонные': 0.94081687762476,
@@ -666,11 +769,36 @@ consumer_soc_type = {
 
 class Utils:
     @staticmethod
+    def get_sock_type(x):
+        for k in consumer_soc_type:
+            if x in consumer_soc_type[k]:
+                return k
+        return "Социальный"
+
+    @staticmethod
+    def get_work_time(x):
+        return work_time.get(x)
+
+    @staticmethod
     def compare_coord(x, center, polygon) -> dict:
         return {"center": x[center], 'polygon': x[polygon]}
 
     @staticmethod
     def priority(x):
+        energy_classes = {
+            'A': 0,
+            'A+': 0,
+            'A++': 0,
+            'B': 1,
+            'C': 2,
+            'D': 2,
+            'E': 2,
+            'G': 2,
+            'F': 2,
+        }
+        if energy_classes.get(x):
+            return energy_classes.get(x)
+
         match x:
             case 'Круглосуточно':
                 return 1
@@ -678,15 +806,9 @@ class Utils:
                 return 2
             case '9:00 – 18:00':
                 return 3
-            case 'A':
-                return 1
-            case 'B':
-                return 2
-            case 'C':
-                return 3
             case 'Социальный':
                 return 1
-            case 'Индустриальный':
+            case 'Промышленный':
                 return 2
             case 'МКД':
                 return 3
@@ -768,31 +890,35 @@ class Utils:
 
     @staticmethod
     def compare_addr(x):
-        # print(x['Улица'], x['Номер дома'])
-        st = x['Улица']
-        if 'улица' in x['Улица']:
-            st = re.sub("улица" + ' *', '', x['Улица']).strip() + " ул.,"
-        if 'проспект' in x['Улица']:
-            st = re.sub("проспект" + ' *', '', x['Улица']).strip() + " просп.,"
-        if 'проезд' in x['Улица']:
-            st = re.sub("проезд" + ' *', '', x['Улица']).strip() + " пр.,"
-        if 'переулок' in x['Улица']:
-            st = re.sub("переулок" + ' *', '', x['Улица']).strip() + " пер.,"
-        if 'аллея' in x['Улица']:
-            st = "аллея " + re.sub("аллея" + ' *', '', x['Улица']).strip()
-        if 'шоссе' in x['Улица']:
-            st = re.sub("шоссе" + ' *', '', x['Улица']).strip() + " шоссе,"
-        if 'дом' in x['Тип номера дом']:
-            if x['Номер дома'] != 'Нет данных':
-                st += " д." + str(x['Номер дома'])
-        if 'владение' in x['Тип номера дом']:
-            if x['Номер дома'] != 'Нет данных':
-                st += " вл." + str(x['Номер дома'])
+        addrs = []
+        if x['Населенный пункт'] != 'Нет данных':
+            addrs.append(x['Населенный пункт'].replace('посёлок', 'пос.'))
+        if x['Улица'] != 'Нет данных':
+            street = x['Улица']
+            street = street.replace('улица', 'ул.')
+            street = street.replace('проспект', 'просп.')
+            street = street.replace('проезд', 'пр.')
+            street = street.replace('набережная', 'наб.')
+            street = street.replace('переулок', 'пер.')
+            street = street.replace('площадь', 'пл.')
+            street = street.replace('бульвар', 'бульв.')
+            addrs.append(street)
+        if x['Номер дома'] != 'Нет данных':
+            d_type = x['Тип номера дом']
+            d_type = re.sub('^дом$', 'д.', d_type)
+            d_type = re.sub('^сооружение$', 'соор.', d_type)
+            d_type = re.sub('^владение$', 'вл.', d_type)
+            # домовладение
+            addrs.append(f"{d_type}{x['Номер дома']}")
         if x['Номер корпуса'] != 'Нет данных':
-            st += ", корп." + str(x['Номер корпуса'])
-        if x['Тип номера строения/сооружения'] != 'Нет данных':
-            st += ", стр." + str(x['Номер строения'])
-        return st
+            addrs.append(f"корп.{x['Номер корпуса']}")
+        if x['Номер строения'] != 'Нет данных':
+            str_type = x['Тип номера строения/сооружения']
+            str_type = str_type.replace('строение', 'стр.')
+            str_type = str_type.replace('сооружение', 'соор.')
+            addrs.append(f"{str_type}{x['Номер строения']}")
+
+        return ', '.join(addrs)
 
     @staticmethod
     def get_coord(x, darr=False):
@@ -834,6 +960,8 @@ class Utils:
                 coord = ["Гражданская 4-я ул., д. 41", 37.719944, 55.807567]
             case 'КТС-28':
                 coord = ["Бойцовая ул., д. 24", 37.727607, 55.814801]
+            case 'КТС Акулово':
+                coord = ["пос. Акулово, д.30А", 37.794460, 56.006502]
         return coord
 
     @staticmethod

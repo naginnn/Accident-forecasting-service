@@ -26,6 +26,7 @@ from apps.train_api.service.utils import (get_word, MultiColumnLabelEncoder,
 from pkg.utils import FakeJob
 import os
 
+from settings.db import get_sync_session
 from settings.rd import get_redis_client
 
 
@@ -57,17 +58,17 @@ async def upload_files(bts: io.BytesIO):
 
 
 def prepare_dataset(**kwargs) -> None:
-    PG_USR = os.getenv('POSTGRES_USER', 'username')
-    PG_PWD = os.getenv('POSTGRES_PASSWORD', 'password')
-    PG_HOST = os.getenv('POSTGRES_HOST', 'localhost')
-    PG_PORT = os.getenv('POSTGRES_PORT', '5432')
-    PG_DB_NAME = os.getenv('POSTGRES_DB', 'postgres')
-    db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
-    session = Session(db)
+    # PG_USR = os.getenv('POSTGRES_USER', 'username')
+    # PG_PWD = os.getenv('POSTGRES_PASSWORD', 'password')
+    # PG_HOST = os.getenv('POSTGRES_HOST', 'localhost')
+    # PG_PORT = os.getenv('POSTGRES_PORT', '5432')
+    # PG_DB_NAME = os.getenv('POSTGRES_DB', 'postgres')
+    # db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
+    # session = Session(db)
     files = kwargs.get('files')
-    job = FakeJob.get_current_job()
-    # job = get_current_job()
-    # session = get_sync_session()
+    # job = FakeJob.get_current_job()
+    job = get_current_job()
+    session = get_sync_session()
     start = time.time()
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
@@ -75,8 +76,6 @@ def prepare_dataset(**kwargs) -> None:
         tables = agr_for_unprocessed(tables=files)
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
-        print('success')
-        return
 
     update_progress(job=job, progress=25, msg="Получение необработанных данных")
     # 3. Получаем все таблицы из схемы unprocessed
@@ -88,6 +87,8 @@ def prepare_dataset(**kwargs) -> None:
     update_progress(job=job, progress=45, msg="Сохранение данных")
     # 5. Записываем
     save_for_view(session=session, tables=agr_view_tables)
+    print('success')
+    return
     #
     update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # 6. Получаем все таблицы из схемы public
@@ -118,19 +119,19 @@ def load_data(files: dict, filename: str):
     # files[filename] = pd.read_excel(f"../../../autostart/{filename}", )
 
 
-if __name__ == '__main__':
-    # start = time.time()
-    # files = {}
-    # # processes = []
-    # threads = []
-    # for filename in os.listdir("../../../autostart"):
-    #     thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
-    #     threads.append(thread)
-    #     thread.start()
-    # for thread in threads:
-    #     thread.join()
-    # # print(time.time() - start)
-    # for filename in os.listdir("../../../autostart"):
-    #     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
-    # prepare_dataset(files=files)
-    prepare_dataset(files=None)
+# if __name__ == '__main__':
+#     # start = time.time()
+#     # files = {}
+#     # # processes = []
+#     # threads = []
+#     # for filename in os.listdir("../../../autostart"):
+#     #     thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
+#     #     threads.append(thread)
+#     #     thread.start()
+#     # for thread in threads:
+#     #     thread.join()
+#     # # print(time.time() - start)
+#     # for filename in os.listdir("../../../autostart"):
+#     #     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
+#     # prepare_dataset(files=files)
+#     prepare_dataset(files=None)

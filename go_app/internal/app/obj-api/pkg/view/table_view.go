@@ -29,6 +29,7 @@ func (h handler) GetTableView(c *gin.Context) {
 		ConsumerAddress     string `json:"consumer_address"`
 		ConsumerCoordinates string `json:"consumer_coordinates"`
 
+		EventId     int64   `json:"event_id"`
 		Source      string  `json:"source"`
 		Description string  `json:"description"`
 		Probability float64 `json:"probability"`
@@ -43,7 +44,7 @@ func (h handler) GetTableView(c *gin.Context) {
     ld.id location_district_consumer_id, ld.name location_district_consumer_name,
     la.id location_area_consumer_id, la.name location_area_consumer_name, la.coordinates location_area_consumer_coordinates,
     c.id consumer_id, c.name consumer_name, c.address consumer_address, c.coordinates consumer_coordinates,
-    ecf.source, ecf.description, ecf.probability, ecf.is_approved, ecf.is_closed,
+    ecf.id event_id, ecf.source, ecf.description, ecf.probability, ecf.is_approved, ecf.is_closed,
     (SELECT EXISTS(SELECT true FROM public.event_consumers WHERE id = ec.id and is_closed = false)) as is_warning
 from obj_consumers as c
          join public.location_districts ld on ld.id = c.location_district_id

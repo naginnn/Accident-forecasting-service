@@ -67,6 +67,7 @@ type ObjConsumer struct {
 	BuildYear int64   `json:"build_year"`
 
 	Type          string `json:"type"`
+	SockType      string `json:"sock_type"`
 	EnergyClass   string `json:"energy_class"`
 	OperatingMode string `json:"operating_mode"`
 	Priority      int64  `json:"priority"`

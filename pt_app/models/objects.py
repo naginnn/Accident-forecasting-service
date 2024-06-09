@@ -97,6 +97,7 @@ class ObjConsumer(BaseModel):
     wear_pct = Column(String, nullable=True)
     build_year = Column(String, nullable=True)
     type = Column(String, nullable=True)
+    sock_type = Column(String, nullable=True)
     energy_class = Column(String, nullable=True)
     operating_mode = Column(String, nullable=True)
     priority = Column(Integer, nullable=True)
