@@ -23,24 +23,25 @@ func (h handler) GetObjView(c *gin.Context) {
 	var area models.LocationArea
 
 	if h.DB.Where("id = ?", objConsumerStationId).
-		Preload("Weather", func(tx *gorm.DB) *gorm.DB {
-			return tx.Last(&models.WeatherArea{})
-		}).
+		//Preload("Weather", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Last(&models.WeatherArea{})
+		//}).
 		Preload("SourceStations").
-		Preload("Consumers.Events", func(tx *gorm.DB) *gorm.DB {
-			return tx.Raw("select ec.* FROM event_consumers as ec " +
-				"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
-				"FROM event_consumers WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
-				"USING(id, obj_consumer_id) JOIN obj_consumers c " +
-				"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
-		}).
-		Preload("Consumers.WeatherFall", func(tx *gorm.DB) *gorm.DB {
-			return tx.Raw("select ec.* FROM weather_consumer_falls as ec " +
-				"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
-				"FROM weather_consumer_falls WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
-				"USING(id, obj_consumer_id) JOIN obj_consumers c " +
-				"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
-		}).
+		//Preload("Consumers.Events", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Raw("select ec.* FROM event_consumers as ec " +
+		//		"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+		//		"FROM event_consumers WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+		//		"USING(id, obj_consumer_id) JOIN obj_consumers c " +
+		//		"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
+		//}).
+		//Preload("Consumers.WeatherFall", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Raw("select ec.* FROM weather_consumer_falls as ec " +
+		//		"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
+		//		"FROM weather_consumer_falls WHERE 1 IN(1) GROUP BY obj_consumer_id) sub " +
+		//		"USING(id, obj_consumer_id) JOIN obj_consumers c " +
+		//		"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
+		//}).
+		Preload("Consumers").
 		Find(&consumerStation).RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, "not found")
 		return
@@ -57,27 +58,29 @@ func (h handler) GetObjView(c *gin.Context) {
 	}
 	flag := false
 	var weather Weather
-	for _, forecast := range area.Weather[0].TempInfo.Forecasts {
-		if flag {
-			break
-		}
-		tNow := time.Now().Format("2006-01-02")
-		//tForecast := time.Unix(int64(forecast.DateTs), 0).Format("2006-01-02")
-		//tForecast, _ := time.Parse("2006-01-02", forecast.Date)
-		tForecast := forecast.Date
-		if tNow == tForecast {
+	if len(area.Weather) > 0 {
+		for _, forecast := range area.Weather[0].TempInfo.Forecasts {
+			if flag {
+				break
+			}
+			tNow := time.Now().Format("2006-01-02")
+			//tForecast := time.Unix(int64(forecast.DateTs), 0).Format("2006-01-02")
+			//tForecast, _ := time.Parse("2006-01-02", forecast.Date)
+			tForecast := forecast.Date
 			if tNow == tForecast {
-				hNow := time.Now()
-				for _, data := range forecast.Hours {
-					hForecast := time.Unix(int64(data.HourTs), 0)
-					if hNow.Hour() == hForecast.Hour() {
-						weather.WindSpeed = data.WindSpeed
-						weather.Humidity = float64(data.Humidity)
-						weather.WindDir = data.WindDir
-						weather.Condition = data.Condition
-						weather.Temp = float64(data.Temp)
-						flag = true
-						break
+				if tNow == tForecast {
+					hNow := time.Now()
+					for _, data := range forecast.Hours {
+						hForecast := time.Unix(int64(data.HourTs), 0)
+						if hNow.Hour() == hForecast.Hour() {
+							weather.WindSpeed = data.WindSpeed
+							weather.Humidity = float64(data.Humidity)
+							weather.WindDir = data.WindDir
+							weather.Condition = data.Condition
+							weather.Temp = float64(data.Temp)
+							flag = true
+							break
+						}
 					}
 				}
 			}
