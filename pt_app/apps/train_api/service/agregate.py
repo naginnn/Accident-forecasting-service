@@ -501,7 +501,6 @@ class AgrUnprocessed:
     def agr_bti(bti_df: pd.DataFrame) -> pd.DataFrame:
         bti_df.columns = bti_df.iloc[0]
         bti_df = bti_df[1:]
-        bti_df.dropna(subset=['Улица'], inplace=True)
         bti_df.fillna("Нет данных", inplace=True)
         bti_df.columns = ['id', 'Город', 'Административный округ',
                           'Муниципальный округ', 'Населенный пункт',
@@ -719,31 +718,35 @@ class Utils:
 
     @staticmethod
     def compare_addr(x):
-        # print(x['Улица'], x['Номер дома'])
-        st = x['Улица']
-        if 'улица' in x['Улица']:
-            st = re.sub("улица" + ' *', '', x['Улица']).strip() + " ул.,"
-        if 'проспект' in x['Улица']:
-            st = re.sub("проспект" + ' *', '', x['Улица']).strip() + " просп.,"
-        if 'проезд' in x['Улица']:
-            st = re.sub("проезд" + ' *', '', x['Улица']).strip() + " пр.,"
-        if 'переулок' in x['Улица']:
-            st = re.sub("переулок" + ' *', '', x['Улица']).strip() + " пер.,"
-        if 'аллея' in x['Улица']:
-            st = "аллея " + re.sub("аллея" + ' *', '', x['Улица']).strip()
-        if 'шоссе' in x['Улица']:
-            st = re.sub("шоссе" + ' *', '', x['Улица']).strip() + " шоссе,"
-        if 'дом' in x['Тип номера дом']:
-            if x['Номер дома'] != 'Нет данных':
-                st += " д." + str(x['Номер дома'])
-        if 'владение' in x['Тип номера дом']:
-            if x['Номер дома'] != 'Нет данных':
-                st += " вл." + str(x['Номер дома'])
+        addrs = []
+        if x['Населенный пункт'] != 'Нет данных':
+            addrs.append(x['Населенный пункт'].replace('посёлок', 'пос.'))
+        if x['Улица'] != 'Нет данных':
+            street = x['Улица']
+            street = street.replace('улица', 'ул.')
+            street = street.replace('проспект', 'просп.')
+            street = street.replace('проезд', 'пр.')
+            street = street.replace('набережная', 'наб.')
+            street = street.replace('переулок', 'пер.')
+            street = street.replace('площадь', 'пл.')
+            street = street.replace('бульвар', 'бульв.')
+            addrs.append(street)
+        if x['Номер дома'] != 'Нет данных':
+            d_type = x['Тип номера дом']
+            d_type = re.sub('^дом$', 'д.', d_type)
+            d_type = re.sub('^сооружение$', 'соор.', d_type)
+            d_type = re.sub('^владение$', 'вл.', d_type)
+            # домовладение
+            addrs.append(f"{d_type}{x['Номер дома']}")
         if x['Номер корпуса'] != 'Нет данных':
-            st += ", корп." + str(x['Номер корпуса'])
-        if x['Тип номера строения/сооружения'] != 'Нет данных':
-            st += ", стр." + str(x['Номер строения'])
-        return st
+            addrs.append(f"корп.{x['Номер корпуса']}")
+        if x['Номер строения'] != 'Нет данных':
+            str_type = x['Тип номера строения/сооружения']
+            str_type = str_type.replace('строение', 'стр.')
+            str_type = str_type.replace('сооружение', 'соор.')
+            addrs.append(f"{str_type}{x['Номер строения']}")
+
+        return ', '.join(addrs)
 
     @staticmethod
     def get_coord(x, darr=False):
@@ -785,6 +788,8 @@ class Utils:
                 coord = ["Гражданская 4-я ул., д. 41", 55.807567, 37.719944]
             case 'КТС-28':
                 coord = ["Бойцовая ул., д. 24", 55.814801, 37.727607]
+            case 'КТС Акулово':
+                coord = ["пос. Акулово, д.30А", 56.006502, 37.794460]
         return coord
 
     @staticmethod
