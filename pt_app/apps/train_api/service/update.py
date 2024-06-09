@@ -8,11 +8,11 @@ from sqlalchemy import create_engine, text as sa_text, select
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.dialects.postgresql import insert as ins
 from models.locations import *
-from models.accidents import *
 from models.events import *
 from models.ml_info import ModelInfo
 from models.objects import *
 from models.materials import *
+from models.utils import create_or_update
 from models.weathers import *
 from pkg.utils import FakeJob
 
@@ -193,6 +193,102 @@ class SaveView:
                 session.add(event_consumer)
             session.commit()
 
+    @staticmethod
+    def save_objects_new(session: Session, df: pd.DataFrame):
+        for index, row in df.iterrows():
+            location_district = create_or_update(
+                session=session,
+                Model=LocationDistrict,
+                constraint="uni_location_districts_name",
+                create_fields=dict(
+                    name=row['obj_consumer_station_location_district'],
+                ),
+                update_fields=dict(
+                    name=row['obj_consumer_station_location_district'],
+                )
+            )
+
+            location_area = create_or_update(
+                session=session,
+                Model=LocationArea,
+                constraint="uni_location_areas_name",
+                create_fields=dict(
+                    name=row['obj_consumer_station_location_area'],
+                    location_district_id=location_district.id,
+                ),
+                update_fields=dict(
+                    name=row['obj_consumer_station_location_area'],
+                    location_district_id=location_district.id,
+                )
+            )
+
+            obj_consumer_station = create_or_update(
+                session=session,
+                Model=ObjConsumerStation,
+                constraint="uni_obj_consumer_stations_name",
+                create_fields=dict(
+                    location_district_id=location_district.id,
+                    location_area_id=location_area.id,
+                    name=row['obj_consumer_station_name'],
+                    address=row['obj_consumer_station_address'],
+                    type=row['obj_consumer_station_type'],
+                    place_type=row['obj_consumer_station_place_type'],
+                    ods_name=row['obj_consumer_station_ods_name'],
+                    ods_address=row['obj_consumer_station_ods_address'],
+                    ods_id_uu=row['obj_consumer_station_ods_id_yy'],
+                    ods_manager_company=row['obj_consumer_station_ods_manager_company'],
+                    geo_data={"polygon": row["obj_consumer_station_geodata"],
+                              "center": row["obj_consumer_station_geodata_center"]},
+                ),
+                update_fields=dict(
+                    address=row['obj_consumer_station_address'],
+                    type=row['obj_consumer_station_type'],
+                    place_type=row['obj_consumer_station_place_type'],
+                    ods_name=row['obj_consumer_station_ods_name'],
+                    ods_address=row['obj_consumer_station_ods_address'],
+                    ods_id_uu=row['obj_consumer_station_ods_id_yy'],
+                    ods_manager_company=row['obj_consumer_station_ods_manager_company'],
+                    geo_data={"polygon": row["obj_consumer_station_geodata"],
+                              "center": row["obj_consumer_station_geodata_center"]},
+                )
+            )
+
+            obj_source_station = create_or_update(
+                session=session,
+                Model=ObjSourceStation,
+                constraint="uni_obj_source_stations_name",
+                create_fields=dict(
+                    location_district_id=location_district.id,
+                    location_area_id=location_area.id,
+                    name=row["obj_source_name"],
+                    launched_date=row["obj_source_launched"],
+                    address=row["obj_source_address"],
+                    e_power=row["obj_source_e_power"],
+                    t_power=row["obj_source_t_power"],
+                    boiler_count=row["obj_source_boiler_count"],
+                    turbine_count=row["obj_source_turbine_count"],
+                    geo_data={"center": row["obj_source_geodata_center"]},
+                ),
+                update_fields=dict(
+                    launched_date=row["obj_source_launched"],
+                    address=row["obj_source_address"],
+                    e_power=row["obj_source_e_power"],
+                    t_power=row["obj_source_t_power"],
+                    boiler_count=row["obj_source_boiler_count"],
+                    turbine_count=row["obj_source_turbine_count"],
+                    geo_data={"center": row["obj_source_geodata_center"]},
+                )
+            )
+
+
+            try:
+                obj_source_station.consumer_stations.append(obj_consumer_station)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+            session.commit()
+            print()
+
     # @staticmethod
     # def save_wall_materials(session: Session, df: pd.DataFrame) -> pd.DataFrame:
     #     for index, row in df.iterrows():
@@ -205,10 +301,12 @@ class SaveView:
 # сохранить без подгрузки координат
 def save_for_view(session: Session, tables: dict):
     job = FakeJob.get_current_job()
-    df = tables.get("full")
-    events = tables.get("events_all")
-    locations = SaveView.save_locations(session=session, df=df)
-    SaveView.save_objects(session=session, df=df, locations=locations, all_events=events)
+    # df = tables.get("full")
+    # events = tables.get("events_all")
+    flat_table = tables.get("flat_table")
+    # locations = SaveView.save_locations(session=session, df=df)
+    SaveView.save_objects_new(session=session, df=flat_table)
+    # SaveView.save_objects(session=session, df=flat_table, locations=locations, all_events=events)
     print('Success')
 
 

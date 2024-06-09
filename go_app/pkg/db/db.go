@@ -103,18 +103,15 @@ func Init(appName string) (*gorm.DB, error) {
 		// Materials
 		err = db.AutoMigrate(
 			&models.MaterialWall{},
-			&models.MaterialRoof{},
 		)
 
 		//Events
 		err = db.AutoMigrate(
 			&models.EventConsumer{},
-			&models.PredictionAccident{},
 		)
 		//EventsType
 		err = db.AutoMigrate(
 			&models.EventConsumer{},
-			&models.PredictionAccident{},
 			&models.EventType{},
 		)
 

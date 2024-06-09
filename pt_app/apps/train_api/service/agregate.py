@@ -1,4 +1,6 @@
 import datetime
+import os
+import pickle
 import threading
 from typing import Tuple
 import numpy as np
@@ -6,8 +8,12 @@ from sqlalchemy import text as sa_text, select
 from sqlalchemy.orm import sessionmaker, Session
 import pandas as pd
 import re
-
+from rq import Queue
+from rq.command import send_stop_job_command
+from rq.exceptions import *
+from rq.job import Job, get_current_job
 from apps.train_api.service.utils import MultiColumnLabelEncoder
+from settings.rd import get_redis_client
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -58,15 +64,6 @@ def read_excel(tables: dict, file, sheet_name: str = None):
 def agr_for_unprocessed(tables: dict) -> dict:
     agr_tables = {}
 
-    # threads = {
-    #     '5.xlsx': threading.Thread(target=read_excel, args=(tables, '5.xlsx', 'Выгрузка',)),
-    #     '5.1.xlsx': threading.Thread(target=read_excel, args=(tables, '5.1.xlsx', 'Выгрузка',)),
-    #     '8.xlsx': threading.Thread(target=read_excel, args=(tables, '8.xlsx',)),
-    #     '13.xlsx': threading.Thread(target=read_excel, args=(tables, "13.xlsx",)),
-    # }
-    # for k, v in threads.items():
-    #     v.start()
-
     main_df = pd.read_excel(tables.get('7.xlsx'))
 
     bti_df = AgrUnprocessed.agr_bti(pd.read_excel(tables.get('9.xlsx')))
@@ -96,9 +93,7 @@ def agr_for_unprocessed(tables: dict) -> dict:
     df_coord['UNOM'] = df_coord['UNOM'].astype(float)
     res = with_tp_df.merge(df_coord[['geoData', 'geodata_center', 'UNOM']], how="inner", on='UNOM')
     df_coord = df_coord.rename(
-
         columns={'UNOM': 'UNOM_ТП', 'geoData': 'geoData_ТП', 'geodata_center': 'geodata_center_ТП'}).__deepcopy__()
-
     res2 = res.merge(df_coord[['geoData_ТП', 'geodata_center_ТП', 'UNOM_ТП']], how="inner", on='UNOM_ТП')
     res2['geodata_center'] = res2['geodata_center'].apply(lambda x: Utils.get_coord(x))
     res2['geoData'] = res2['geoData'].apply(lambda x: Utils.get_coord(x, darr=True))
@@ -148,15 +143,28 @@ def agr_for_unprocessed(tables: dict) -> dict:
         'geoData': 'obj_consumer_geodata',
         'geodata_center': 'obj_consumer_geodata_center',
     }, inplace=True)
+    obj_source_columns = (
+        'obj_source_e_power',
+        'obj_source_t_power',
+        'obj_source_boiler_count',
+        'obj_source_turbine_count'
+    )
+    res2[[*obj_source_columns]] = res2['obj_source_name'].apply(lambda x: pd.Series(Utils.get_source_data(x)))
+
     res2 = res2[[
         # source station
-        'obj_source_name', 'obj_source_launched', 'obj_source_address', 'obj_source_geodata_center',
+        'obj_source_name', 'obj_source_launched', 'obj_source_address',
+        'obj_source_e_power',
+        'obj_source_t_power',
+        'obj_source_boiler_count',
+        'obj_source_turbine_count',
+        'obj_source_geodata_center',
         # consumer_station
         'obj_consumer_station_location_district', 'obj_consumer_station_location_area', 'obj_consumer_station_name',
         'obj_consumer_station_address', 'obj_consumer_station_type',
-        'obj_consumer_station_place_type', 'obj_consumer_station_unom', 'obj_consumer_station_geodata',
+        'obj_consumer_station_place_type', 'obj_consumer_station_unom',
+        'obj_consumer_station_geodata',
         'obj_consumer_station_geodata_center',
-        # s
         # obj_consumer
         'obj_consumer_address',
         'obj_consumer_balance_holder',
@@ -188,9 +196,12 @@ def agr_for_unprocessed(tables: dict) -> dict:
     res2 = res2.merge(ods_df[['obj_consumer_station_name',
                               'obj_consumer_station_ods_name',
                               'obj_consumer_station_ods_address',
+                              'obj_consumer_station_ods_id_yy',
                               'obj_consumer_station_ods_manager_company',
                               ]], how='left', on='obj_consumer_station_name')
     res2.fillna("Нет данных", inplace=True)
+    # dsadsa
+    res2['wall_material_k'] = res2['wall_material'].apply(lambda x: Utils.check_heat_resist(x))
     # threads['5.xlsx'].join()
     # threads['5.1.xlsx'].join()
     events = pd.read_excel(tables.get('5.xlsx'), sheet_name='Выгрузка')
@@ -209,8 +220,69 @@ def agr_for_unprocessed(tables: dict) -> dict:
         'Дата и время завершения события во внешней системе': 'event_closed',
     }, inplace=True)
 
+    #
+    events_counter = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 1')
+    events_counter2 = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 2')
+
+    events_counter_all = pd.concat([events_counter, events_counter2])
+    events_counter_all.rename(columns={
+        'ID УУ': 'obj_consumer_station_ods_id_yy',
+        'ID ТУ': 'obj_consumer_station_ods_id_ty',
+        'Округ': 'district',
+        'Район': 'area',
+        'Потребители': 'obj_consumer_station_ods_manager_company',
+        'Группа': 'group',
+        'UNOM': 'unom',
+        'Адрес': 'address',
+        'Центральное отопление(контур)': 'central_heating',
+        'Марка счетчика ': 'counter_brand',
+        'Серия/Номер счетчика': 'number_brand',
+        'Дата': 'date', 'Месяц/Год': 'month_year', 'Unit': 'unit',
+        'Температура подачи': 'supply_temperature',
+        'Объём поданого теплоносителя в систему ЦО': 'to_system_co',
+        'Объём обратного теплоносителя из системы ЦО': 'to_system_reverse_co',
+        'Разница между подачей и обраткой(Подмес)': 'diff_between_feed_return_subset',
+        'Разница между подачей и обраткой(Утечка)': 'diff_between_feed_return_leak',
+        'Температура обратки': 'return_temperature',
+        'Наработка часов счётчика': 'running_time_counter_clock',
+        'Расход тепловой энергии ': 'thermal_energy_consumption',
+        'Ошибки': 'errors', 'Марка счетчика': 'counter_mark'
+    }, inplace=True)
+    events_counter_all['error_description'] = events_counter_all['errors'].apply(lambda x: Utils.get_error_desc(x))
+    events_counter_all.fillna('Нет данных', inplace=True)
+
+    outage = pd.read_excel(tables.get('6.xlsx'))
+    outage.rename(columns={
+        'Причина': 'reason', 'Источник': 'source',
+        'Дата регистрации отключения': 'date_registration_shutdown',
+        'Планируемая дата отключения': 'planned_shutdown_date',
+        'Планируемая дата включения': 'planned_activation_date',
+        'Фактическая дата отключения': 'fact_shutdown_date',
+        'Фактическая дата включения': 'fact_activation_date',
+        'Вид отключения': 'shutdown_type', 'УНОМ': 'unom', 'Адрес': 'address'}, inplace=True)
+
+    energy_df = pd.read_excel(
+        tables.get('12.xlsx'),
+        usecols=["Департамент", "Класс энергоэффективности здания",
+                 "Фактический износ здания, %", "Год ввода здания в эксплуатацию"])
+    clear_shit = energy_df[~energy_df["Департамент"].astype(str).str.contains('^[А-Я]') == True]
+
+    clear_shit["obj_consumer_address"] = clear_shit["Департамент"][2:].apply(lambda x: Utils.rename_address(x))
+    clear_shit = clear_shit.drop(columns=["Департамент"])
+    clear_shit.reset_index(drop=True, inplace=True)
+
+    clear_shit.rename(columns={
+        "Класс энергоэффективности здания": 'obj_consumer_energy_class',
+        "Фактический износ здания, %": 'obj_consumer_building_wear_pct ',
+        "Год ввода здания в эксплуатацию": 'obj_consumer_build_date ',
+    }, inplace=True)
+
+    res2 = res2.merge(clear_shit, how='left', on=["obj_consumer_address"])
+    res2.fillna('Нет данных', inplace=True)
     agr_tables['flat_table'] = res2
     agr_tables['events_all'] = events
+    agr_tables['events_counter_all'] = events_counter_all
+    agr_tables['outage'] = outage
     return agr_tables
 
 
@@ -447,6 +519,7 @@ class AgrUnprocessed:
         ods_df.rename(columns={
             'ЦТП': 'obj_consumer_station_name',
             '№ ОДС': 'obj_consumer_station_ods_name',
+            'ID УУ': 'obj_consumer_station_ods_id_yy',
             'Адрес ОДС': 'obj_consumer_station_ods_address',
             'Потребитель (или УК)': 'obj_consumer_station_ods_manager_company',
         }, inplace=True)
@@ -454,7 +527,99 @@ class AgrUnprocessed:
         return ods_df
 
 
+material_dict = {
+    'из железобетонных сегментов': 0.849775847370430,
+    'панели керамзитобетонные': 0.94081687762476,
+    'панельные': 0.84977584737043,
+    'кирпичные': 0.97984936103377,
+    'из унифицированных железобетонных элементов': 0.84977584737043,
+    'из легкобетонных панелей': 0.89371490725226,
+    'монолитные (ж-б)': 0.747126436781610,
+    'железобетонные': 0.84977584737043,
+    'крупнопанельные': 0.84977584737043,
+    'металлические': 0.72984936103377,
+    'смешанные': 0.88699221817663,
+    'шлакобетонные': 0.89371490725226,
+    'крупноблочные': 0.84977584737043,
+    'из мелких бетонных блоков': 0.75265350209981,
+    'легкобетонные блоки': 0.75265350209981,
+    'деревянные': 0.75265350209981,
+    'каркасно-панельные': 0.82345746442182,
+    'бетонные': 0.89371490725226,
+    'панельного типа несущие': 0.88699221817663,
+    'Нет данных': 0.84977584737043,
+    'каменные и бетонные': 0.93890859448325,
+    'легкобетонные блоки с утеплением': 0.72984936103377,
+    'из прочих материалов': 0.84977584737043,
+    'монолитные (бетонные)': 1.0622198092134,
+    'панели типа "Сэндвич"': 0.74712643678161,
+    'кирпичные облегченные': 0.72984936103377,
+    'каркасно-засыпные': 0.84977584737043,
+    'железобетонный каркас': 0.84977584737043
+}
+
+errors = {
+    'U': 'Отсутствие электропитания',
+    'D': 'Разница температур в подающем и обратном трубопроводах меньше минимального',
+    'g': 'Расход меньше минимального',
+    'G': 'Расход больше максимального',
+    'E': 'Функциональный отказ',
+}
+
+consumer_soc_type = {
+    "Социальный": ['дворец спорта', 'санаторий', 'учреждение,мастерские' 'подсобное', 'консультативная поликлинника',
+                   'детский санаторий', 'торговое и учреждение', 'медвытрезвитель', 'спортивная школа',
+                   'торговое и бытовое обслуживание',
+                   'техникум', 'дворец пионеров', 'кафе,магазин', 'неотложная медпомощь', 'склад и гараж',
+                   'гараж-стоянка', 'универмаг', 'дом культуры', 'молочная кухня', 'хранилище', 'женская консультация',
+                   'кухня клиническая', 'академия', 'плавательный бассейн', 'ресторан', 'общественное питание',
+                   'клуб', 'кафе-столовая', 'тех.школа', 'общественный туалет', 'кинотеатр', 'уборная',
+                   'здание общественных организаций',
+                   'школа-сад', 'архив', 'административное здание', 'прочее', 'почта',
+                   'блок-пристройка начальных классов', 'бытовое',
+                   'школа-интернат', 'бытовое обслуживание', 'центр реабилитации', 'университет', 'приходская школа',
+                   'медучилище', 'бытовой корпус', 'бомбоубежище', 'подстанция скорой помощи', 'терапевтический корпус',
+                   'хирургический корпус', 'спальный корпус', 'школа искусств', 'спортивный корпус', 'аптека',
+                   'нежилое,ГПТУ', 'учебный корпус', 'административно-бытовой корпус', 'столовая',
+                   'наркологический диспансер',
+                   'ПТУ', 'бассейн и спортзал', 'паталого-анатомический корпус', 'лечебно-трудовые мастерские',
+                   'интернат',
+                   'отдел милиции', 'пищеблок', 'зубной кабинет', 'мойка автомашин', 'ГАИ', 'отделение милиции',
+                   'химчистка',
+                   'спортивное', 'булочная-кондитерская', 'гостиница', 'банк', 'дом ребенка', 'детские ясли',
+                   'учебно-производственное',
+                   'институт', 'детсад-ясли', 'административный корпус', 'военкомат', 'лечебный корпус', 'ясли-сад',
+                   'родильный дом', 'научное', 'универсам', 'станция скорой помощи', 'музей', 'детская поликлиника',
+                   'профтехучилище', 'стоматологическая поликлиника', 'общежитие', 'спортзал', 'кафе',
+                   'музыкальная школа',
+                   'торговое и бытовое', 'школьное', 'пекарня', 'учебно-воспитательное', 'учебное', 'училище',
+                   'оздоровительный комплекс', 'гражданская оборона', 'торговый центр', 'центр обслуживания',
+                   'культурно-просветительное', 'дворец бракосочетания', 'больница', 'морг', 'парикмахерская',
+                   'колледж', 'учебно-воспитателный комбинат', 'профилакторий', 'спортивный комплекс', 'лечебное',
+                   'библиотека', 'поликлиника', 'молочно-раздаточный пункт', 'отделение связи', 'магазин',
+                   'торговое', 'административное', 'гараж', 'учебно-научное', 'мастерская', 'учреждение',
+                   'школа', 'физкультурно-оздоровительный комплекс', 'ателье', 'детское дошкольное учреждение',
+                   'гимназия',
+                   'детский сад', 'церковь', 'нежилое'],
+
+    "Промышленный": ['гараж и котельная', 'спецназначение', 'типография', 'техкорпус', 'ТП', 'служ.корпус' 'служебное',
+                     'аварийная служба', 'учреждение и производство', 'административно-производственное',
+                     'административный корпус и котельная',
+                     'инженерный корпус', 'бойлерная', 'насосная станция', 'гараж и проходная', 'бытовое здание',
+                     'мастерская и склад', 'лаборатория', 'гараж и склад', 'АТС', 'пожарное депо', 'пленкохранилище',
+                     'насосная', 'телемеханический центр', 'диспетчерская', 'модуль', 'тепловой пункт', 'блок-станция',
+                     'рентгеновский архив', 'ВОХР', 'ЦТП', 'пункт охраны', 'ФОК', 'учебно-производственный комбинат',
+                     'хозяйственный корпус', 'станция мед.газа', 'прочее с производством', 'проходная', 'котельная',
+                     'склад и учреждение', 'механический цех', 'производственно-бытовой корпус',
+                     'опорно-усилительная станция', 'склад,учреждение', 'комбинат бытового обслуживания', 'хозблок',
+                     'склад', 'производственное', 'подстанция'],
+
+    "МКД": ['жилое', 'блокированный жилой дом', 'многоквартирный дом']
+}
+
+
 class Utils:
+
     @staticmethod
     def priority(x):
         match x:
@@ -585,19 +750,18 @@ class Utils:
         res = []
         if isinstance(x, str):
             numbers = re.findall(r'[\d\.\-]+', x)
-            print(numbers)
             try:
                 if darr:
                     tmp = []
                     for i in numbers:
                         tmp.append(float(i))
                         if len(tmp) == 2:
-                            tmp.reverse()
+                            # tmp.reverse()
                             res.append(tmp)
                             tmp = []
                 else:
                     res = [float(num) for num in numbers]
-                    res.reverse()
+                    # res.reverse()
             except ValueError:
                 return x
             else:
@@ -627,6 +791,156 @@ class Utils:
     def get_addr(x):
         adr = x.pop(0)
         return adr
+
+    @staticmethod
+    def get_source_data(source: str) -> tuple[int, int, int, int]:
+        # (Электрическая мощность, Тепловая мощность, Котлы, Турбогенераторы)
+        return {
+            'ТЭЦ №23': (1420, 3709, 23, 8),
+            'РТС Перово': (0, 391, 4, 0),
+            'ТЭЦ №22': (1070, 3402, 22, 11),
+            'ТЭЦ №11': (330, 868, 7, 3),
+            'КТС-42': (0, 25, 4, 0),
+            'КТС Акулово': (0, 8, 4, 0),
+            'КТС-28': (0, 28, 4, 0),
+        }.get(source, (0, 0, 0, 0))
+
+    @staticmethod
+    def check_heat_resist(material: str) -> float:
+        if material in material_dict:
+            return material_dict[material]
+        else:
+            return 0.82345746442182
+
+    @staticmethod
+    def get_error_desc(x):
+        errs = []
+        try:
+            for err in x.split(','):
+                errs.append(errors.get(err, 'Нет данных'))
+        finally:
+            if errs:
+                return ','.join(errs)
+            else:
+                return 'Нет данных'
+
+    @staticmethod
+    def rename_address(address: str) -> str:
+        """Indian Magic! Don't touch!!!!"""
+        if isinstance(address, str):
+            split_address = address.split(' ')
+            try:
+                type_a = split_address[0]
+                if type_a == 'пр-кт':
+                    type_a = 'просп.'
+                elif type_a == 'ш.':
+                    type_a = 'шоссе'
+                elif type_a == 'б-р':
+                    type_a = 'бульвар'
+                elif type_a == 'пл.':
+                    type_a = 'площадь'
+                elif type_a == 'наб.':
+                    type_a = 'набережная'
+                elif type_a == 'проезд':
+                    type_a = 'пр.'
+                else:
+                    type_a = split_address[0]
+
+                house_type = 'д.'
+                if split_address[1][0].isupper() and split_address[2][0].isupper() and split_address[2] not in ["Б.",
+                                                                                                                "М."]:
+                    if split_address[3][0].isdigit():
+                        name_a = split_address[3] + ' ' + split_address[1] + ' ' + split_address[2]
+                        if split_address[4] not in ["Б.", "М."]:
+                            house_number = split_address[5]
+                            try:
+                                if split_address[6] == "стр.":
+                                    str_num = split_address[7]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', стр.' + str_num
+                                elif split_address[6] == "корп.":
+                                    corp_num = split_address[7]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', корп.' + corp_num
+                            except:
+                                pass
+                        else:
+                            house_number = split_address[6]
+                            try:
+                                if split_address[7] == "стр.":
+                                    str_num = split_address[8]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', стр.' + str_num
+                                elif split_address[7] == "корп.":
+                                    corp_num = split_address[8]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', корп.' + corp_num
+                            except:
+                                pass
+                    else:
+                        name_a = split_address[1] + ' ' + split_address[2]
+                        if split_address[3] not in ["Б.", "М."]:
+                            house_number = split_address[4]
+                            try:
+                                if split_address[5] == "стр.":
+                                    str_num = split_address[6]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', стр.' + str_num
+                                elif split_address[5] == "корп.":
+                                    corp_num = split_address[6]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', корп.' + corp_num
+                            except:
+                                pass
+                        else:
+                            house_number = split_address[5]
+                            try:
+                                if split_address[6] == "стр.":
+                                    str_num = split_address[7]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', стр.' + str_num
+                                elif split_address[6] == "корп.":
+                                    corp_num = split_address[7]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', корп.' + corp_num
+                            except:
+                                pass
+                else:
+                    if split_address[2][0].isdigit():
+                        name_a = split_address[2] + ' ' + split_address[1]
+                        if split_address[3] not in ["Б.", "М."]:
+                            house_number = split_address[4]
+                        else:
+                            house_type = split_address[4]
+                            house_number = split_address[5]
+                        try:
+                            if split_address[6] == "стр.":
+                                str_num = split_address[7]
+                                return name_a + ' ' + type_a + ', ' + house_type + house_number + ', стр.' + str_num
+                            elif split_address[6] == "корп.":
+                                corp_num = split_address[7]
+                                return name_a + ' ' + type_a + ', ' + house_type + house_number + ', корп.' + corp_num
+                        except:
+                            pass
+                    else:
+                        name_a = split_address[1]
+                        if split_address[2] not in ["Б.", "М."]:
+                            house_number = split_address[3]
+                            try:
+                                if split_address[4] == "стр.":
+                                    str_num = split_address[5]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', стр.' + str_num
+                                elif split_address[4] == "корп.":
+                                    corp_num = split_address[5]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', корп.' + corp_num
+                            except:
+                                pass
+                        else:
+                            house_number = split_address[4]
+                            try:
+                                if split_address[5] == "стр.":
+                                    str_num = split_address[6]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', стр.' + str_num
+                                elif split_address[5] == "корп.":
+                                    corp_num = split_address[6]
+                                    return name_a + ' ' + type_a + ', ' + house_type + house_number + ', корп.' + corp_num
+                            except:
+                                pass
+                return name_a + ' ' + type_a + ', ' + house_type + house_number
+            except:
+                return address
     # @staticmethod
     # def put_down_class(x: str, events: list) -> int:
     #     if x in events:
@@ -656,3 +970,10 @@ class Utils:
     #         return list(alpabet.keys()).index(res)
     #     else:
     #         return -1
+
+
+def upload(file, name):
+    job = get_current_job()
+    df = pd.ExcelFile(file, )
+    job.meta[name] = df
+    job.save_meta()

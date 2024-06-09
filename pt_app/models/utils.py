@@ -2,6 +2,8 @@ import uuid
 from datetime import timedelta, datetime
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm.collections import InstrumentedList
+from sqlalchemy.dialects.postgresql import insert as ins
+from sqlalchemy.orm import sessionmaker, Session
 
 Base = declarative_base()
 
@@ -58,3 +60,19 @@ def get_dict(obj, ignored_fields=None, date_format=None, compress_list=None):
                     new_obj[name] = value
             fields.append(new_obj)
     return fields
+
+
+def create_or_update(session: Session,
+                     Model: BaseModel,
+                     constraint: str,
+                     create_fields: dict,
+                     update_fields: dict) -> BaseModel:
+    obj_consumer_station = ins(Model).values(
+        **create_fields
+    )
+
+    do_upd_upd = obj_consumer_station.on_conflict_do_update(
+        constraint=constraint,
+        set_=update_fields
+    ).returning(Model)
+    return session.execute(do_upd_upd).scalar()
