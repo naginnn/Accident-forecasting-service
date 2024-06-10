@@ -31,13 +31,13 @@ def agr_for_view(tables: dict) -> dict:
     flat_table = AgrView.get_operation_mode(flat_table)
     flat_table = AgrView.get_sock(flat_table)
     flat_table = AgrView.get_ranking(flat_table)
+    flat_table = AgrView.get_temp_conditions(flat_table)
     # flat_table = AgrView.get_temp_conditions(flat_table)
     # flat_table = AgrView.split_address(flat_table)
     # flat_table = AgrView.split_wall_materials(flat_table, df_wall_materials)
     # df_events = tables.get('test_events_all')
     # df_events = AgrView.get_work_days(df_events)
     events_all = AgrView.filter_events(events_all, event_types)
-    # events_all = AgrView.get_work_days(events_all)
 
     agr_tables["flat_table"] = flat_table
     agr_tables["events_all"] = events_all
@@ -324,7 +324,7 @@ class AgrView:
 
     @staticmethod
     def get_temp_conditions(df: pd.DataFrame) -> pd.DataFrame:
-        df["temp_conditions"] = df["tip_obekta"].apply(lambda x: Utils.temp_conditions(x))
+        df["temp_conditions"] = df["sock_type"].apply(lambda x: Utils.temp_conditions(x))
         return df
 
     @staticmethod
@@ -337,6 +337,7 @@ class AgrView:
     @staticmethod
     def get_work_days(df: pd.DataFrame) -> pd.DataFrame:
         df = df[(df['event_closed'] != 0) | (df['event_closed_ext'] != 0)]
+
         def lala(x):
             if x['event_closed']:
                 return x['event_closed']
@@ -832,7 +833,7 @@ class Utils:
                     winter_high=20.0,
                     winter_low=18.0,
                 )
-            case "Индустриальный":
+            case "Промышленный":
                 return dict(
                     summer_high=20.0,
                     summer_low=18.0,

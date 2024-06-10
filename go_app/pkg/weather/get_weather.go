@@ -102,21 +102,25 @@ func UpdateTempDataArea(db *gorm.DB) error {
 func CalculateFallTemp(db *gorm.DB) error {
 	var areas []models.LocationArea
 	err := db.
-		Preload("Weather", func(tx *gorm.DB) *gorm.DB {
-			return tx.Last(&models.WeatherArea{})
-		}).
+		//Preload("Weather", func(tx *gorm.DB) *gorm.DB {
+		//	return tx.Last(&models.WeatherArea{})
+		//}).
 		//Preload("Consumers").Find(&areas).Error
 		//Preload("Consumers.WeatherFall").
 		Preload(clause.Associations).Find(&areas).Error
-
-	if err != nil {
-		log.Println(err)
-		return err
+	var nAreas []models.LocationArea
+	for _, area := range areas {
+		q := "select * from public.weather_areas where location_area_id='" + strconv.FormatUint(uint64(area.ID), 10) + "'"
+		err := db.Raw(q).Scan(&area.Weather).Error
+		if err != nil {
+			continue
+		}
+		nAreas = append(nAreas, area)
 	}
 
 	flag := false
 	var nParams []NewtonParams
-	for _, area := range areas {
+	for _, area := range nAreas {
 		for _, forecast := range area.Weather[0].TempInfo.Forecasts {
 			tNow := time.Now().Format("2006-01-02")
 			tForecast := time.Unix(int64(forecast.DateTs), 0).Format("2006-01-02")
@@ -141,7 +145,9 @@ func CalculateFallTemp(db *gorm.DB) error {
 			}
 
 		}
-		err = PredicateTemp(db, &area.Consumers, &nParams)
+		var consumers []models.ObjConsumer
+		db.Where("location_area_id = ?", area.ID).Preload("WallMaterial").Find(&consumers)
+		err = PredicateTemp(db, &consumers, &nParams)
 		if err != nil {
 			return err
 		}
@@ -166,7 +172,11 @@ func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *
 		for _, wthr := range *weatherParams {
 			tempData.DateTs = wthr.DateTs
 			//fallWeather.TempDropping.DateTs = append(fallWeather.TempDropping.DateTs, wthr.DateTs)
-			wthr.K = 0.01
+			if len(consumer.WallMaterial) > 0 {
+				wthr.K = consumer.WallMaterial[0].K
+			} else {
+				wthr.K = 0.01
+			}
 			wthr.TInitial = tInitial
 			tInitial = NewtonCooling(&wthr)
 			tempData.Temp = tInitial

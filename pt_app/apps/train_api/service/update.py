@@ -309,6 +309,7 @@ class SaveView:
                     obj_consumer_station_id=obj_consumer_station.id,
                     address=row["obj_consumer_address"],
                     geo_data=row["obj_consumer_coordinates"],
+                    temp_conditions=row["temp_conditions"],
                     street=row["obj_consumer_street"],
                     house_type=row["obj_consumer_house_type"],
                     house_number=row["obj_consumer_house_number"],
@@ -336,6 +337,7 @@ class SaveView:
                 ),
                 update_fields=dict(
                     geo_data=row["obj_consumer_coordinates"],
+                    temp_conditions=row["temp_conditions"],
                     street=row["obj_consumer_street"],
                     house_type=row["obj_consumer_house_type"],
                     house_number=row["obj_consumer_house_number"],

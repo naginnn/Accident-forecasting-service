@@ -13,8 +13,6 @@ import (
 	"services01/internal/app/obj-api/pkg/view"
 	"services01/pkg/middlewares"
 	"services01/pkg/presets"
-	"services01/pkg/weather"
-	"time"
 )
 
 func main() {
@@ -47,20 +45,31 @@ func main() {
 	config.RegRoutes(r, c)
 	objects.RegRoutes(r, c)
 
-	go func() {
-		time.Sleep(4 * time.Minute)
-		err := weather.UpdateTempDataArea(c.DB)
-		if err != nil {
-			log.Println(err)
-		}
-		for {
-			err = weather.CalculateFallTemp(c.DB)
-			if err != nil {
-				log.Println(err)
-			}
-			time.Sleep(2 * time.Minute)
-		}
-	}()
+	//err = weather.UpdateTempDataArea(c.DB)
+	//if err != nil {
+	//	log.Println(err)
+	//}
+	//err = weather.CalculateFallTemp(c.DB)
+	//if err != nil {
+	//	log.Println(err)
+	//}
+	//if err != nil {
+	//	log.Println(err)
+	//}
+	//go func() {
+	//	time.Sleep(4 * time.Minute)
+	//	err := weather.UpdateTempDataArea(c.DB)
+	//	if err != nil {
+	//		log.Println(err)
+	//	}
+	//	for {
+	//		err = weather.CalculateFallTemp(c.DB)
+	//		if err != nil {
+	//			log.Println(err)
+	//		}
+	//		time.Sleep(2 * time.Minute)
+	//	}
+	//}()
 
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, "not found")

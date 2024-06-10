@@ -39,8 +39,8 @@ def update_progress(job: Job, progress: float, msg: str):
 
 async def upload_files(bts: io.BytesIO):
     """ Переодическая задача, разбор архива и вызов парсинга """
-    job = get_current_job()
-    # job = FakeJob.get_current_job()
+    # job = get_current_job()
+    job = FakeJob.get_current_job()
     # Загрузка файлов
     # job.meta['stage'] = 0.0
     # job.save_meta()
@@ -58,16 +58,16 @@ async def upload_files(bts: io.BytesIO):
 
 
 def prepare_dataset(**kwargs) -> None:
-    # PG_USR = os.getenv('POSTGRES_USER', 'username')
-    # PG_PWD = os.getenv('POSTGRES_PASSWORD', 'password')
-    # PG_HOST = os.getenv('POSTGRES_HOST', 'localhost')
-    # PG_PORT = os.getenv('POSTGRES_PORT', '5432')
-    # PG_DB_NAME = os.getenv('POSTGRES_DB', 'postgres')
-    # db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
-    # session = Session(db)
+    PG_USR = os.getenv('POSTGRES_USER', 'username')
+    PG_PWD = os.getenv('POSTGRES_PASSWORD', 'password')
+    PG_HOST = os.getenv('POSTGRES_HOST', 'localhost')
+    PG_PORT = os.getenv('POSTGRES_PORT', '5432')
+    PG_DB_NAME = os.getenv('POSTGRES_DB', 'postgres')
+    db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
+    session = Session(db)
     files = kwargs.get('files')
-    # job = FakeJob.get_current_job()
-    job = get_current_job()
+    job = FakeJob.get_current_job()
+    # job = get_current_job()
     session = get_sync_session()
     start = time.time()
     if files:
@@ -119,7 +119,7 @@ def load_data(files: dict, filename: str):
     # files[filename] = pd.read_excel(f"../../../autostart/{filename}", )
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
 #     # start = time.time()
 #     # files = {}
 #     # # processes = []
@@ -134,4 +134,4 @@ def load_data(files: dict, filename: str):
 #     # for filename in os.listdir("../../../autostart"):
 #     #     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
 #     # prepare_dataset(files=files)
-#     prepare_dataset(files=None)
+    prepare_dataset(files=None)
