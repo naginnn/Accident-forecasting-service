@@ -69,7 +69,7 @@ func (h handler) GetTableView(c *gin.Context) {
     (SELECT EXISTS(SELECT true FROM public.event_consumers WHERE id = ec.id and is_closed = false)) as is_warning
 from obj_consumers as c
          join public.location_districts ld on ld.id = c.location_district_id
-         join public.location_areas la on ld.id = c.location_area_id
+         join public.location_areas la on la.id = c.location_area_id
          join public.obj_consumer_stations cs on cs.id = c.obj_consumer_station_id
          join public.obj_source_consumer_stations scs on cs.id = scs.obj_consumer_station_id
          join public.obj_source_stations ss on ss.id = scs.obj_source_station_id
