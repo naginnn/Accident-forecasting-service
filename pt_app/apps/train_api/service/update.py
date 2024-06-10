@@ -194,7 +194,7 @@ class SaveView:
             session.commit()
 
     @staticmethod
-    def save_objects_new(session: Session, df: pd.DataFrame, events: pd.DataFrame):
+    def save_objects_new(session: Session, df: pd.DataFrame, events: pd.DataFrame, counter_events: pd.DataFrame):
         for index, row in df.iterrows():
             location_district = create_or_update(
                 session=session,
@@ -373,14 +373,13 @@ class SaveView:
 
             # events['unom'] = events['unom'].astype(int)
             events_df = events[events['unom'] == float(row['obj_consumer_unom'])]
-            if not events.empty:
-                print(float(row['obj_consumer_unom']))
+            # if not events.empty:
+            #     print(float(row['obj_consumer_unom']))
             # events_df = events[events['unom'] == float(row['obj_consumer_station_unom'])]
             # if not events.empty:
             #     print()
 
             for idx, e in events_df.iterrows():
-                work_days = 0
                 event_consumer = EventConsumer()
                 event_consumer.obj_consumer_id = obj_consumer.id
                 event_consumer.source = e['event_source']
@@ -388,9 +387,17 @@ class SaveView:
                 event_consumer.is_approved = True
                 event_consumer.is_closed = True
                 event_consumer.probability = 100.0
-                event_consumer.days_of_work = work_days
+                event_consumer.days_of_work = e['days_of_work']
                 event_consumer.created = e['event_created']
-                event_consumer.closed = e['event_closed'] if e['event_closed'] else e['event_closed_ext']
+                event_consumer.closed = e['event_closed']
+
+                ###
+                counter_events = counter_events[counter_events['unom'] == float(row['obj_consumer_unom'])]
+                if not counter_events.empty:
+                    counter_events = counter_events[(counter_events['month_year'] >= e['event_created']) & (counter_events['month_year'] <= e['event_closed'])]
+                    print()
+                ###
+
                 session.add(event_consumer)
 
             session.commit()
@@ -410,10 +417,11 @@ class SaveView:
 def save_for_view(session: Session, tables: dict):
     job = FakeJob.get_current_job()
     # df = tables.get("full")
+    counter_events = tables.get("events_counter_all")
     events = tables.get("events_all")
     flat_table = tables.get("flat_table")
     # locations = SaveView.save_locations(session=session, df=df)
-    SaveView.save_objects_new(session=session, df=flat_table, events=events)
+    SaveView.save_objects_new(session=session, df=flat_table, events=events, counter_events=counter_events)
     # SaveView.save_objects(session=session, df=flat_table, locations=locations, all_events=events)
     print('Success')
 

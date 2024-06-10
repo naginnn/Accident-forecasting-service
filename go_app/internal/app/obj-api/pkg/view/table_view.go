@@ -73,7 +73,7 @@ from obj_consumers as c
          join public.obj_consumer_stations cs on cs.id = c.obj_consumer_station_id
          join public.obj_source_consumer_stations scs on cs.id = scs.obj_consumer_station_id
          join public.obj_source_stations ss on ss.id = scs.obj_source_station_id
-         left join (select ecc.obj_consumer_id, max(ecc.id) as id from public.event_consumers as ecc group by obj_consumer_id) ec on ec.obj_consumer_id = cs.id
+         left join (select ecc.obj_consumer_id, max(ecc.id) as id from public.event_consumers as ecc group by obj_consumer_id) ec on ec.obj_consumer_id = c.id
          left join public.event_consumers ecf on ecf.id = ec.id
 order by is_warning desc;`
 

@@ -53,16 +53,17 @@ def get_processed_data(db: Engine) -> dict[str, DataFrame]:
     ss.id source_station_id,
     cs.id cs_id, cs.location_district_id cs_location_district_id, cs.location_area_id cs_location_area_id,
     c.location_district_id c_district_id, c.location_area_id c_location_area_id, c.id consumer_id,
-     c.name consumer_name, c.address consumer_address, c.total_area, c.living_area, c.not_living_area,
+     c.address consumer_address, c.total_area,
      c.priority,
     ec.id event_id, ec.description event_description, ec.created event_created, ec.closed event_closed, ec.days_of_work days_of_work
 from obj_consumers as c
          join public.location_districts ld on ld.id = c.location_district_id
-         join public.location_areas la on ld.id = c.location_area_id
+         join public.location_areas la on la.id = c.location_area_id
          join public.obj_consumer_stations cs on cs.id = c.obj_consumer_station_id
          join public.obj_source_consumer_stations scs on cs.id = scs.obj_consumer_station_id
          join public.obj_source_stations ss on ss.id = scs.obj_source_station_id
          left join public.event_consumers ec on c.id = ec.obj_consumer_id
+-- order by ec.closed
 --          where ec.description in (select et.event_name from public.event_types et)
          """)
     tables["view_table"] = pd.read_sql(query, db)

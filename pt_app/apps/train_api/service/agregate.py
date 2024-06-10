@@ -38,6 +38,7 @@ def agr_for_view(tables: dict) -> dict:
     # df_events = tables.get('test_events_all')
     # df_events = AgrView.get_work_days(df_events)
     events_all = AgrView.filter_events(events_all, event_types)
+    events_all = AgrView.get_work_days(events_all)
 
     agr_tables["flat_table"] = flat_table
     agr_tables["events_all"] = events_all
@@ -233,35 +234,35 @@ def agr_for_unprocessed(tables: dict) -> dict:
     }, inplace=True)
 
     #
-    events_counter = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 1')
-    events_counter2 = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 2')
-
-    events_counter_all = pd.concat([events_counter, events_counter2])
-    events_counter_all.rename(columns={
-        'ID УУ': 'obj_consumer_station_ods_id_yy',
-        'ID ТУ': 'obj_consumer_station_ods_id_ty',
-        'Округ': 'district',
-        'Район': 'area',
-        'Потребители': 'obj_consumer_station_ods_manager_company',
-        'Группа': 'group',
-        'UNOM': 'unom',
-        'Адрес': 'address',
-        'Центральное отопление(контур)': 'central_heating',
-        'Марка счетчика ': 'counter_brand',
-        'Серия/Номер счетчика': 'number_brand',
-        'Дата': 'date', 'Месяц/Год': 'month_year', 'Unit': 'unit',
-        'Температура подачи': 'supply_temperature',
-        'Объём поданого теплоносителя в систему ЦО': 'to_system_co',
-        'Объём обратного теплоносителя из системы ЦО': 'to_system_reverse_co',
-        'Разница между подачей и обраткой(Подмес)': 'diff_between_feed_return_subset',
-        'Разница между подачей и обраткой(Утечка)': 'diff_between_feed_return_leak',
-        'Температура обратки': 'return_temperature',
-        'Наработка часов счётчика': 'running_time_counter_clock',
-        'Расход тепловой энергии ': 'thermal_energy_consumption',
-        'Ошибки': 'errors', 'Марка счетчика': 'counter_mark'
-    }, inplace=True)
-    events_counter_all['error_description'] = events_counter_all['errors'].apply(lambda x: Utils.get_error_desc(x))
-    events_counter_all.fillna('Нет данных', inplace=True)
+    # events_counter = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 1')
+    # events_counter2 = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 2')
+    #
+    # events_counter_all = pd.concat([events_counter, events_counter2])
+    # events_counter_all.rename(columns={
+    #     'ID УУ': 'obj_consumer_station_ods_id_yy',
+    #     'ID ТУ': 'obj_consumer_station_ods_id_ty',
+    #     'Округ': 'district',
+    #     'Район': 'area',
+    #     'Потребители': 'obj_consumer_station_ods_manager_company',
+    #     'Группа': 'group',
+    #     'UNOM': 'unom',
+    #     'Адрес': 'address',
+    #     'Центральное отопление(контур)': 'central_heating',
+    #     'Марка счетчика ': 'counter_brand',
+    #     'Серия/Номер счетчика': 'number_brand',
+    #     'Дата': 'date', 'Месяц/Год': 'month_year', 'Unit': 'unit',
+    #     'Температура подачи': 'supply_temperature',
+    #     'Объём поданого теплоносителя в систему ЦО': 'to_system_co',
+    #     'Объём обратного теплоносителя из системы ЦО': 'to_system_reverse_co',
+    #     'Разница между подачей и обраткой(Подмес)': 'diff_between_feed_return_subset',
+    #     'Разница между подачей и обраткой(Утечка)': 'diff_between_feed_return_leak',
+    #     'Температура обратки': 'return_temperature',
+    #     'Наработка часов счётчика': 'running_time_counter_clock',
+    #     'Расход тепловой энергии ': 'thermal_energy_consumption',
+    #     'Ошибки': 'errors', 'Марка счетчика': 'counter_mark'
+    # }, inplace=True)
+    # events_counter_all['error_description'] = events_counter_all['errors'].apply(lambda x: Utils.get_error_desc(x))
+    # events_counter_all.fillna('Нет данных', inplace=True)
 
     outage = pd.read_excel(tables.get('6.xlsx'))
     outage.rename(columns={
@@ -291,9 +292,36 @@ def agr_for_unprocessed(tables: dict) -> dict:
 
     res2 = res2.merge(clear_shit, how='left', on=["obj_consumer_address"])
     res2.fillna('Нет данных', inplace=True)
+
+    counter_events = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 1')
+    counter_events2 = pd.read_excel(tables.get('11.xlsx'), sheet_name='Sheet 2')
+    errors_description = pd.read_excel(tables.get('11.xlsx'), sheet_name='Справочник Ошибки (W)')
+    counter_events_all = pd.concat([counter_events, counter_events2])
+    counter_events_all.rename(columns={
+        'ID УУ': 'id_uu', 'ID ТУ': 'id_ty',
+        'Округ': 'district', 'Район': 'area', 'Потребители': 'manager_company', 'Группа': 'group', 'UNOM': 'unom',
+        'Адрес': 'address',
+        'Центральное отопление(контур)': 'contour_co',
+        'Марка счетчика': 'brand_counter',
+        'Серия/Номер счетчика': 'number_counter',
+        'Дата': 'date', 'Месяц/Год': 'month_year', 'Unit': 'unit',
+        'Объём поданого теплоносителя в систему ЦО': 'obyom_podanogo_teplonositelya_v_sistemu_co',
+        'Объём обратного теплоносителя из системы ЦО': 'obyom_obratnogo_teplonositelya_is_sistemu_co',
+        'Разница между подачей и обраткой(Подмес)': 'podmes',
+        'Разница между подачей и обраткой(Утечка)': 'ytechka',
+        'Температура подачи': 'temp_podachi',
+        'Температура обратки': 'temp_obratki',
+        'Наработка часов счётчика': 'narabotka_chasov_schetchika',
+        'Расход тепловой энергии ': 'rashod_teplovoy_energy',
+        'Ошибки': 'errors'
+    }, inplace=True)
+    err_dict = errors_description.to_dict(orient='list')
+    counter_events_all = AgrUnprocessed.get_err_counter_desc(counter_events_all, err_dict)
+    counter_events_all.fillna(0, inplace=True)
+
     agr_tables['flat_table'] = res2
     agr_tables['events_all'] = events
-    agr_tables['events_counter_all'] = events_counter_all
+    agr_tables['events_counter_all'] = counter_events_all
     agr_tables['outage'] = outage
     return agr_tables
 
@@ -336,23 +364,27 @@ class AgrView:
 
     @staticmethod
     def get_work_days(df: pd.DataFrame) -> pd.DataFrame:
-        df = df[(df['event_closed'] != 0) | (df['event_closed_ext'] != 0)]
-
-        def lala(x):
-            if x['event_closed']:
-                return x['event_closed']
-            else:
-                return x['event_closed_ext']
-
-        df['closed'] = df.apply(lambda x: lala(x), axis=1)
-        df['days_of_work'] = (df['closed'] - df['event_created']).dt.days.astype(float)
+        df['event_closed'] = df['event_closed'].astype('datetime64[ns]')
+        df['event_created'] = df['event_created'].astype('datetime64[ns]')
+        df['days_of_work'] = abs((df['event_closed'] - df['event_created']).dt.days.astype(float))
         return df
 
     @staticmethod
     def filter_events(df: pd.DataFrame, mask: pd.DataFrame) -> pd.DataFrame:
         masks = mask['event_name'].tolist()
         df = df[df['event_description'].isin(masks)]
+        df['event_closed'].fillna(0, inplace=True)
+        df['event_closed_ext'].fillna(0, inplace=True)
+        df = df[(df['event_closed'] != 0) | (df['event_closed_ext'] != 0)]
 
+        def event_closed_compare(x):
+            if x['event_closed']:
+                return x['event_closed']
+            else:
+                return x['event_closed_ext']
+
+        df['event_closed'] = df.apply(lambda x: event_closed_compare(x), axis=1)
+        df.drop(['event_closed_ext'], axis=1, inplace=True)
         return df
 
     @staticmethod
@@ -576,6 +608,10 @@ class AgrTrain:
 
 class AgrUnprocessed:
     @staticmethod
+    def get_err_counter_desc(counter_events: pd.DataFrame, err_dict: dict) -> pd.DataFrame:
+        counter_events['error_desc'] = counter_events['errors'].apply(lambda x: Utils.add_desc(x, err_dict))
+        return counter_events
+    @staticmethod
     def agr_bti(bti_df: pd.DataFrame) -> pd.DataFrame:
         bti_df.columns = bti_df.iloc[0]
         bti_df = bti_df[1:]
@@ -769,6 +805,20 @@ consumer_soc_type = {
 
 
 class Utils:
+    @staticmethod
+    def add_desc(x, err_dict):
+        res = []
+        try:
+            codes = x.split(',')
+            for code in codes:
+                try:
+                    idx = err_dict.get('Код').index(code)
+                    res.append(err_dict.get('Описание')[idx])
+                except:
+                    continue
+            return ",".join(res)
+        except:
+            return "na"
     @staticmethod
     def get_sock_type(x):
         for k in consumer_soc_type:
