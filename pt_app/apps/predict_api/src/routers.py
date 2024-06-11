@@ -1,10 +1,10 @@
 import io
 
 from fastapi import APIRouter
-from pt_app.apps.predict_api.src.utils import get_recommendations
+from apps.predict_api.src.utils import get_recommendations
 from starlette.responses import StreamingResponse
 
-from pt_app.apps.predict_api.src.reports.objects import create_objects_report, create_object_report
+from apps.predict_api.src.reports.objects import create_objects_report, create_object_report
 
 predict_router = APIRouter(
     tags=["predict"],

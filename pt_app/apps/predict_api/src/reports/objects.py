@@ -3,7 +3,7 @@ import io
 
 import pandas as pd
 from datetime import datetime
-from pt_app.settings.db import sync_db
+from settings.db import sync_db
 
 
 async def create_objects_report():
