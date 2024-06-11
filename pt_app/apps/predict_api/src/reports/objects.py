@@ -57,7 +57,7 @@ async def create_object_report(id: int):
     obj_query = f"""
                 select
                     ld.name as "Округ", la.name as "Район",
-                    obj.address as "Адрес потребителя", obj.name as "Тип потребителя",
+                    obj.address as "Адрес потребителя", 
                     obj.operating_mode as "Режим работы потребителя",
                     ocs.name as "Имя ЦТП", ocs.address as "Адрес ЦТП"
                 from obj_consumers obj
@@ -68,10 +68,37 @@ async def create_object_report(id: int):
                 """
     df_object = pd.read_sql(obj_query, sync_db)
 
+    events_query = f"""
+                    select
+                        obj.address        as "Адрес потребителя",
+                        obj.total_area     as "Общ. площадь",
+                        obj.energy_class   as "Класс энергоэффективности",
+                        obj.operating_mode as "Режим работы потребителя",
+                        obj.priority       as "Приоритет",
+                        ocs.name           as "Имя ЦТП",
+                        ocs.address        as "Адрес ЦТП",
+                        ecf.source         as "Источник",
+                        ecf.description    as "Описание",
+                        ecf.created        as "Дата создания",
+                        ecf.probability    as "Вероятность предсказания, %"
+                    from obj_consumers obj
+                         join (select ec.source,
+                                      ec.description,
+                                      ec.created,
+                                      ec.probability,
+                                      ec.obj_consumer_id
+                               from event_consumers ec
+                                        join obj_consumers obj on ec.obj_consumer_id = obj.id
+                               where ec.is_closed = false) ecf on ecf.obj_consumer_id = obj.id
+                         join obj_consumer_stations ocs on obj.obj_consumer_station_id = ocs.id
+                    where obj.id = '{str(id)}'
+    """
+    df_events = pd.read_sql(events_query, sync_db)
+
     objects_query = f"""
                 select 
-                    obj.name as "Тип потребителя", obj.address as "Адрес потребителя",
-                    obj.total_area as "Общ. площадь", obj.living_area as "Жил. площадь",
+                    obj.address as "Адрес потребителя",
+                    obj.total_area as "Общ. площадь", 
                     obj.energy_class as "Класс энергоэффективности", 
                     obj.operating_mode as "Режим работы потребителя",
                     obj.priority as "Приоритет"
@@ -98,8 +125,10 @@ async def create_object_report(id: int):
             writer.sheets[sheet_name].set_column(col_idx, col_idx, column_width)
 
     df_object.to_excel(writer, sheet_name="Информация о потребителе", index=False)
+    df_events.to_excel(writer, sheet_name="Открытые инциденты", index=False)
     df_objects.to_excel(writer, sheet_name="Взаимосвязанные потребители", index=False)
     set_column_size(df_object, "Информация о потребителе")
+    set_column_size(df_events, "Открытые инциденты")
     set_column_size(df_objects, "Взаимосвязанные потребители")
 
     writer.close()
