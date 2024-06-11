@@ -1,1 +1,1 @@
-export {store, type RootState, type AppDispatch} from './model/store'
+export {store, type RootState, type AppDispatch, useAppDispatch, useAppSelector} from './model/store'

@@ -1,18 +1,19 @@
 import {FC} from "react";
 
 import {VisibleColumnT} from "@src/widgets/tableFilter";
+import {FocusedTableRow} from "@src/shared/ui/focusedTableRow";
 
 import {TableCell, Typography} from "@mui/material";
-import TableRow from "@mui/material/TableRow";
 
 import {Consumer} from "../types/consumerCorrelationsInfo";
 
 interface IConsumerRowProps {
     info: Consumer
     visibleColumn: VisibleColumnT<Consumer>
+    setActiveConsumer: React.Dispatch<React.SetStateAction<number | undefined>>
 }
 
-export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn}) => {
+export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn, setActiveConsumer}) => {
     const getCell = (
         info: Consumer,
         keyName: Extract<
@@ -22,7 +23,7 @@ export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn}) => {
         >
     ) => {
         if (visibleColumn && visibleColumn[keyName]) {
-            return <TableCell>
+            return <TableCell onClick={() => setActiveConsumer(info.id)}>
                 <Typography variant='body2'>
                     {info[keyName]}
                 </Typography>
@@ -33,7 +34,7 @@ export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn}) => {
     }
 
     return (
-        <TableRow>
+        <FocusedTableRow>
             {getCell(info, 'name')}
             {getCell(info, 'address')}
             {getCell(info, 'total_area')}
@@ -41,7 +42,7 @@ export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn}) => {
             {getCell(info, 'energy_class')}
             {getCell(info, 'operating_mode')}
             {getCell(info, 'priority')}
-        </TableRow>
+        </FocusedTableRow>
     )
 }
 

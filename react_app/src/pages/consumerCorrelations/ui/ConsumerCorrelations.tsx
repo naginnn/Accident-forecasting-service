@@ -1,21 +1,19 @@
 import {FC} from "react";
 import {useParams} from "react-router-dom";
-import {LngLat} from "@yandex/ymaps3-types";
 
-import {Box, Grid} from "@mui/material";
+import {Grid} from "@mui/material";
+
 
 import {PageWrapper} from "@src/entities/pageWrapper";
-import {YMap} from "@src/widgets/YMap";
 import {LoadingWrapper} from "@src/entities/loadingWrapper";
 import {ErrorWrapper} from "@src/entities/errorWrapper";
-import {coordinates} from "@src/widgets/YMap/const/coordinates";
+import {withMenu} from "@src/widgets/menuWrapper";
 
 import {useGetConsumersCorrelationsQuery} from "../api/getConsumerCorrelations";
+import {ConsumersMainContent} from "./ConsumersMainContent";
 import {CommonInfoBlock} from "./CommonInfoBlock";
-import {ConsumerTablesWrapper} from "./ConsumerTablesWrapper";
-import {Consumer} from "@src/pages/consumerCorrelations/types/consumerCorrelationsInfo";
 
-export const ConsumerCorrelations: FC = () => {
+export const ConsumerCorrelations: FC = withMenu(() => {
     const {consumer_stations_id} = useParams()
 
     const {data, error, isLoading} = useGetConsumersCorrelationsQuery(consumer_stations_id!)
@@ -46,23 +44,12 @@ export const ConsumerCorrelations: FC = () => {
                                     />
                                 </Grid>
                             </Grid>
-                            <Box sx={{height: '600px', width: '100%', position: 'relative', mt: '16px'}}>
-                                <ConsumerTablesWrapper
-                                    consumers={data.consumers_dep}
-                                    consumersWarn={data.consumer_warn}
-                                />
-                                <YMap initLocation={{
-                                    center: data.area?.coordinates
-                                        .split(' ')
-                                        .reverse() as unknown as LngLat || coordinates.moscow,
-                                    zoom: 13
-                                }}/>
-                            </Box>
+                            <ConsumersMainContent data={data}/>
                         </>
                     }
                 </ErrorWrapper>
             </LoadingWrapper>
         </PageWrapper>
     );
-};
+}, 'Потребители')
 

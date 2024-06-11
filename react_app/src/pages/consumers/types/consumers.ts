@@ -1,3 +1,5 @@
+import {LngLat} from "ymaps3";
+
 export interface Consumers {
     SourceStationId: number
     source_station_name: string
@@ -7,6 +9,10 @@ export interface Consumers {
     consumer_station_name: string
     consumer_station_address: string
     consumer_station_coordinates: string
+    consumer_geo_data: {
+        center: LngLat
+        polygon: LngLat[]
+    }
     location_district_consumer_id: number
     location_district_consumer_name: string
     location_area_consumer_id: number

@@ -7,7 +7,7 @@ import {Box, LinearProgress} from "@mui/material";
 
 interface ILoadingWrapperProps {
     isLoading: boolean
-    displayType: 'normal' | 'modal' | 'hidden' | 'skeleton' | 'linear'
+    displayType: 'normal' | 'modal' | 'hidden' | 'skeleton' | 'linear' | 'modalUnblock'
     skeletonLayout?: JSX.Element | React.ReactElement<any, any>
     children: ReactNode
 }
@@ -26,6 +26,11 @@ export const LoadingWrapper = (
                 return <CircleLoader/>
             case "modal":
                 return <ModalLoader/>
+            case "modalUnblock":
+                return <>
+                    <ModalLoader/>
+                    {children}
+                </>
             case "skeleton":
                 return skeletonLayout ? skeletonLayout : null
             case "linear":

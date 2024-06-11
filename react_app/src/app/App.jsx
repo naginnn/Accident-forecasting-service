@@ -28,7 +28,7 @@ function App() {
                     }}
                     anchorOrigin={{
                         vertical: 'bottom',
-                        horizontal: 'left',
+                        horizontal: 'right',
                     }}
                 >
                 <ThemeProvider theme={theme}>

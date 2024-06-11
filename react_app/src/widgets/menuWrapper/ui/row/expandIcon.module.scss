@@ -1,0 +1,8 @@
+.expandIconWrapper {
+  transition: all .5s cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  margin-right: 8px;
+
+  &:hover {
+    transform: translateY(2px)
+  }
+}

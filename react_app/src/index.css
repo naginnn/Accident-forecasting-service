@@ -1,8 +1,8 @@
 body {
   position: absolute;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  overflow-y: hidden;
   font-family: "Montserrat", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -16,13 +16,25 @@ body {
 #root {
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 * {
   margin: 0;
   padding: 0;
-  box-sizing: 0;
+  box-sizing: border-box;
   text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #9e9e9e;
+  border-radius: 10px;
 }
 
 code {

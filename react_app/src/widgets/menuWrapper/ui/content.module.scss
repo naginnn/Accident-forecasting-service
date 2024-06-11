@@ -1,0 +1,9 @@
+@import "./variable.scss";
+
+.contentWrapper {
+  height: calc(100% - #{$top-menu-height});
+  padding: 16px 16px 0 16px;
+  margin-top: 0;
+  overflow: auto;
+  position: relative;
+}

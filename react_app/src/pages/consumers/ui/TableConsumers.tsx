@@ -1,30 +1,20 @@
 //@ts-nocheck
-import {FC, useState, useEffect} from "react";
+import {FC} from "react";
 
 import {TableBody} from "@mui/material";
 
-import {useGetConsumersQuery, TransformConsumers} from "../api/getConsumers";
+import {TransformConsumers} from "../api/getConsumers";
 
-import {LoadingWrapper} from "@src/entities/loadingWrapper";
 import {TableFilter, VisibleColumnT} from "@src/widgets/tableFilter";
-import {ErrorWrapper} from "@src/entities/errorWrapper";
-import {PageWrapper} from "@src/entities/pageWrapper"
-import {PaperWrapper} from "@src/shared/ui/paperWrapper";
 
 import {ConsumersRow} from "./ConsumersRow";
 
-export const TableConsumers: FC = ({}) => {
-    const {data: dataConsumers, isLoading: isLoadingConsumers, error: errorConsumers} = useGetConsumersQuery()
-    const [copyConsumersData, setCopyConsumersData] = useState<TransformConsumers | undefined>()
+interface ITableConsumersProps {
+    data: TransformConsumers[]
+    updateStatus: React.Dispatch<React.SetStateAction<TransformConsumers[]>>
+}
 
-
-    useEffect(() => {
-        if (dataConsumers) {
-            setCopyConsumersData(JSON.parse(JSON.stringify(dataConsumers)))
-        }
-    }, [dataConsumers])
-
-
+export const TableConsumers: FC<ITableConsumersPropsZ> = ({data, updateStatus}) => {
     const getTableBodyLayout = (data: TransformConsumers[], getPageContent: (x: TransformConsumers[]) => TransformConsumers[], visibleColumn: VisibleColumnT<TransformConsumers>) => {
         return (
             <TableBody>
@@ -36,7 +26,7 @@ export const TableConsumers: FC = ({}) => {
                                 info={row}
                                 criticalStatus={row.critical_status}
                                 visibleColumn={visibleColumn}
-                                updateStatus={setCopyConsumersData}
+                                updateStatus={updateStatus}
                             />
                         )
                     })
@@ -46,67 +36,74 @@ export const TableConsumers: FC = ({}) => {
     }
 
     return (
-        <PageWrapper>
-            <LoadingWrapper
-                isLoading={isLoadingConsumers}
-                displayType="normal"
-            >
-                <ErrorWrapper
-                    fullSizeError={{
-                        error: errorConsumers,
-                        blockContent: true
-                    }}
-                >
-                    <PaperWrapper sx={{m: '20px'}}>
-                    {
-                        !!copyConsumersData?.length &&
-                        <TableFilter
-                            id='table_view'
-                            data={copyConsumersData}
-                            getTableBodyLayout={getTableBodyLayout}
-                            withPagination
-                        >
-                            <TableFilter.Banner withSearch withManageColumn/>
-                            <TableFilter.SelectCell keyName='critical_status' id='critical_status'sx={{width: '50px'}} topic=''/>
-                            <TableFilter.Cell keyName='consumer_address' id='consumer_address' topic='Адрес потребителя'/>
-                            <TableFilter.SelectCell keyName='consumer_name' id='consumer_name' topic='Тип потребителя'/>
-                            <TableFilter.SelectCell
-                                keyName='location_district_consumer_name'
-                                id='location_district_consumer_name'
-                                topic='Округ'
-                            />
-                            <TableFilter.SelectCell
-                                keyName='location_area_consumer_name'
-                                id='location_area_consumer_name'
-                                topic='Район'
-                            />
-                            <TableFilter.SelectCell
-                                keyName='source_station_name'
-                                id='source_station_name'
-                                topic='Имя источника'
-                            />
-                            <TableFilter.Cell
-                                keyName='source_station_address'
-                                id='source_station_address'
-                                topic='Адрес источника'
-                            />
-                            <TableFilter.SelectCell
-                                keyName='consumer_station_name'
-                                id='consumer_station_name'
-                                topic='Имя ЦТП'
-                            />
-                            <TableFilter.Cell
-                                keyName='consumer_station_address'
-                                id='consumer_station_address'
-                                topic='Адрес ЦТП'
-                            />
-                            <TableFilter.SortCell keyName='probability' id='probability' topic='Вероятность предсказания'/>
-                            <TableFilter.Cell keyName='manage_table' id='manage_table'sx={{width: '50px'}} topic=''/>
-                        </TableFilter>
-                    }
-                    </PaperWrapper>
-                </ErrorWrapper>
-            </LoadingWrapper>
-        </PageWrapper>
+        <TableFilter
+            id='table_view'
+            data={data}
+            getTableBodyLayout={getTableBodyLayout}
+            withPagination
+        >
+            <TableFilter.Banner withSearch withManageColumn/>
+            <TableFilter.SelectCell
+                isInvisible
+                keyName='critical_status'
+                id='critical_status'
+                sx={{width: '50px'}}
+                topic='Статус критичности'
+            />
+            <TableFilter.Cell
+                keyName='consumer_address'
+                id='consumer_address'
+                topic='Адрес потребителя'
+            />
+            <TableFilter.SelectCell
+                keyName='consumer_name'
+                id='consumer_name'
+                topic='Тип потребителя'
+            />
+            <TableFilter.SelectCell
+                keyName='location_district_consumer_name'
+                id='location_district_consumer_name'
+                topic='Округ'
+            />
+            <TableFilter.SelectCell
+                keyName='location_area_consumer_name'
+                id='location_area_consumer_name'
+                topic='Район'
+            />
+            <TableFilter.SelectCell
+                keyName='source_station_name'
+                id='source_station_name'
+                topic='Имя источника'
+            />
+            <TableFilter.Cell
+                keyName='source_station_address'
+                id='source_station_address'
+                topic='Адрес источника'
+            />
+            <TableFilter.SelectCell
+                keyName='consumer_station_name'
+                id='consumer_station_name'
+                topic='Имя ЦТП'
+            />
+            <TableFilter.Cell
+                keyName='consumer_station_address'
+                id='consumer_station_address'
+                topic='Адрес ЦТП'
+            />
+
+            <TableFilter.SortCell
+                keyName='probability'
+                id='probability'
+                topic='Вероятность предсказания'
+            />
+            <TableFilter.Cell
+                isInvisible
+                keyName='manage_table'
+                id='manage_table'
+                sx={{width: '50px'}}
+                topic='Управление инцидентом'
+            />
+        </TableFilter>
+
     );
-};
+}

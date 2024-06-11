@@ -7,7 +7,6 @@ import {Registration} from "@src/pages/registration";
 import {OutOfRange} from "@src/pages/outOfRange";
 import {ErrorLayout} from "@src/entities/errorWrapper";
 
-import {YMap} from "@src/widgets/YMap"
 import {Consumers} from "src/pages/consumers";
 import {ConsumerCorrelations} from "@src/pages/consumerCorrelations";
 

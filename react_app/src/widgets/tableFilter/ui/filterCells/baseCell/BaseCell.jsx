@@ -4,7 +4,7 @@ import {TableCell, Grid} from "@mui/material";
 
 import {BASE_CELL_CHILD_NAME} from "../../../const/CellNames";
 
-const BaseCell = ({topic, filterIcon, sx, booleanName, children, ...props}) => {
+const BaseCell = ({topic, filterIcon, sx, booleanName, children, isInvisible, ...props}) => {
     // Лишний props нужен на уровне таблицы для дефолтной отрисовки строки
     // если не был передан кастомная верстка с помощью функции getTableBodyLayout
     if (props.keyName)
@@ -30,7 +30,7 @@ const BaseCell = ({topic, filterIcon, sx, booleanName, children, ...props}) => {
                                     color: 'rgb(135, 135, 135)'
                                 }}
                         >
-                            {children || topic}
+                            { isInvisible ? '' : children || topic}
                         </Grid>
                         : null
                 }

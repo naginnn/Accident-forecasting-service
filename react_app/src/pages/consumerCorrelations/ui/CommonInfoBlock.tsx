@@ -25,7 +25,7 @@ export const CommonInfoBlock: FC<CommonInfoBlockProps> = (
         consumerStationAddr
     }) => {
     return (
-        <PaperWrapper>
+        <PaperWrapper sx={{mt: 0}}>
             <Typography variant='h5' gutterBottom>
                 Общая информация
             </Typography>

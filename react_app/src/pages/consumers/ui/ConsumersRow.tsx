@@ -17,7 +17,7 @@ import {openNewWindowPage} from "@src/shared/lib/openNewWindowPage";
 
 interface IConsumersProps {
     info: TransformConsumers
-    visibleColumn: VisibleColumnT<TransformConsumers>
+    visibleColumn: VisibleColumnT<TransformConsumers> & {manage_table: boolean}
     updateStatus: React.Dispatch<React.SetStateAction<TransformConsumers[]>>
     criticalStatus: CriticalStatusName
 }
@@ -37,7 +37,7 @@ export const ConsumersRow: FC<IConsumersProps> = ({info, visibleColumn, updateSt
         }
     }
 
-    const getCell = (info: TransformConsumers, keyName: keyof TransformConsumers) => {
+    const getCell = (info: TransformConsumers, keyName: Exclude<keyof TransformConsumers, 'consumer_geo_data' | 'critical_status'>) => {
         if (visibleColumn && visibleColumn[keyName]) {
             return <TableCell>
                 <Typography variant='body2'>
@@ -48,18 +48,34 @@ export const ConsumersRow: FC<IConsumersProps> = ({info, visibleColumn, updateSt
         return null
     }
 
-    const getStatusCell = () => {
-        if (criticalStatus === CriticalStatusName.IS_WARNING) {
-            return <TableCell>
-                <WarningAmberIcon sx={{color: orange[600]}}/>
-            </TableCell>
-        } else if (criticalStatus === CriticalStatusName.IS_APPROVED) {
-            return <TableCell>
-                <ErrorOutlineIcon sx={{color: red[700]}}/>
-            </TableCell>
+    const getStatusCell = (keyName: keyof TransformConsumers) => {
+        if (visibleColumn && visibleColumn[keyName]) {
+            if (criticalStatus === CriticalStatusName.IS_WARNING) {
+                return <TableCell>
+                    <WarningAmberIcon sx={{color: orange[600]}}/>
+                </TableCell>
+            } else if (criticalStatus === CriticalStatusName.IS_APPROVED) {
+                return <TableCell>
+                    <ErrorOutlineIcon sx={{color: red[700]}}/>
+                </TableCell>
+            }
+
+            return <TableCell/>
         }
 
-        return <TableCell/>
+        return null
+    }
+
+    const getEditButtonCell = () => {
+        if (visibleColumn && visibleColumn['manage_table']) {
+            return <TableCell>
+                <EditStatusButton
+                    info={info}
+                    updateStatus={updateStatus}
+                />
+            </TableCell>
+        }
+        return null
     }
 
     return (
@@ -67,7 +83,7 @@ export const ConsumersRow: FC<IConsumersProps> = ({info, visibleColumn, updateSt
             onClick={onOpenConsumerCortnsPage}
             onMouseDown={onOpenConsumerCortnsNewPage}
         >
-            {getStatusCell()}
+            {getStatusCell('critical_status')}
             {getCell(info, 'consumer_address')}
             {getCell(info, 'consumer_name')}
             {getCell(info, 'location_district_consumer_name')}
@@ -77,12 +93,7 @@ export const ConsumersRow: FC<IConsumersProps> = ({info, visibleColumn, updateSt
             {getCell(info, 'consumer_station_name')}
             {getCell(info, 'consumer_station_address')}
             {getCell(info, 'probability')}
-            <TableCell>
-                <EditStatusButton
-                    info={info}
-                    updateStatus={updateStatus}
-                />
-            </TableCell>
+            {getEditButtonCell()}
         </FocusedTableRow>
     )
 }
