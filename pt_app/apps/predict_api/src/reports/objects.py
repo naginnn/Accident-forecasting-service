@@ -9,17 +9,26 @@ from pt_app.settings.db import sync_db
 async def create_objects_report():
     file_name = str(datetime.now().__format__('%d%m%Y')) + '_' + 'objects_report'
     query = """
-                select
-                    obj.address as "Адрес потребителя", obj.name as "Тип потребителя",
-                    ld.name as "Округ", la.name as "Район",
+                select 
+                    obj.address        as "Адрес потребителя",
+                    ld.name            as "Округ",
+                    la.name            as "Район",
                     obj.operating_mode as "Режим работы потребителя",
-                    ss.name as "Имя источника", ss.address as "Адрес источника",
-                    ocs.name as "Имя ЦТП", ocs.address as "Адрес ЦТП"
+                    ss.name            as "Имя источника",
+                    ss.address         as "Адрес источника",
+                    ocs.name           as "Имя ЦТП",
+                    ocs.address        as "Адрес ЦТП",
+                    ecf.probability    as "Вероятность предсказания, %"
                 from obj_source_stations ss
-                join obj_consumer_stations ocs on ss.location_area_id = ocs.location_area_id
-                join obj_consumers obj on obj.obj_consumer_station_id = ss.id
-                join location_districts ld on obj.location_district_id = ld.id
-                join location_areas la on obj.location_area_id = la.id
+                    join obj_consumer_stations ocs on ss.location_area_id = ocs.location_area_id
+                    join obj_consumers obj on obj.obj_consumer_station_id = ss.id
+                    join location_districts ld on obj.location_district_id = ld.id
+                    join location_areas la on obj.location_area_id = la.id
+                    left join (
+                        select ecc.obj_consumer_id, max(ecc.id) as id
+                        from event_consumers as ecc
+                        group by obj_consumer_id) ec on ec.obj_consumer_id = ocs.id
+                    left join event_consumers ecf on ecf.id = ec.id
                 """
     df_objects = pd.read_sql(query, sync_db)
     output = io.BytesIO()
