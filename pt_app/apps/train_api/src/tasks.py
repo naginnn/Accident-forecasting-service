@@ -121,18 +121,18 @@ def load_data(files: dict, filename: str):
 
 
 if __name__ == '__main__':
-    # start = time.time()
-    # files = {}
-    # # processes = []
-    # threads = []
-    # for filename in os.listdir("../../../autostart"):
-    #     thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
-    #     threads.append(thread)
-    #     thread.start()
-    # for thread in threads:
-    #     thread.join()
-    # # print(time.time() - start)
-    # for filename in os.listdir("../../../autostart"):
-    #     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
-    # prepare_dataset(files=files)
-    prepare_dataset(files=None)
+    start = time.time()
+    files = {}
+    # processes = []
+    threads = []
+    for filename in os.listdir("../../../autostart"):
+        thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
+        threads.append(thread)
+        thread.start()
+    for thread in threads:
+        thread.join()
+    # print(time.time() - start)
+    for filename in os.listdir("../../../autostart"):
+        files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
+    prepare_dataset(files=files)
+    # prepare_dataset(files=None)
