@@ -390,16 +390,34 @@ class SaveView:
                 event_consumer.days_of_work = e['days_of_work']
                 event_consumer.created = e['event_created']
                 event_consumer.closed = e['event_closed']
-
-                ###
-                counter_events = counter_events[counter_events['unom'] == float(row['obj_consumer_unom'])]
-                if not counter_events.empty:
-                    counter_events = counter_events[(counter_events['month_year'] >= e['event_created']) & (counter_events['month_year'] <= e['event_closed'])]
-                    print()
-                ###
-
                 session.add(event_consumer)
 
+            counter_events_filtered = counter_events[counter_events['unom'] == float(row['obj_consumer_unom'])]
+            ###
+            # if not counter_events_filtered.empty:
+            #     counter_events_filtered = counter_events_filtered[(counter_events_filtered['month_year'] >= e['event_created']) & (counter_events_filtered['month_year'] <= e['event_closed'])]
+            #     if not counter_events_filtered.empty:
+            #         print()
+            ###
+            for idx, ec in counter_events_filtered.iterrows():
+                event_counter = EventCounter()
+                event_counter.obj_consumer_id = obj_consumer.id
+                # event_counter.event_consumer_id = ec['']
+                event_counter.contour = ec['contour_co']
+                event_counter.counter_mark = ec['counter_mark']
+                event_counter.counter_number = ec['number_counter']
+                event_counter.created = ec['month_year']
+                event_counter.gcal_in_system = ec['obyom_podanogo_teplonositelya_v_sistemu_co']
+                event_counter.gcal_out_system = ec['obyom_obratnogo_teplonositelya_is_sistemu_co']
+                event_counter.subset = ec['podmes']
+                event_counter.leak = ec['ytechka']
+                event_counter.supply_temp = ec['temp_podachi']
+                event_counter.return_temp = ec['temp_obratki']
+                event_counter.work_hours_counter = ec['narabotka_chasov_schetchika']
+                event_counter.heat_thermal_energy = ec['rashod_teplovoy_energy']
+                event_counter.errors = ec['errors']
+                event_counter.errors_desc = ec['error_desc']
+                session.add(event_counter)
             session.commit()
             print()
 

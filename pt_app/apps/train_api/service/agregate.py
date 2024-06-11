@@ -40,6 +40,7 @@ def agr_for_view(tables: dict) -> dict:
     events_all = AgrView.filter_events(events_all, event_types)
     events_all = AgrView.get_work_days(events_all)
 
+    events_counter_all['month_year'] = events_counter_all['month_year'].astype('datetime64[ns]')
     agr_tables["flat_table"] = flat_table
     agr_tables["events_all"] = events_all
     agr_tables["events_counter_all"] = events_counter_all
@@ -302,6 +303,7 @@ def agr_for_unprocessed(tables: dict) -> dict:
         'Округ': 'district', 'Район': 'area', 'Потребители': 'manager_company', 'Группа': 'group', 'UNOM': 'unom',
         'Адрес': 'address',
         'Центральное отопление(контур)': 'contour_co',
+        'Марка счетчика ': 'counter_mark',
         'Марка счетчика': 'brand_counter',
         'Серия/Номер счетчика': 'number_counter',
         'Дата': 'date', 'Месяц/Год': 'month_year', 'Unit': 'unit',
