@@ -8,5 +8,4 @@ WORKDIR /app
 COPY . .
 
 COPY requirements.txt .
-RUN pip install pip==20.1.1
 RUN pip install -r requirements.txt
