@@ -33,6 +33,12 @@ services:
     ports:
       - "5432:5432"
 #    volumes:
+           # Снять дамп БД с Docker контейнера, в контейнере выполнить команду:
+           # pg_dump -U username postgres -n public | gzip > db_public.sql.gz
+           # Скопировать дамп БД на хост: 'docker cp cce3e2febc11:/home/db_public.sql.gz .'
+           # В файле скрипта закоментировать строчку -- CREATE SCHEMA public;
+           # Для инициализации БД раскоментировать строку ниже
+           #- ./db_dump/db_public.sql.gz:/docker-entrypoint-initdb.d/db_public.sql.gz
 #      - ./pg_data:/var/lib/postgresql/data
 
 #
