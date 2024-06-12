@@ -10,9 +10,17 @@ app = FastAPI(redoc_url=None)
 
 """ Настройки CORS """
 
+# origins = [
+#     "*",
+# ]
+
 origins = [
-    "*",
+    "http://95.163.229.202:3000",
+    "https://dev.mutx.ru:443",
+    os.environ.get('CORS'),
 ]
+
+
 
 app.add_middleware(
     middleware_class=CORSMiddleware,
