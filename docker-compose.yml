@@ -90,6 +90,26 @@ services:
     links:
       - db
 
+  reports:
+    container_name: reports-api
+    build:
+      context: ./pt_app
+      dockerfile: ./apps/predict_api/Dockerfile
+      network: host
+    restart: always
+    command: >
+      sh -c "python3 apps/predict_api/server.py"
+    ports:
+      - "2227:2227"
+    env_file:
+      - ./.env
+    volumes:
+      - ./models:/models
+      - ./autostart:/autostart
+    depends_on:
+      - db
+    links:
+      - db
 
   train:
     container_name: train-api
