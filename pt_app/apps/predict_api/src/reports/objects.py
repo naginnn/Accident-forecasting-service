@@ -6,46 +6,44 @@ from datetime import datetime
 from settings.db import sync_db
 
 
+def set_column_size(writer, df, sheet_name, **kwargs):
+    writer.sheets[sheet_name].autofilter(0, 0, df.shape[1], df.shape[1])
+    for column in df:
+        if kwargs.get("unique_columns", {}).get(column):
+            column_width = kwargs.get("unique_columns").get(column)
+        else:
+            column_width = max(df[column].astype(str).map(len).max(), len(column))
+        col_idx = df.columns.get_loc(column)
+        writer.sheets[sheet_name].set_column(col_idx, col_idx, column_width)
+
+
 async def create_objects_report():
     file_name = str(datetime.now().__format__('%d%m%Y')) + '_' + 'objects_report'
     query = """
-                select 
-                    obj.address        as "Адрес потребителя",
-                    ld.name            as "Округ",
-                    la.name            as "Район",
-                    obj.operating_mode as "Режим работы потребителя",
-                    ss.name            as "Имя источника",
-                    ss.address         as "Адрес источника",
-                    ocs.name           as "Имя ЦТП",
-                    ocs.address        as "Адрес ЦТП",
-                    ecf.probability    as "Вероятность предсказания, %"
-                from obj_source_stations ss
-                    join obj_consumer_stations ocs on ss.location_area_id = ocs.location_area_id
-                    join obj_consumers obj on obj.obj_consumer_station_id = ss.id
-                    join location_districts ld on obj.location_district_id = ld.id
-                    join location_areas la on obj.location_area_id = la.id
-                    left join (
-                        select ecc.obj_consumer_id, max(ecc.id) as id
-                        from event_consumers as ecc
-                        group by obj_consumer_id) ec on ec.obj_consumer_id = ocs.id
-                    left join event_consumers ecf on ecf.id = ec.id
+                select
+                    c.address as "Адрес потребителя", 
+                    ld.name as "Округ",
+                    la.name as "Район",
+                    ss.name as "Источник", 
+                    ss.address as "Адрес источника", 
+                    cs.name as "Имя ЦТП", 
+                    cs.address as "Адрес ЦТП",
+                    ecf.probability  as "Вероятность предсказания"
+                from obj_consumers as c
+                         join public.location_districts ld on ld.id = c.location_district_id
+                         join public.location_areas la on la.id = c.location_area_id
+                         join public.obj_consumer_stations cs on cs.id = c.obj_consumer_station_id
+                         join public.obj_source_consumer_stations scs on cs.id = scs.obj_consumer_station_id
+                         join public.obj_source_stations ss on ss.id = scs.obj_source_station_id
+                         left join (select ecc.obj_consumer_id, max(ecc.id) as id from public.event_consumers as ecc group by obj_consumer_id) ec on ec.obj_consumer_id = cs.id
+                         left join public.event_consumers ecf on ecf.id = ec.id
                 """
     df_objects = pd.read_sql(query, sync_db)
     output = io.BytesIO()
     writer = pd.ExcelWriter(output, engine="xlsxwriter")
 
-    def set_column_size(df, sheet_name, **kwargs):
-        writer.sheets[sheet_name].autofilter(0, 0, df.shape[1], df.shape[1])
-        for column in df:
-            if kwargs.get("unique_columns", {}).get(column):
-                column_width = kwargs.get("unique_columns").get(column)
-            else:
-                column_width = max(df[column].astype(str).map(len).max(), len(column))
-            col_idx = df.columns.get_loc(column)
-            writer.sheets[sheet_name].set_column(col_idx, col_idx, column_width)
-
     df_objects.to_excel(writer, sheet_name="Информация о потребителях", index=False)
-    set_column_size(df_objects, "Информация о потребителях")
+    set_column_size(writer, df_objects, "Информация о потребителях")
 
     writer.close()
     excel_file = output.getvalue()
@@ -80,7 +78,7 @@ async def create_object_report(id: int):
                         ecf.source         as "Источник",
                         ecf.description    as "Описание",
                         ecf.created        as "Дата создания",
-                        ecf.probability    as "Вероятность предсказания, %"
+                        ecf.probability    as "Вероятность предсказания"
                     from obj_consumers obj
                          join (select ec.source,
                                       ec.description,
@@ -114,24 +112,13 @@ async def create_object_report(id: int):
     output = io.BytesIO()
     writer = pd.ExcelWriter(output, engine="xlsxwriter")
 
-    def set_column_size(df, sheet_name, **kwargs):
-        writer.sheets[sheet_name].autofilter(0, 0, df.shape[1], df.shape[1])
-        for column in df:
-            if kwargs.get("unique_columns", {}).get(column):
-                column_width = kwargs.get("unique_columns").get(column)
-            else:
-                column_width = max(df[column].astype(str).map(len).max(), len(column))
-            col_idx = df.columns.get_loc(column)
-            writer.sheets[sheet_name].set_column(col_idx, col_idx, column_width)
-
-    df_object.to_excel(writer, sheet_name="Информация о потребителе", index=False)
+    df_object.to_excel(writer, sheet_name="Потребители", index=False)
     df_events.to_excel(writer, sheet_name="Открытые инциденты", index=False)
     df_objects.to_excel(writer, sheet_name="Взаимосвязанные потребители", index=False)
-    set_column_size(df_object, "Информация о потребителе")
-    set_column_size(df_events, "Открытые инциденты")
-    set_column_size(df_objects, "Взаимосвязанные потребители")
+    set_column_size(writer, df_object, "Потребители")
+    set_column_size(writer, df_events, "Открытые инциденты")
+    set_column_size(writer, df_objects, "Взаимосвязанные потребители")
 
     writer.close()
     excel_file = output.getvalue()
     return file_name, excel_file
-
