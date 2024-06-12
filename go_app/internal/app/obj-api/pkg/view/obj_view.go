@@ -19,7 +19,7 @@ type Weather struct {
 func (h handler) GetObjView(c *gin.Context) {
 	objConsumerStationId := c.Param("obj_consumer_station_id")
 	var consumerStation models.ObjConsumerStation
-	//var sourceStation models.ObjSourceStation
+	var sourceStations []models.ObjSourceStation
 	var consumers []models.ObjConsumer
 	var area models.LocationArea
 
@@ -81,16 +81,17 @@ func (h handler) GetObjView(c *gin.Context) {
 	//	}
 	//}
 	//
-	//q = "select * from public.obj_source_stations " +
-	//	"join public.obj_source_consumer_stations oscs on obj_source_stations.id = oscs.obj_source_station_id " +
-	//	"where oscs.obj_consumer_station_id = '" + objConsumerStationId + "'"
-	//h.DB.Raw(q).Scan(&sourceStation)
+	q := "select * from public.obj_source_stations " +
+		"join public.obj_source_consumer_stations oscs on obj_source_stations.id = oscs.obj_source_station_id " +
+		"where oscs.obj_consumer_station_id = '" + objConsumerStationId + "'"
+	h.DB.Raw(q).Scan(&sourceStations)
 
 	if h.DB.Where("id = ?", objConsumerStationId).
+		//Preload("SourceStations").
 		Preload("Weather", func(tx *gorm.DB) *gorm.DB {
 			return tx.Last(&models.WeatherArea{})
 		}).
-		Preload("SourceStations").
+		//Preload("SourceStations").
 		Preload("Consumers.Events", func(tx *gorm.DB) *gorm.DB {
 			return tx.Raw("select ec.* FROM event_consumers as ec " +
 				"JOIN (SELECT MAX(id) AS id, obj_consumer_id " +
@@ -106,7 +107,7 @@ func (h handler) GetObjView(c *gin.Context) {
 				"ON c.id = ec.obj_consumer_id where c.obj_consumer_station_id = '" + objConsumerStationId + "' ORDER BY ec.id DESC;")
 		}).
 		Preload("Consumers.WallMaterial").
-		Preload("SourceStations").
+		//Preload("SourceStations").
 		Find(&consumerStation).RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, "not found")
 		return
@@ -152,12 +153,12 @@ func (h handler) GetObjView(c *gin.Context) {
 		}
 	}
 
-	var sourceStations []*models.ObjSourceStation
+	//var sourceStations []*models.ObjSourceStation
 	area.Weather = nil
 	consumers = consumerStation.Consumers
 	consumerStation.Consumers = nil
-	sourceStations = consumerStation.SourceStations
-	consumerStation.SourceStations = nil
+	//sourceStations = consumerStation.SourceStations
+	//consumerStation.SourceStations = nil
 
 	c.JSON(http.StatusOK, gin.H{
 		"weather":           &weather,
