@@ -8,5 +8,4 @@ WORKDIR /app
 COPY . .
 
 COPY requirements.txt .
-
-RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt --use-deprecated=legacy-resolver
