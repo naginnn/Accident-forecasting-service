@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import Connection, create_engine, NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, Session
-from apps.train_api.service.receive import (collect_data, predict_data, save_unprocessed_data,
+from apps.train_api.service.receive import (predict_data, save_unprocessed_data,
                                             get_unprocessed_data, get_processed_data)
 from apps.train_api.service.train import train_model
 from apps.train_api.service.update import save_for_view, save_for_predict, save_predicated, save_model_info
@@ -96,12 +96,17 @@ def prepare_dataset(**kwargs) -> None:
         # 1. собираем и пред агрегируем входные данные
         tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
+        start = time.time()
         save_unprocessed_data(db=db, tables=tables)
-
+        print(time.time() - start)
+        return
     if save_view:
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
         # 3. Получаем все таблицы из схемы unprocessed
+        start = time.time()
         tables = get_unprocessed_data(db=db)
+        print(time.time() - start)
+        return
         #
         update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
         # 4. Пред агрегируем данные для записи в нормальную структуру
@@ -147,14 +152,15 @@ def loop(path, file_name):
     print(f"{path}/{file_name}")
     match file_name:
         case "13.xlsx":
-            s = {file_name: pd.read_excel(f"{path}/{file_name}" , usecols=[
+            s = {file_name: pd.read_excel(f"{path}/{file_name}", usecols=[
                 'geoData', 'geodata_center', 'UNOM'
             ])}
         case '12.xlsx':
-            s = {file_name: pd.read_excel(f"{path}/{file_name}", usecols=["Департамент", "Класс энергоэффективности здания",
-                                                                  "Фактический износ здания, %",
-                                                                  "Год ввода здания в эксплуатацию"
-                                                                  ])}
+            s = {file_name: pd.read_excel(f"{path}/{file_name}",
+                                          usecols=["Департамент", "Класс энергоэффективности здания",
+                                                   "Фактический износ здания, %",
+                                                   "Год ввода здания в эксплуатацию"
+                                                   ])}
         case '5.xlsx':
             s = {file_name: pd.read_excel(f"{path}/{file_name}", sheet_name='Выгрузка')}
         case '5.1.xlsx':
@@ -169,22 +175,21 @@ def loop(path, file_name):
     return s
 
 
-if __name__ == '__main__':
+def upload_xlsx_faster():
     start = time.time()
     path = "/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart"
     list_files = os.listdir(path)
-
-    # files = ['/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart/6.xlsx',
-    #          '/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart/7.xlsx']
     res = Parallel(n_jobs=-2, verbose=10)(delayed(loop)
                                           (path, file_name)
                                           for file_name in list_files)
-
     files = {}
     for r in res:
         files.update(r)
+    return files
+
+
+if __name__ == '__main__':
     # files = get_data_from_excel()
-    # prepare_dataset(files=files)
-    print(time.time() - start)
-    prepare_dataset(files=files, save_view=False, agr_counter=False)
+    # files = upload_xlsx_faster()
+    prepare_dataset(save_view=True)
     # prepare_dataset(files=files, save_view=False, agr_counter=False)

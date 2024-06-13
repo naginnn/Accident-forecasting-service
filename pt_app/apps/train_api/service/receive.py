@@ -8,7 +8,7 @@ from sqlalchemy.schema import CreateSchema
 from transliterate import translit
 import re
 import numpy as np
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, parallel_backend
 
 unprocessed_schema_name = "unprocessed"
 
@@ -34,7 +34,7 @@ def save_unprocessed_data(db: Engine, tables: dict) -> None:
         connection.execute(CreateSchema(unprocessed_schema_name, if_not_exists=True))
         connection.commit()
     # for table_name, table in tables.items():
-    # table.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
+    #     table.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
     Parallel(n_jobs=-2, verbose=10)(delayed(__save_unproc_table)
                                     (table, table_name, unprocessed_schema_name)
                                     for table_name, table in tables.items())
@@ -43,18 +43,30 @@ def save_unprocessed_data(db: Engine, tables: dict) -> None:
 def __save_unproc_table(table: pd.DataFrame, name: str, schema: str, ):
     table.to_sql(name=name, con=sync_db, if_exists="replace", schema=schema, index=False)
 
-def __get_unproc_table(query:str, name: str):
-    pass
+
+def __get_unproc_table(query: str, name: str):
+    return {name: pd.read_sql(query, sync_db)}
+
 
 def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame]]:
     """Получить не обработанные таблицы"""
     inspector = inspect(db)
     table_names = inspector.get_table_names(schema=unprocessed_schema_name)
+    res = Parallel(n_jobs=len(table_names), verbose=10)(delayed(__get_unproc_table)
+                                          (f"select * from {unprocessed_schema_name}.{table_name}", table_name)
+                                          for table_name in table_names)
+
     tables = {}
-    for table_name in table_names:
-        query = sa_text(f"select * from {unprocessed_schema_name}.{table_name}")
-        tables[table_name] = pd.read_sql(query, db)
+    for r in res:
+        tables.update(r)
     tables['event_types'] = pd.read_sql(sa_text(f"select * from public.event_types"), db)
+
+
+    # tables = {}
+    # for table_name in table_names:
+    #     query = sa_text(f"select * from {unprocessed_schema_name}.{table_name}")
+    #     tables[table_name] = pd.read_sql(query, db)
+    # tables['event_types'] = pd.read_sql(sa_text(f"select * from public.event_types"), db)
     return tables
 
 
@@ -98,11 +110,6 @@ def get_processed_data(db: Engine) -> dict[str, DataFrame]:
     tables["counter_consumer_events"] = pd.read_sql(query, db)
     return tables
 
-
-def collect_data(db: Engine) -> pd.DataFrame:
-    query = sa_text("SELECT * FROM public.obj_areas")
-    df = pd.read_sql(query, con=db)
-    return df
 
 
 def predict_data(model: CatBoostClassifier, predict_df: pd.DataFrame) -> pd.DataFrame:
