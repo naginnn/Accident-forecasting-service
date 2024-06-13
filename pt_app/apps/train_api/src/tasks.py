@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 from zipfile import ZipFile
-
+from joblib import Parallel, delayed
 import rq
 import pandas as pd
 import numpy as np
@@ -62,8 +62,8 @@ async def upload_files(bts: io.BytesIO):
         prepare_dataset(files=files)
 
 
-def load_data(files: dict, filename: str):
-    files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
+# def load_data(files: dict, filename: str):
+#     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
 
 
 @log
@@ -113,11 +113,11 @@ def prepare_dataset(**kwargs) -> None:
     if agr_counter:
         agr_events_counters(db=db)
     #
-    update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
-    # 6. Получаем все таблицы из схемы public
+    # update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
+    # # 6. Получаем все таблицы из схемы public
     processed = get_processed_data(db=db)
-    # #
-    update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
+    # # #
+    # update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
     agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
 
     update_progress(job=job, progress=75, msg="Сохранение данных")
@@ -143,9 +143,49 @@ def prepare_dataset(**kwargs) -> None:
     print(time.time() - start)
 
 
+def loop(path, file_name):
+    print(f"{path}/{file_name}")
+    match file_name:
+        case "13.xlsx":
+            s = {file_name: pd.read_excel(f"{path}/{file_name}" , usecols=[
+                'geoData', 'geodata_center', 'UNOM'
+            ])}
+        case '12.xlsx':
+            s = {file_name: pd.read_excel(f"{path}/{file_name}", usecols=["Департамент", "Класс энергоэффективности здания",
+                                                                  "Фактический износ здания, %",
+                                                                  "Год ввода здания в эксплуатацию"
+                                                                  ])}
+        case '5.xlsx':
+            s = {file_name: pd.read_excel(f"{path}/{file_name}", sheet_name='Выгрузка')}
+        case '5.1.xlsx':
+            s = {file_name: pd.read_excel(f"{path}/{file_name}", sheet_name='Выгрузка')}
+        case '11.xlsx':
+            s = {}
+            s.update({file_name + '_1': pd.read_excel(f"{path}/{file_name}", sheet_name='Sheet 1')})
+            s.update({file_name + '_2': pd.read_excel(f"{path}/{file_name}", sheet_name='Sheet 2')})
+            s.update({file_name + '_W': pd.read_excel(f"{path}/{file_name}", sheet_name='Справочник Ошибки (W)')})
+        case _:
+            s = {file_name: pd.read_excel(f"{path}/{file_name}")}
+    return s
+
+
 if __name__ == '__main__':
+
+
     start = time.time()
-    files = get_data_from_excel()
+    path = "/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart"
+    list_files = os.listdir(path)
+
+    # files = ['/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart/6.xlsx',
+    #          '/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart/7.xlsx']
+    res = Parallel(n_jobs=-2, verbose=10)(delayed(loop)
+                                          (path, file_name)
+                                          for file_name in list_files)
+
+    files = {}
+    for r in res:
+        files.update(r)
+    # files = get_data_from_excel()
     # prepare_dataset(files=files)
-    # prepare_dataset(files=None)
     prepare_dataset(files=files, save_view=False, agr_counter=False)
+    # prepare_dataset(files=files, save_view=False, agr_counter=False)

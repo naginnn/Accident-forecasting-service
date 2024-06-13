@@ -7,6 +7,7 @@ from sqlalchemy.schema import CreateSchema
 from transliterate import translit
 import re
 import numpy as np
+from joblib import Parallel, delayed
 
 unprocessed_schema_name = "unprocessed"
 
@@ -49,6 +50,10 @@ def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame
 
 def get_processed_data(db: Engine) -> dict[str, DataFrame]:
     tables = {}
+
+    def load(query: str) -> DataFrame:
+        pass
+
     query = sa_text(f"""
     select
         oss.id obj_source_satation_id,

@@ -15,10 +15,10 @@ class AgrUnprocessed:
         agr_tables = {}
 
         # Схема подключений МОЭК
-        main_df = pd.read_excel(tables.get('7.xlsx'))
+        main_df = tables.get('7.xlsx')
 
         # Выгрузка БТИ
-        bti_df = AgrUnprocessed._agr_bti(pd.read_excel(tables.get('9.xlsx')))
+        bti_df = AgrUnprocessed._agr_bti(tables.get('9.xlsx'))
         big_df = main_df.merge(bti_df[[
             'UNOM', 'Адрес строения',
             'Административный округ', 'Муниципальный округ',
@@ -44,7 +44,7 @@ class AgrUnprocessed:
                                   on='Адрес ТП')
 
         # Адресный реестр объектов недвижимости города Москвы
-        df_coord = pd.read_excel(tables.get("13.xlsx"))
+        df_coord = tables.get("13.xlsx")
         df_coord = df_coord[1:]
         df_coord['UNOM'] = df_coord['UNOM'].astype(float)
         res = with_tp_df.merge(df_coord[['geoData', 'geodata_center', 'UNOM']],
@@ -161,7 +161,7 @@ class AgrUnprocessed:
         ]]
 
         # Данные АСУПР с диспетчерскими ОДС
-        ods_df = AgrUnprocessed._agr_ods(pd.read_excel(tables.get('8.xlsx')))
+        ods_df = AgrUnprocessed._agr_ods(tables.get('8.xlsx'))
         res2 = res2.merge(ods_df[['obj_consumer_station_name',
                                   'obj_consumer_station_ods_name',
                                   'obj_consumer_station_ods_address',
@@ -174,9 +174,9 @@ class AgrUnprocessed:
             lambda x: AgrUnprocessed._check_heat_resist(x))
 
         # Перечень событий за период  (ЦУ КГХ)
-        events = pd.read_excel(tables.get('5.xlsx'), sheet_name='Выгрузка')
+        events = tables.get('5.xlsx')
         # Перечень событий за период  (ЦУ КГХ)
-        events2 = pd.read_excel(tables.get('5.1.xlsx'), sheet_name='Выгрузка')
+        events2 = tables.get('5.1.xlsx')
         events2.rename(columns={
             'Дата и время завершения события': 'Дата и время завершения события во внешней системе'},
                        inplace=True)
@@ -193,7 +193,7 @@ class AgrUnprocessed:
         }, inplace=True)
 
         # Плановые-Внеплановые отключения 01.10.2023-30.04.2023
-        outage = pd.read_excel(tables.get('6.xlsx'))
+        outage = tables.get('6.xlsx')
         outage.rename(columns={
             'Причина': 'reason', 'Источник': 'source',
             'Дата регистрации отключения': 'date_registration_shutdown',
@@ -205,11 +205,8 @@ class AgrUnprocessed:
             'Адрес': 'address'}, inplace=True)
 
         # Класс энергоэффективности соцобъектов
-        energy_df = pd.read_excel(
-            tables.get('12.xlsx'),
-            usecols=["Департамент", "Класс энергоэффективности здания",
-                     "Фактический износ здания, %",
-                     "Год ввода здания в эксплуатацию"])
+        energy_df = tables.get('12.xlsx')
+
         clear_shit = energy_df[
             ~energy_df["Департамент"].astype(str).str.contains(
                 '^[А-Я]') == True]
@@ -230,12 +227,9 @@ class AgrUnprocessed:
         res2.fillna('Нет данных', inplace=True)
 
         # Выгрузка ОДПУ отопления
-        counter_events = pd.read_excel(tables.get('11.xlsx'),
-                                       sheet_name='Sheet 1')
-        counter_events2 = pd.read_excel(tables.get('11.xlsx'),
-                                        sheet_name='Sheet 2')
-        errors_description = pd.read_excel(tables.get('11.xlsx'),
-                                           sheet_name='Справочник Ошибки (W)')
+        counter_events = tables.get('11.xlsx_1')
+        counter_events2 = tables.get('11.xlsx_2')
+        errors_description = tables.get('11.xlsx_W')
         counter_events_all = pd.concat([counter_events, counter_events2])
         counter_events_all.rename(columns={
             'ID УУ': 'id_uu', 'ID ТУ': 'id_ty',

@@ -2,7 +2,6 @@ from sqlalchemy import text as sa_text
 from sqlalchemy.orm import Session
 import pandas as pd
 
-
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
@@ -38,8 +37,8 @@ def agr_events_counters(db, session: Session):
     )
     event_counters = pd.read_sql(query, db).reset_index()
 
-    all_df = pd.DataFrame()
     for i, c in consumers.iterrows():
+        all_df = pd.DataFrame()
         event_counter_consumer = event_counters[event_counters['obj_consumer_id'] == c['id']]
         events = event_consumers[event_consumers['obj_consumer_id'] == c['id']]
         used_events = []
@@ -56,4 +55,4 @@ def agr_events_counters(db, session: Session):
         if used_events:
             events = events[~events['id'].isin(used_events)]
         all_df = pd.concat([all_df, events])
-    all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)
+        all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)

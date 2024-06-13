@@ -445,7 +445,7 @@ def save_for_view(session: Session, tables: dict):
 
 
 def save_for_predict(db: Engine, df_predict: pd.DataFrame):
-    df_predict.to_sql(name="data_for_prediction", con=db, if_exists="replace", index=False)
+    df_predict.to_sql(name="consumer_event_predict", con=db, if_exists="replace", index=False)
 
 
 def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd.DataFrame):
