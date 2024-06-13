@@ -140,9 +140,7 @@ if __name__ == '__main__':
             futures.append(future)
         for future in futures:
             future.result()
-        df = saver.get('all_df')
-        df.to_excel('data.xlsx')
-        print(time.time() - start)
+    print(time.time() - start)
 
     # df['event_id'] = df['accident']
     # consumers = df['consumer_id'].unique().tolist()
