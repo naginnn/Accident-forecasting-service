@@ -28,7 +28,22 @@ async def create_objects_report():
                     ss.address as "Адрес источника", 
                     cs.name as "Имя ЦТП", 
                     cs.address as "Адрес ЦТП",
-                    ecf.probability  as "Вероятность предсказания"
+                    c.balance_holder as "Балансодержатель",
+                    c.operating_mode as "Режим работы потребителя",
+                    c.type as "Тип",
+                    c.total_area as "Общая площадь",
+                    c.build_year as "Год постройки",
+                    c.wear_pct as "Фактический износ здания, проц.",
+                    c.priority as "Приоритет",
+                    c.energy_class as "Класс энергоэффективности",
+                    c.load_gvs as "Тепловая нагрузка ГВС ср.",
+                    c.load_fact as "Тепловая нагрузка ГВС факт.",
+                    c.heat_load as "Тепловая нагрузка отопления строения",
+                    c.vent_load as "Тепловая нагрузка вентиляции строения",
+                    ecf.probability  as "Вероятность предсказания",
+                    ecf.description  as "Последний инцидент",
+                    ecf.created  as "Дата создания инцидента",
+                    ecf.is_closed  as "Статус инцидента"
                 from obj_consumers as c
                          join public.location_districts ld on ld.id = c.location_district_id
                          join public.location_areas la on la.id = c.location_area_id
@@ -39,6 +54,16 @@ async def create_objects_report():
                          left join public.event_consumers ecf on ecf.id = ec.id
                 """
     df_objects = pd.read_sql(query, sync_db)
+
+    def change_event_status(data):
+        if data:
+            return "Открыт"
+        elif data is None:
+            return '-'
+        elif not data:
+            return "Закрыт"
+
+    df_objects["Статус инцидента"] = df_objects["Статус инцидента"].apply(lambda x: change_event_status(x))
     output = io.BytesIO()
     writer = pd.ExcelWriter(output, engine="xlsxwriter")
 
@@ -54,10 +79,24 @@ async def create_object_report(id: int):
     file_name = str(datetime.now().__format__('%d%m%Y')) + '_' + 'object_report'
     obj_query = f"""
                 select
-                    ld.name as "Округ", la.name as "Район",
                     obj.address as "Адрес потребителя", 
+                    ld.name as "Округ", 
+                    la.name as "Район",
+                    obj.address as "Адрес потребителя", 
+                    ocs.name as "Имя ЦТП", 
+                    ocs.address as "Адрес ЦТП",
+                    obj.balance_holder as "Балансодержатель",
                     obj.operating_mode as "Режим работы потребителя",
-                    ocs.name as "Имя ЦТП", ocs.address as "Адрес ЦТП"
+                    obj.type as "Тип",
+                    obj.total_area as "Общая площадь",
+                    obj.build_year as "Год постройки",
+                    obj.wear_pct as "Фактический износ здания, проц.",
+                    obj.priority as "Приоритет",
+                    obj.energy_class as "Класс энергоэффективности",
+                    obj.load_gvs as "Тепловая нагрузка ГВС ср.",
+                    obj.load_fact as "Тепловая нагрузка ГВС факт.",
+                    obj.heat_load as "Тепловая нагрузка отопления строения",
+                    obj.vent_load as "Тепловая нагрузка вентиляции строения"
                 from obj_consumers obj
                 join location_districts ld on obj.location_district_id = ld.id
                 join location_areas la on obj.location_area_id = la.id
@@ -69,16 +108,22 @@ async def create_object_report(id: int):
     events_query = f"""
                     select
                         obj.address        as "Адрес потребителя",
+                        ecf.description    as "Описание инцидента",
+                        ecf.created        as "Дата создания инцидента",
+                        ecf.probability    as "Вероятность предсказания",
+                        ocs.name           as "Имя ЦТП",
+                        ocs.address        as "Адрес ЦТП",
+                        ecf.source         as "Источник",
                         obj.total_area     as "Общ. площадь",
                         obj.energy_class   as "Класс энергоэффективности",
                         obj.operating_mode as "Режим работы потребителя",
                         obj.priority       as "Приоритет",
-                        ocs.name           as "Имя ЦТП",
-                        ocs.address        as "Адрес ЦТП",
-                        ecf.source         as "Источник",
-                        ecf.description    as "Описание",
-                        ecf.created        as "Дата создания",
-                        ecf.probability    as "Вероятность предсказания"
+                        obj.load_gvs as "Тепловая нагрузка ГВС ср.",
+                        obj.load_fact as "Тепловая нагрузка ГВС факт.",
+                        obj.heat_load as "Тепловая нагрузка отопления строения",
+                        obj.vent_load as "Тепловая нагрузка вентиляции строения",
+                        obj.build_year as "Год постройки",
+                        obj.wear_pct as "Фактический износ здания, проц."
                     from obj_consumers obj
                          join (select ec.source,
                                       ec.description,
@@ -99,7 +144,17 @@ async def create_object_report(id: int):
                     obj.total_area as "Общ. площадь", 
                     obj.energy_class as "Класс энергоэффективности", 
                     obj.operating_mode as "Режим работы потребителя",
-                    obj.priority as "Приоритет"
+                    obj.balance_holder as "Балансодержатель",
+                    obj.type as "Тип",
+                    obj.priority as "Приоритет",
+                    obj.energy_class as "Класс энергоэффективности",
+                    obj.load_gvs as "Тепловая нагрузка ГВС ср.",
+                    obj.load_fact as "Тепловая нагрузка ГВС факт.",
+                    obj.heat_load as "Тепловая нагрузка отопления строения",
+                    obj.vent_load as "Тепловая нагрузка вентиляции строения",
+                    obj.total_area as "Общая площадь",
+                    obj.build_year as "Год постройки",
+                    obj.wear_pct as "Фактический износ здания, проц."
                 from obj_consumers obj
                 where obj.obj_consumer_station_id = (
                         select ocs.id
@@ -122,3 +177,8 @@ async def create_object_report(id: int):
     writer.close()
     excel_file = output.getvalue()
     return file_name, excel_file
+
+
+if __name__ == '__main__':
+    # asyncio.run(create_objects_report())
+    asyncio.run(create_object_report(10))
