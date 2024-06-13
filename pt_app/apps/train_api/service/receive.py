@@ -35,14 +35,16 @@ def save_unprocessed_data(db: Engine, tables: dict) -> None:
         connection.commit()
     # for table_name, table in tables.items():
     # table.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
-    Parallel(n_jobs=-2, verbose=10)(delayed(__save_table)
+    Parallel(n_jobs=-2, verbose=10)(delayed(__save_unproc_table)
                                     (table, table_name, unprocessed_schema_name)
                                     for table_name, table in tables.items())
 
 
-def __save_table(table: pd.DataFrame, name: str, schema: str, ):
+def __save_unproc_table(table: pd.DataFrame, name: str, schema: str, ):
     table.to_sql(name=name, con=sync_db, if_exists="replace", schema=schema, index=False)
 
+def __get_unproc_table(query:str, name: str):
+    pass
 
 def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame]]:
     """Получить не обработанные таблицы"""

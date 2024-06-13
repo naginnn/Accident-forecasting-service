@@ -97,8 +97,6 @@ def prepare_dataset(**kwargs) -> None:
         tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
-        print('success')
-        return
 
     if save_view:
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
@@ -172,8 +170,6 @@ def loop(path, file_name):
 
 
 if __name__ == '__main__':
-
-
     start = time.time()
     path = "/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart"
     list_files = os.listdir(path)
