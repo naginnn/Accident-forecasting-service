@@ -1,6 +1,6 @@
 import datetime
 import re
-from apps.train_api.service.agregate.config import ERRORS
+from apps.train_api.service.aggregate.config import ERRORS
 
 
 class Utils:

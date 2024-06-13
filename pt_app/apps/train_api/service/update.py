@@ -449,15 +449,15 @@ def save_for_predict(db: Engine, df_predict: pd.DataFrame):
 
 
 def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd.DataFrame):
-    events_df.rename(columns={"id": "event_id"}, inplace=True)
+    events_df.rename(columns={"id": "event_class"}, inplace=True)
     # predicated_df = predicated_df.join(events_df, on="event_id", how="inner")
-    predicated_df = predicated_df.merge(events_df, on='event_id', how='inner')
+    predicated_df = predicated_df.merge(events_df, on='event_class', how='inner')
     # ограничение по точности
     predicated_df = predicated_df[predicated_df['percent'] > 0.7]
     predicated_df.reset_index()
     for i, row in predicated_df.iterrows():
         event = EventConsumer()
-        event.obj_consumer_id = row['consumer_id']
+        event.obj_consumer_id = row['obj_consumer_id']
         event.source = "Модель"
         event.is_closed = False
         event.description = row['event_name']

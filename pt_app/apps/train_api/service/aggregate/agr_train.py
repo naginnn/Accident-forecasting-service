@@ -1,7 +1,7 @@
 import datetime
 import pandas as pd
 from apps.train_api.src._test_utils import log
-
+from apps.train_api.service.utils import MultiColumnLabelEncoder
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -10,25 +10,179 @@ class AgrTrain:
     @staticmethod
     @log
     def execute(tables: dict) -> tuple:
-        df = tables.get('view_table')
-        events_df = tables.get('event_types')
-        df = AgrTrain._agr_date(df)
-        df = AgrTrain._get_work_class(df, events_df)
-        # df = AgrTrain.get_work_classes_all(df)
-        # Преобразуем в числовые параметры
-        # close time не учитывать при обучении, интервал тоже
-        df = AgrTrain._clear_data(df)
+        consumers = tables.get("consumers")
+        events_classes = tables.get("events_classes")
+        counter_consumer_events = tables.get("counter_consumer_events")
 
-        # df = MultiColumnLabelEncoder(columns=[
-        #     'consumer_address', 'consumer_name',
-        # ]).fit_transform(df)
-        agr_train_df = AgrTrain._get_train_data(df)
-        agr_predict_df = AgrTrain._get_predict_data(agr_train_df)
-        agr_train_df.to_csv("agr_train_df.csv", index=False)
-        agr_predict_df.to_csv("agr_predict_df.csv", index=False)
-        # agr_train_tables["full"] = tables.get('test_full')
-        # agr_predict_tables["full"] = tables.get('test_full')
+        counter_consumer_events['time'] = counter_consumer_events.apply(
+            lambda x: AgrTrain._set_date(x), axis=1)
+        counter_consumer_events.reset_index()
+        events_classes = events_classes.set_index('event_name').T.to_dict(
+            'index').get('id')
+        keys = list(events_classes.keys())
+        counter_consumer_events['event_class'] = counter_consumer_events[
+            'description'].apply(
+            lambda x: AgrTrain._set_event_class(x, events_classes, keys))
+        counter_consumer_events.drop(
+            columns=['id_y', 'id_x', 'index', 'id', 'description',
+                     'counter_event_created', 'event_created', 'event_closed',
+                     'errors_desc'], inplace=True, axis=1)
+        counter_consumer_events = AgrTrain._split_date(counter_consumer_events)
+        agr_events = AgrTrain._compare_events(counter_consumer_events)
+        consumers = AgrTrain._transform_consumer(consumers)
+        train_df = pd.merge(consumers, agr_events, how='left',
+                            on='obj_consumer_id')
+        train_df = train_df[['obj_source_satation_id',
+                             'e_power',
+                             't_power',
+                             'boiler_count',
+                             'turbine_count',
+                             'obj_consumer_station_id',
+                             'obj_consumer_id',
+                             'load_gvs',
+                             'load_fact',
+                             'heat_load',
+                             'vent_load',
+                             'total_area',
+                             'location_district_id',
+                             'location_area_id',
+                             'street',
+                             'house_number',
+                             'b_class',
+                             'floors',
+                             'wear_pct',
+                             'build_year',
+                             'sock_type',
+                             'energy_class',
+                             'operating_mode',
+                             'priority',
+                             'is_dispatch',
+                             'gcal_in_system',
+                             'gcal_out_system',
+                             'subset',
+                             'leak',
+                             'supply_temp',
+                             'return_temp',
+                             'heat_thermal_energy',
+                             'errors',
+                             'days_of_work',
+                             'time',
+                             'year',
+                             'month',
+                             'season',
+                             'day',
+                             'day_of_week',
+                             'is_weekend',
+                             'last_event_class',
+                             'last_event_days',
+                             'event_class', ]]
+        agr_train_df = train_df[train_df['last_event_class'].notna()]
+
+        agr_predict_df = train_df.groupby(['obj_consumer_id']).first()
+        agr_predict_df = agr_predict_df.reset_index()
+        agr_predict_df['time'] = datetime.datetime.now()
+        agr_predict_df['time'] = agr_predict_df['time'].astype(
+            'datetime64[ns]')
+        # ss['time'] = ss['time'].apply(lambda x: x + pd.Timedelta("1 day"))
+        agr_predict_df = AgrTrain._split_date(agr_predict_df)
+        agr_predict_df['last_event_days'] = agr_predict_df.apply(
+            lambda x: x['last_event_days'] if x['event_class'] == 0 else 0,
+            axis=1)
+        agr_predict_df['last_event_class'] = agr_predict_df.apply(
+            lambda x: x['event_class'], axis=1)
+        agr_predict_df['event_class'] = 0
+        agr_predict_df.sort_values(by=['leak'], ascending=True,
+                                   na_position='last', inplace=True)
+        agr_predict_df.interpolate(method='linear', inplace=True)
+        agr_predict_df.sort_values(by=['obj_consumer_id'], ascending=True,
+                                   inplace=True)
+
+        agr_train_df.drop('time', inplace=True, axis=1)
+        agr_predict_df.drop(columns=['time', 'event_class'], inplace=True,
+                            axis=1)
+
         return agr_predict_df, agr_train_df
+
+    @staticmethod
+    def _transform_consumer(df: pd.DataFrame) -> pd.DataFrame:
+        df = MultiColumnLabelEncoder(columns=[
+            'street', 'house_number',
+            'b_class', 'sock_type', 'energy_class',
+            'operating_mode',
+        ]).fit_transform(df)
+        return df
+
+    @staticmethod
+    def _compare_events(events: pd.DataFrame):
+        consumers = events['obj_consumer_id'].unique().tolist()
+        events['last_event_class'] = 0
+        events['last_event_days'] = 0
+        # df['between_created'] = 0
+        train_df = pd.DataFrame()
+        # last = 0
+        for consumer in consumers:
+            consumers_df = events[events['obj_consumer_id'] == consumer].sort_values(by='time', ascending=True)
+            consumers_df = consumers_df.reset_index()
+            last_event_class = 0
+            last_event_day = 0
+            for i, row in consumers_df.iterrows():
+                if i > 0:
+                    if consumers_df.at[i - 1, 'event_class'] != 0:
+                        last_event_class = consumers_df.at[i - 1, 'event_class']
+                        last_event_day = consumers_df.at[i, 'time']
+                    # abs((df['event_closed'] - df['event_created']).dt.days.astype(float))
+                    consumers_df.at[i, 'last_event_class'] = last_event_class
+                    if last_event_day != 0:
+                        consumers_df.at[i, 'last_event_days'] = (consumers_df.at[i, 'time'] - last_event_day).days
+                else:
+                    consumers_df.at[i, 'last_event_days'] = 0
+                    consumers_df.at[i, 'last_event_class'] = 0
+                    # consumers_df.at[i, 'last_event_class'] = last
+            # consumers_df = consumers_df[(consumers_df['event_class'] != 0) | (consumers_df['last_event_class'] != 0)]
+            train_df = pd.concat([train_df, consumers_df])
+        train_df = train_df.sort_values(by=['obj_consumer_id', 'time'], ascending=(True, False))
+        train_df.fillna({
+            'gcal_in_system': 0,
+            'gcal_out_system': 0,
+            'subset': 0,
+            'leak': 0,
+            'supply_temp': 0,
+            'return_temp': 0,
+            'heat_thermal_energy': 0,
+            'days_of_work': 0,
+            'errors': 0,
+        }, inplace=True)
+        train_df['errors'] = train_df['errors'].apply(lambda x: len(x.split(',')) if x != 0 else 0)
+        train_df.drop('index', inplace=True, axis=1)
+        return train_df
+
+    @staticmethod
+    def _split_date(events: pd.DataFrame):
+        events['year'] = events['time'].dt.year
+        events['month'] = events['time'].dt.month
+        events['season'] = events['month'] % 12 // 3 + 1
+        events['day'] = events['time'].dt.day
+        # df['work_time'] = (df['event_closed'] - df['event_created']).dt.days
+        events['day_of_week'] = events['time'].dt.dayofweek
+        events['is_weekend'] = events['day_of_week'].apply(lambda x: 1 if x >= 5 else 0)
+        return events
+
+    # Utils
+    @staticmethod
+    def _set_date(x):
+        if not pd.isnull(x['counter_event_created']):
+            return x['counter_event_created']
+        if not pd.isnull(x['event_created']):
+            return x['event_created']
+        if not pd.isnull(x['event_closed']):
+            return x['event_closed']
+
+    @staticmethod
+    def _set_event_class(x, events_classes: dict, keys: list):
+        if x in keys:
+            return events_classes.get(x)
+        # return 1
+        return 0
 
     @staticmethod
     @log

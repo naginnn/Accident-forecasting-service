@@ -10,7 +10,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import Connection, create_engine, NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, Session
-from apps.train_api.service.agregate import agr_for_view, agr_for_train, agr_for_unprocessed, upload
+from apps.train_api.service.aggregate import agr_for_view, agr_for_train, agr_for_unprocessed, upload
 from apps.train_api.service.receive import (collect_data, predict_data, save_unprocessed_data,
                                             get_unprocessed_data, get_processed_data)
 
@@ -140,10 +140,7 @@ if __name__ == '__main__':
             futures.append(future)
         for future in futures:
             future.result()
-        df = saver.get('all_df')
-        df.to_excel('data.xlsx')
-        print(time.time() - start)
-
+    print(time.time() - start)
     # df['event_id'] = df['accident']
     # consumers = df['consumer_id'].unique().tolist()
     # df['last_event_id'] = 0

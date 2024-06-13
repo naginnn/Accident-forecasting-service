@@ -29,9 +29,10 @@ from settings.db import get_sync_session
 from settings.rd import get_redis_client
 
 from apps.train_api.src._test_utils import log
-from apps.train_api.service.agregate.agr_unprocessed import AgrUnprocessed
-from apps.train_api.service.agregate.agr_view import AgrView
-from apps.train_api.service.agregate.agr_train import AgrTrain
+from apps.train_api.service.aggregate.agr_unprocessed import AgrUnprocessed
+from apps.train_api.service.aggregate.agr_view import AgrView
+from apps.train_api.service.aggregate.agr_train import AgrTrain
+from apps.train_api.service.aggregate.agr_event_counter import agr_events_counters
 
 
 def update_progress(job: Job, progress: float, msg: str):
@@ -84,6 +85,8 @@ def prepare_dataset(**kwargs) -> None:
     db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
     session = Session(db)
     files = kwargs.get('files')
+    save_view = kwargs.get('save_view')
+    agr_counter = kwargs.get('agr_counter')
     job = FakeJob.get_current_job()
     # job = get_current_job()
     session = get_sync_session()
@@ -95,23 +98,25 @@ def prepare_dataset(**kwargs) -> None:
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
 
-    update_progress(job=job, progress=25, msg="Получение необработанных данных")
-    # 3. Получаем все таблицы из схемы unprocessed
-    tables = get_unprocessed_data(db=db)
-    #
-    update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
-    # 4. Пред агрегируем данные для записи в нормальную структуру
-    agr_view_tables = AgrView.execute(tables=tables)
-    update_progress(job=job, progress=45, msg="Сохранение данных")
-    # 5. Записываем
-    save_for_view(session=session, tables=agr_view_tables)
-    print('success')
-    return
+    if save_view:
+        update_progress(job=job, progress=25, msg="Получение необработанных данных")
+        # 3. Получаем все таблицы из схемы unprocessed
+        tables = get_unprocessed_data(db=db)
+        #
+        update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
+        # 4. Пред агрегируем данные для записи в нормальную структуру
+        agr_view_tables = AgrView.execute(tables=tables)
+        update_progress(job=job, progress=45, msg="Сохранение данных")
+        # 5. Записываем
+        save_for_view(session=session, tables=agr_view_tables)
+
+    if agr_counter:
+        agr_events_counters(db=db)
     #
     update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # 6. Получаем все таблицы из схемы public
     processed = get_processed_data(db=db)
-    #
+    # #
     update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
     agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
 
@@ -124,10 +129,15 @@ def prepare_dataset(**kwargs) -> None:
     save_model_info(session=session, model=model, accuracy_score=accuracy_score,
                     feature_importances=feature_importances)
     #
+    ### mock data
+    # from catboost import CatBoostClassifier
+    # agr_predict_df = pd.read_sql("""select * from data_for_prediction""", db).drop('event_class', axis=1)
+    # model = CatBoostClassifier().load_model("events.cbm")
+    ### mock data
     update_progress(job=job, progress=90, msg="Расчет предсказаний")
     predicated_df = predict_data(model=model, predict_df=agr_predict_df)
     update_progress(job=job, progress=95, msg="Сохранение предсказаний")
-    save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('event_types'))
+    save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('events_classes'))
 
     update_progress(job=job, progress=100, msg="Выполнено успешно")
     print(time.time() - start)
@@ -136,5 +146,6 @@ def prepare_dataset(**kwargs) -> None:
 if __name__ == '__main__':
     start = time.time()
     files = get_data_from_excel()
-    prepare_dataset(files=files)
+    # prepare_dataset(files=files)
     # prepare_dataset(files=None)
+    prepare_dataset(files=files, save_view=False, agr_counter=False)

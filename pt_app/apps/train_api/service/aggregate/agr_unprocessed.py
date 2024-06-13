@@ -2,8 +2,8 @@ import pandas as pd
 import re
 
 from apps.train_api.src._test_utils import log
-from apps.train_api.service.agregate.config import MATERIALS
-from apps.train_api.service.agregate.utils import Utils
+from apps.train_api.service.aggregate.config import MATERIALS
+from apps.train_api.service.aggregate.utils import Utils
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
