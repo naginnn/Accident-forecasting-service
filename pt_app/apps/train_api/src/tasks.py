@@ -97,6 +97,8 @@ def prepare_dataset(**kwargs) -> None:
         tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
+        print('success')
+        return
 
     if save_view:
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
@@ -187,5 +189,6 @@ if __name__ == '__main__':
         files.update(r)
     # files = get_data_from_excel()
     # prepare_dataset(files=files)
+    print(time.time() - start)
     prepare_dataset(files=files, save_view=False, agr_counter=False)
     # prepare_dataset(files=files, save_view=False, agr_counter=False)

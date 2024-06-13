@@ -2,6 +2,7 @@ from typing import Dict, Any, Iterator
 from catboost import *
 import pandas as pd
 from pandas import DataFrame
+from settings.db import sync_db
 from sqlalchemy import text as sa_text, select, Engine, inspect
 from sqlalchemy.schema import CreateSchema
 from transliterate import translit
@@ -32,8 +33,15 @@ def save_unprocessed_data(db: Engine, tables: dict) -> None:
     with db.connect() as connection:
         connection.execute(CreateSchema(unprocessed_schema_name, if_not_exists=True))
         connection.commit()
-    for table_name, table in tables.items():
-        table.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
+    # for table_name, table in tables.items():
+    # table.to_sql(name=table_name, con=db, if_exists="replace", schema=unprocessed_schema_name, index=False)
+    Parallel(n_jobs=-2, verbose=10)(delayed(__save_table)
+                                    (table, table_name, unprocessed_schema_name)
+                                    for table_name, table in tables.items())
+
+
+def __save_table(table: pd.DataFrame, name: str, schema: str, ):
+    table.to_sql(name=name, con=sync_db, if_exists="replace", schema=schema, index=False)
 
 
 def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame]]:
