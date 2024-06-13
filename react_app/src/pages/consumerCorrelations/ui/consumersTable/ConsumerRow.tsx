@@ -10,7 +10,7 @@ import {Consumer} from "../types/consumerCorrelationsInfo";
 interface IConsumerRowProps {
     info: Consumer
     visibleColumn: VisibleColumnT<Consumer>
-    setActiveConsumer: React.Dispatch<React.SetStateAction<number | undefined>>
+    setActiveConsumer: React.Dispatch<React.SetStateAction<Consumer | undefined>>
 }
 
 export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn, setActiveConsumer}) => {
@@ -18,14 +18,20 @@ export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn, setActi
         info: Consumer,
         keyName: Extract<
             keyof Consumer,
-            'name' | 'address' | 'total_area' | 'living_area'
-            | 'energy_class' | 'operating_mode' | 'priority'
+            'address' | 'balance_holder' | 'sock_type' | 'total_area' | 'floors'
+            | 'is_dispatch' | 'energy_class' | 'operating_mode'
+            | 'priority'
         >
     ) => {
         if (visibleColumn && visibleColumn[keyName]) {
-            return <TableCell onClick={() => setActiveConsumer(info.id)}>
+            let val = info[keyName]
+
+            if (typeof val === 'boolean')
+                val = val ? 'Да' : 'Нет'
+
+            return <TableCell onClick={() => setActiveConsumer(info)}>
                 <Typography variant='body2'>
-                    {info[keyName]}
+                    {val}
                 </Typography>
             </TableCell>
         }
@@ -33,12 +39,15 @@ export const ConsumerRow: FC<IConsumerRowProps> = ({info, visibleColumn, setActi
         return null
     }
 
+
     return (
         <FocusedTableRow>
-            {getCell(info, 'name')}
             {getCell(info, 'address')}
+            {getCell(info, 'balance_holder')}
+            {getCell(info, 'sock_type')}
             {getCell(info, 'total_area')}
-            {getCell(info, 'living_area')}
+            {getCell(info, 'floors')}
+            {getCell(info, 'is_dispatch')}
             {getCell(info, 'energy_class')}
             {getCell(info, 'operating_mode')}
             {getCell(info, 'priority')}
