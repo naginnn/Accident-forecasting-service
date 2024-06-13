@@ -16,8 +16,6 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import Connection, create_engine, NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, Session
-from apps.train_api.service.agregate import agr_for_view, agr_for_train, agr_for_unprocessed, upload, \
-    agr_events_counters
 from apps.train_api.service.receive import (collect_data, predict_data, save_unprocessed_data,
                                             get_unprocessed_data, get_processed_data)
 from apps.train_api.service.train import train_model
@@ -29,6 +27,12 @@ import os
 
 from settings.db import get_sync_session
 from settings.rd import get_redis_client
+
+from apps.train_api.src._test_utils import log
+from apps.train_api.service.aggregate.agr_unprocessed import AgrUnprocessed
+from apps.train_api.service.aggregate.agr_view import AgrView
+from apps.train_api.service.aggregate.agr_train import AgrTrain
+from apps.train_api.service.aggregate.agr_event_counter import agr_events_counters
 
 
 def update_progress(job: Job, progress: float, msg: str):
@@ -58,6 +62,20 @@ async def upload_files(bts: io.BytesIO):
         prepare_dataset(files=files)
 
 
+def load_data(files: dict, filename: str):
+    files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
+
+
+@log
+def get_data_from_excel() -> dict[str, pd.ExcelFile]:
+    path_to_excel = "../../../autostart"
+    return {
+        filename: pd.ExcelFile(f"{path_to_excel}/{filename}", )
+        for filename in os.listdir(path_to_excel)
+    }
+
+
+@log
 def prepare_dataset(**kwargs) -> None:
     PG_USR = os.getenv('POSTGRES_USER', 'username')
     PG_PWD = os.getenv('POSTGRES_PASSWORD', 'password')
@@ -76,7 +94,7 @@ def prepare_dataset(**kwargs) -> None:
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
         # 1. собираем и пред агрегируем входные данные
-        tables = agr_for_unprocessed(tables=files)
+        tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
 
@@ -87,7 +105,7 @@ def prepare_dataset(**kwargs) -> None:
         #
         update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
         # 4. Пред агрегируем данные для записи в нормальную структуру
-        agr_view_tables = agr_for_view(tables=tables)
+        agr_view_tables = AgrView.execute(tables=tables)
         update_progress(job=job, progress=45, msg="Сохранение данных")
         # 5. Записываем
         save_for_view(session=session, tables=agr_view_tables)
@@ -100,7 +118,7 @@ def prepare_dataset(**kwargs) -> None:
     processed = get_processed_data(db=db)
     # #
     update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
-    agr_predict_df, agr_train_df = agr_for_train(tables=processed)
+    agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
 
     update_progress(job=job, progress=75, msg="Сохранение данных")
     save_for_predict(db=db, df_predict=agr_predict_df)
@@ -125,25 +143,9 @@ def prepare_dataset(**kwargs) -> None:
     print(time.time() - start)
 
 
-def load_data(files: dict, filename: str):
-    files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
-    # files[filename] = pd.read_excel(f"../../../autostart/{filename}", )
-
-
 if __name__ == '__main__':
-    # start = time.time()
-    # files = {}
-    # # processes = []
-    # threads = []
-    # for filename in os.listdir("../../../autostart"):
-    #     thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
-    #     threads.append(thread)
-    #     thread.start()
-    # for thread in threads:
-    #     thread.join()
-    # # print(time.time() - start)
-    # for filename in os.listdir("../../../autostart"):
-    #     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
+    start = time.time()
+    files = get_data_from_excel()
     # prepare_dataset(files=files)
     # prepare_dataset(files=None)
-    prepare_dataset(files=None, save_view=False, agr_counter=False)
+    prepare_dataset(files=files, save_view=False, agr_counter=False)
