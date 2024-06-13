@@ -91,22 +91,22 @@ def prepare_dataset(**kwargs) -> None:
     # job = get_current_job()
     session = get_sync_session()
     start = time.time()
+    # 85 seconds
     if files:
+        start = time.time()
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
         # 1. собираем и пред агрегируем входные данные
         tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
-        start = time.time()
         save_unprocessed_data(db=db, tables=tables)
-        print(time.time() - start)
+        print(time.time() - start, "files")
         return
+    # 250 seconds
     if save_view:
+        start = time.time()
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
         # 3. Получаем все таблицы из схемы unprocessed
-        start = time.time()
         tables = get_unprocessed_data(db=db)
-        print(time.time() - start)
-        return
         #
         update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
         # 4. Пред агрегируем данные для записи в нормальную структуру
@@ -114,9 +114,14 @@ def prepare_dataset(**kwargs) -> None:
         update_progress(job=job, progress=45, msg="Сохранение данных")
         # 5. Записываем
         save_for_view(session=session, tables=agr_view_tables)
+        print(time.time() - start, "save_view")
+        return
 
     if agr_counter:
+        start = time.time()
         agr_events_counters(db=db)
+        print(time.time() - start, "agr_event_counters")
+        return
     #
     # update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # # 6. Получаем все таблицы из схемы public
@@ -189,7 +194,11 @@ def upload_xlsx_faster():
 
 
 if __name__ == '__main__':
+    start = time.time()
     # files = get_data_from_excel()
+    # 119 seconds
     # files = upload_xlsx_faster()
-    prepare_dataset(save_view=True)
+    # prepare_dataset(save_view=True)
+    prepare_dataset(agr_counter=True)
+    print(time.time() - start, "upload")
     # prepare_dataset(files=files, save_view=False, agr_counter=False)

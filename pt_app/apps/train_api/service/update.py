@@ -419,8 +419,6 @@ class SaveView:
                 event_counter.errors_desc = ec['error_desc']
                 session.add(event_counter)
             session.commit()
-            print()
-
 
     # @staticmethod
     # def save_wall_materials(session: Session, df: pd.DataFrame) -> pd.DataFrame:
