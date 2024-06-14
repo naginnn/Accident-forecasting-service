@@ -74,7 +74,6 @@ func UpdateTempDataArea(db *gorm.DB) error {
 	}
 
 	apiKey := os.Getenv("YA_WEATHER_KEY")
-
 	for _, area := range areas {
 		coordinates := strings.Split(area.Coordinates, " ")
 		lat, err := strconv.ParseFloat(coordinates[0], 64)
@@ -100,6 +99,8 @@ func UpdateTempDataArea(db *gorm.DB) error {
 }
 
 func CalculateFallTemp(db *gorm.DB) error {
+	var wthConditions []models.WeatherCondition
+	db.Find(&wthConditions)
 	var areas []models.LocationArea
 	err := db.
 		//Preload("Weather", func(tx *gorm.DB) *gorm.DB {
@@ -129,6 +130,13 @@ func CalculateFallTemp(db *gorm.DB) error {
 				for _, data := range forecast.Hours {
 					hForecast := time.Unix(int64(data.HourTs), 0)
 					if hNow.Hour() == hForecast.Hour() || flag {
+						var condition float64
+						for _, wthCondition := range wthConditions {
+							if wthCondition.Name == data.Condition {
+								condition = wthCondition.K
+								break
+							}
+						}
 						flag = true
 						nParams = append(nParams, NewtonParams{
 							K:             0.0,
@@ -136,7 +144,7 @@ func CalculateFallTemp(db *gorm.DB) error {
 							Humidity:      float64(data.Humidity),
 							TInitial:      0.0,
 							TEnv:          float64(data.Temp),
-							Weather:       data.Condition,
+							Weather:       condition,
 							WindDirection: data.WindDir,
 							DateTs:        int64(data.HourTs),
 						})
@@ -147,7 +155,7 @@ func CalculateFallTemp(db *gorm.DB) error {
 		}
 		var consumers []models.ObjConsumer
 		db.Where("location_area_id = ?", area.ID).Preload("WallMaterial").Find(&consumers)
-		err = PredicateTemp(db, &consumers, &nParams)
+		err = PredicateTemp(db, &consumers, &nParams, &wthConditions)
 		if err != nil {
 			return err
 		}
@@ -155,7 +163,7 @@ func CalculateFallTemp(db *gorm.DB) error {
 	return nil
 }
 
-func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *[]NewtonParams) error {
+func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *[]NewtonParams, wthConditions *[]models.WeatherCondition) error {
 	t := time.Now()
 	nTime := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, time.Local)
 	startTime := nTime.Unix() - 3600
@@ -178,6 +186,9 @@ func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *
 				wthr.K = 0.01
 			}
 			wthr.TInitial = tInitial
+			// add whether block
+
+			// add whether block
 			tInitial = NewtonCooling(&wthr)
 			tempData.Temp = tInitial
 			fallWeather.TempDropping.TempData = append(fallWeather.TempDropping.TempData, tempData)

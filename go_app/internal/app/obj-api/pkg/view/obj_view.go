@@ -124,14 +124,14 @@ func (h handler) GetObjView(c *gin.Context) {
 	}
 	flag := false
 	var weather Weather
+	var tempInfo models.TempInfo
 	if len(area.Weather) > 0 {
+		tempInfo = area.Weather[0].TempInfo
 		for _, forecast := range area.Weather[0].TempInfo.Forecasts {
 			if flag {
 				break
 			}
 			tNow := time.Now().Format("2006-01-02")
-			//tForecast := time.Unix(int64(forecast.DateTs), 0).Format("2006-01-02")
-			//tForecast, _ := time.Parse("2006-01-02", forecast.Date)
 			tForecast := forecast.Date
 			if tNow == tForecast {
 				if tNow == tForecast {
@@ -169,6 +169,7 @@ func (h handler) GetObjView(c *gin.Context) {
 		//"consumer_warn":     &consumerWarn,
 		//"source_stations": &sourceStation,
 		//"source_stations": &consumerStation.SourceStations,
+		"weather_chart":   &tempInfo,
 		"source_stations": &sourceStations,
 	})
 }

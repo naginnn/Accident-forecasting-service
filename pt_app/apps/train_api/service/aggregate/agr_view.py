@@ -1,6 +1,6 @@
 import pandas as pd
 from apps.train_api.src._test_utils import log
-from apps.train_api.service.aggregate.config import CONSUMER_SOC_TYPE, WORK_TIME
+from apps.train_api.service.aggregate.config import CONSUMER_SOC_TYPE, WORK_TIME, DISTRICT_LOCATION
 from apps.train_api.service.aggregate.utils import Utils
 
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -23,6 +23,7 @@ class AgrView:
         flat_table = AgrView._get_sock(flat_table)
         flat_table = AgrView._get_ranking(flat_table)
         flat_table = AgrView._get_temp_conditions(flat_table)
+        flat_table = AgrView._get_area_coord(flat_table)
         # flat_table = AgrView.get_temp_conditions(flat_table)
         # flat_table = AgrView.split_address(flat_table)
         # flat_table = AgrView.split_wall_materials(flat_table, df_wall_materials)
@@ -38,6 +39,18 @@ class AgrView:
         agr_tables["events_counter_all"] = events_counter_all
         agr_tables["outage"] = outage
         return agr_tables
+
+    @staticmethod
+    @log
+    def _get_area_coord(df: pd.DataFrame) -> pd.DataFrame:
+        df['location_area_coord'] = df['obj_consumer_station_location_area'].apply(
+            lambda x: AgrView._get_coord_by_area(x))
+        return df
+
+    @staticmethod
+    @log
+    def _get_coord_by_area(x):
+        return DISTRICT_LOCATION.get(x, "55.753544 37.621202")
 
     @staticmethod
     @log

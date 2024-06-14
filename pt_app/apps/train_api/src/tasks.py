@@ -5,6 +5,8 @@ import sys
 import threading
 import time
 from zipfile import ZipFile
+
+import requests
 from joblib import Parallel, delayed
 import rq
 import pandas as pd
@@ -90,23 +92,18 @@ def prepare_dataset(**kwargs) -> None:
     job = FakeJob.get_current_job()
     # job = get_current_job()
     session = get_sync_session()
-    start = time.time()
+    # 85 seconds 1.5 minute
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
         # 1. собираем и пред агрегируем входные данные
         tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
-        start = time.time()
         save_unprocessed_data(db=db, tables=tables)
-        print(time.time() - start)
-        return
+    # 250 seconds = 4 minute
     if save_view:
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
         # 3. Получаем все таблицы из схемы unprocessed
-        start = time.time()
         tables = get_unprocessed_data(db=db)
-        print(time.time() - start)
-        return
         #
         update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
         # 4. Пред агрегируем данные для записи в нормальную структуру
@@ -115,37 +112,39 @@ def prepare_dataset(**kwargs) -> None:
         # 5. Записываем
         save_for_view(session=session, tables=agr_view_tables)
 
+    # 1410 seconds = 18 minute
     if agr_counter:
+        # агрегация показаний счетчика с потребителем и инцидентами
         agr_events_counters(db=db)
     #
     # update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # # 6. Получаем все таблицы из схемы public
+    # 5.1 seconds
     processed = get_processed_data(db=db)
-    # # #
-    # update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
+
+    update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
+    # 116 seconds = 2 minute
     agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
 
     update_progress(job=job, progress=75, msg="Сохранение данных")
+    # 0.7 seconds
     save_for_predict(db=db, df_predict=agr_predict_df)
     #
     update_progress(job=job, progress=80, msg="Обучение модели и оценка точности")
+    # 371 seconds = 6 minute
     model, accuracy_score, feature_importances = train_model(train_df=agr_train_df)
     update_progress(job=job, progress=85, msg="Сохранение модели и метаинформации")
     save_model_info(session=session, model=model, accuracy_score=accuracy_score,
                     feature_importances=feature_importances)
-    #
-    ### mock data
-    # from catboost import CatBoostClassifier
-    # agr_predict_df = pd.read_sql("""select * from data_for_prediction""", db).drop('event_class', axis=1)
-    # model = CatBoostClassifier().load_model("events.cbm")
-    ### mock data
     update_progress(job=job, progress=90, msg="Расчет предсказаний")
     predicated_df = predict_data(model=model, predict_df=agr_predict_df)
     update_progress(job=job, progress=95, msg="Сохранение предсказаний")
     save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('events_classes'))
-
+    update_progress(job=job, progress=99, msg="Обновление данных о погодных условиях")
+    update_weather_data()
+    # update_weather_consumers_fall()
+    update_weather_consumers_fall_go()
     update_progress(job=job, progress=100, msg="Выполнено успешно")
-    print(time.time() - start)
 
 
 def loop(path, file_name):
@@ -176,7 +175,6 @@ def loop(path, file_name):
 
 
 def upload_xlsx_faster():
-    start = time.time()
     path = "/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart"
     list_files = os.listdir(path)
     res = Parallel(n_jobs=-2, verbose=10)(delayed(loop)
@@ -188,8 +186,40 @@ def upload_xlsx_faster():
     return files
 
 
+def update_weather_data():
+    r = requests.post(
+        url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/update"
+    )
+    return r.status_code
+
+
+def update_weather_consumers_fall():
+    r = requests.post(
+        url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/calculate"
+    )
+    return r.status_code
+
+
+def update_weather_consumers_fall_go():
+    r = requests.post(
+        url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/calculate_go"
+    )
+    return r.status_code
+
+
 if __name__ == '__main__':
+    # update_weather_data()
+    print(update_weather_consumers_fall())
+
+    # start = time.time()
     # files = get_data_from_excel()
+    # 119 seconds
     # files = upload_xlsx_faster()
-    prepare_dataset(save_view=True)
+    # prepare_dataset(save_view=True)
+    # prepare_dataset(
+    #     files=None,
+    #     save_view=True,
+    #     agr_counter=False
+    # )
+    # print(time.time() - start, "upload")
     # prepare_dataset(files=files, save_view=False, agr_counter=False)

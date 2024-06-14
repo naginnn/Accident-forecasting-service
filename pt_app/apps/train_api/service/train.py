@@ -45,8 +45,6 @@ def train_model(train_df: pd.DataFrame) -> tuple[CatBoostClassifier, float, dict
     pred_y = model.predict(test_dataset.drop(columns='event_class'))
     test_y = test_dataset['event_class']
     accuracy = accuracy_score(test_y, pred_y)
-    model.save_model("events.cbm")
-
     return model, accuracy, feature_importances_dict
 
 

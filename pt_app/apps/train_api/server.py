@@ -24,9 +24,7 @@ app.mount(static_path, StaticFiles(directory=static_path), name="static")
 
 """ Настройки CORS """
 
-origins = [
-    "*",
-]
+origins = os.environ.get('CORS').split(',')
 
 app.add_middleware(
     middleware_class=CORSMiddleware,

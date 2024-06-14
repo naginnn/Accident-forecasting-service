@@ -52,21 +52,21 @@ def get_unprocessed_data(db: Engine) -> dict[Any, DataFrame | Iterator[DataFrame
     """Получить не обработанные таблицы"""
     inspector = inspect(db)
     table_names = inspector.get_table_names(schema=unprocessed_schema_name)
-    res = Parallel(n_jobs=len(table_names), verbose=10)(delayed(__get_unproc_table)
-                                          (f"select * from {unprocessed_schema_name}.{table_name}", table_name)
-                                          for table_name in table_names)
+    # res = Parallel(n_jobs=len(table_names), verbose=10)(delayed(__get_unproc_table)
+    #                                       (f"select * from {unprocessed_schema_name}.{table_name}", table_name)
+    #                                       for table_name in table_names)
+    #
+    # tables = {}
+    # for r in res:
+    #     tables.update(r)
+    # tables['event_types'] = pd.read_sql(sa_text(f"select * from public.event_types"), db)
+
 
     tables = {}
-    for r in res:
-        tables.update(r)
+    for table_name in table_names:
+        query = sa_text(f"select * from {unprocessed_schema_name}.{table_name}")
+        tables[table_name] = pd.read_sql(query, db)
     tables['event_types'] = pd.read_sql(sa_text(f"select * from public.event_types"), db)
-
-
-    # tables = {}
-    # for table_name in table_names:
-    #     query = sa_text(f"select * from {unprocessed_schema_name}.{table_name}")
-    #     tables[table_name] = pd.read_sql(query, db)
-    # tables['event_types'] = pd.read_sql(sa_text(f"select * from public.event_types"), db)
     return tables
 
 

@@ -130,13 +130,14 @@ func adjustCooling(k, weatherEffect, windSpeed, windDegrees, humidity float64) f
 
 type NewtonParams struct {
 	K, WindSpeed, Humidity, TInitial, TEnv float64
-	Weather, WindDirection                 string
+	Weather                                float64
+	WindDirection                          string
 	DateTs                                 int64
 }
 
 func NewtonCooling(nParams *NewtonParams) float64 {
 	nParams.K = adjustCooling(nParams.K,
-		ConvertCondition(nParams.Weather),
+		nParams.Weather,
 		nParams.WindSpeed,
 		ConvertToDegrees(nParams.WindDirection),
 		nParams.Humidity)

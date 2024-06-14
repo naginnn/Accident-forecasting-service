@@ -215,10 +215,12 @@ class SaveView:
                 create_fields=dict(
                     name=row['obj_consumer_station_location_area'],
                     location_district_id=location_district.id,
+                    coordinates=row['location_area_coord'],
                 ),
                 update_fields=dict(
                     name=row['obj_consumer_station_location_area'],
                     location_district_id=location_district.id,
+                    coordinates=row['location_area_coord'],
                 )
             )
 
@@ -419,8 +421,6 @@ class SaveView:
                 event_counter.errors_desc = ec['error_desc']
                 session.add(event_counter)
             session.commit()
-            print()
-
 
     # @staticmethod
     # def save_wall_materials(session: Session, df: pd.DataFrame) -> pd.DataFrame:
@@ -469,10 +469,11 @@ def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd
 
 
 def save_model_info(session: Session, model: CatBoostClassifier, accuracy_score: float, feature_importances: dict):
+    name = f"models_{str(datetime.datetime.now())}.cbm"
+    model.save_model(f"{os.getenv('MODEL_PATH')}/{name}")
     model_info = ModelInfo(
-        name="new_events_new_dsa.cbm",
-        path="new_events_new_dsa.cbm",
-        # path=os.getenv("MODEL_PATH") + "/events.cbm",
+        name=name,
+        path=f"{os.getenv('MODEL_PATH')}/{name}",
         metrics="",
         accuracy=round(accuracy_score, 2),
         feature_importance=feature_importances,
