@@ -12,6 +12,7 @@ import (
 	"os"
 	"services01/pkg/models"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -73,9 +74,8 @@ func UpdateTempDataArea(db *gorm.DB) error {
 	}
 
 	apiKey := os.Getenv("YA_WEATHER_KEY")
-	coordinates := []string{"55.753544", "37.621202"}
 	for _, area := range areas {
-		//coordinates := strings.Split(area.Coordinates, " ")
+		coordinates := strings.Split(area.Coordinates, " ")
 		lat, err := strconv.ParseFloat(coordinates[0], 64)
 		lon, err := strconv.ParseFloat(coordinates[1], 64)
 		if err != nil {
