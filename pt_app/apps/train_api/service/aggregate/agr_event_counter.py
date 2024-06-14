@@ -65,6 +65,7 @@ def agr_events_counters_processing(db):
                                     (c, event_counters, event_consumers)
                                     for i, c in consumers.iterrows())
 
+
 def agr_events_counters(db):
     query = sa_text(
         f"""
@@ -96,18 +97,15 @@ def agr_events_counters(db):
                     """
     )
     event_counters = pd.read_sql(query, db).reset_index()
+    print('start')
 
-    def res(x,):
-        pass
-
-    consumers['id']
-
-
-    for i, c in consumers.iterrows():
-        all_df = pd.DataFrame()
-        event_counter_consumer = event_counters[event_counters['obj_consumer_id'] == c['id']]
-        events = event_consumers[event_consumers['obj_consumer_id'] == c['id']]
+    def res(x, ):
+        event_counter_consumer = event_counters[event_counters['obj_consumer_id'] == x]
+        events = event_consumers[event_consumers['obj_consumer_id'] == x]
+        if event_counter_consumer.empty and events.empty:
+            return
         used_events = []
+        all_df = pd.DataFrame()
         for j, ecc in event_counter_consumer.iterrows():
             between = events[
                 (ecc['counter_event_created'] >= events['event_created']) & (
@@ -121,11 +119,15 @@ def agr_events_counters(db):
         if used_events:
             events = events[~events['id'].isin(used_events)]
         all_df = pd.concat([all_df, events])
-        all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)
+        if not all_df.empty:
+            all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)
+        # del all_df
+        # del event_counter_consumer
+        # del events
 
+    consumers['id'].apply(lambda x: res(x))
 
-
-def agr_events_counters_faster(db):
+def agr_events_counters_stable(db):
     query = sa_text(
         f"""
                 select * from postgres.public.obj_consumers
@@ -175,4 +177,6 @@ def agr_events_counters_faster(db):
         if used_events:
             events = events[~events['id'].isin(used_events)]
         all_df = pd.concat([all_df, events])
-        all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)
+        if not all_df.empty:
+            all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)
+

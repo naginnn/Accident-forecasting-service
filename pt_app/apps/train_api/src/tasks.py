@@ -91,7 +91,7 @@ def prepare_dataset(**kwargs) -> None:
     # job = get_current_job()
     session = get_sync_session()
     start = time.time()
-    # 85 seconds
+    # 85 seconds 1.5 minute
     if files:
         start = time.time()
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
@@ -100,8 +100,7 @@ def prepare_dataset(**kwargs) -> None:
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
         print(time.time() - start, "files")
-        return
-    # 250 seconds
+    # 250 seconds = 4 minute
     if save_view:
         start = time.time()
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
@@ -115,25 +114,36 @@ def prepare_dataset(**kwargs) -> None:
         # 5. Записываем
         save_for_view(session=session, tables=agr_view_tables)
         print(time.time() - start, "save_view")
-        return
 
+    # 1410 seconds = 18 minute
     if agr_counter:
         start = time.time()
+        # агрегация показаний счетчика с потребителем и инцидентами
         agr_events_counters(db=db)
         print(time.time() - start, "agr_event_counters")
         return
     #
     # update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # # 6. Получаем все таблицы из схемы public
+    start = time.time()
+    # 5.1 seconds
     processed = get_processed_data(db=db)
+    print(time.time() - start, "get_processed_data")
     # # #
     # update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
+    start = time.time()
+    # 116 seconds
     agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
+    print(time.time() - start, "agregate_train_df")
 
     update_progress(job=job, progress=75, msg="Сохранение данных")
+    start = time.time()
+    # 0.7 seconds
     save_for_predict(db=db, df_predict=agr_predict_df)
+    print(time.time() - start, "save_for_predict")
     #
     update_progress(job=job, progress=80, msg="Обучение модели и оценка точности")
+    # 371 seconds
     model, accuracy_score, feature_importances = train_model(train_df=agr_train_df)
     update_progress(job=job, progress=85, msg="Сохранение модели и метаинформации")
     save_model_info(session=session, model=model, accuracy_score=accuracy_score,
@@ -144,13 +154,12 @@ def prepare_dataset(**kwargs) -> None:
     # agr_predict_df = pd.read_sql("""select * from data_for_prediction""", db).drop('event_class', axis=1)
     # model = CatBoostClassifier().load_model("events.cbm")
     ### mock data
+    # 0.1 seconds
     update_progress(job=job, progress=90, msg="Расчет предсказаний")
     predicated_df = predict_data(model=model, predict_df=agr_predict_df)
     update_progress(job=job, progress=95, msg="Сохранение предсказаний")
     save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('events_classes'))
-
     update_progress(job=job, progress=100, msg="Выполнено успешно")
-    print(time.time() - start)
 
 
 def loop(path, file_name):
@@ -199,6 +208,10 @@ if __name__ == '__main__':
     # 119 seconds
     # files = upload_xlsx_faster()
     # prepare_dataset(save_view=True)
-    prepare_dataset(agr_counter=True)
+    prepare_dataset(
+        files=None,
+        save_view=False,
+        agr_counter=False
+    )
     print(time.time() - start, "upload")
     # prepare_dataset(files=files, save_view=False, agr_counter=False)
