@@ -1,1 +1,1 @@
-export {TableConsumers as Consumers} from './ui/TableConsumers'
+export {ConsumersWrapper as Consumers} from './ui/ConsumersWrapper'

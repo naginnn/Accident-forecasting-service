@@ -1,0 +1,1 @@
+export {withMenu} from './hoc/withMenu'

@@ -17,4 +17,6 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	}
 	routers := r.Group("/api/v1/obj")
 	routers.POST("/events", middlewares.RoleChecker(h.UpdateEvent, "rw"))
+	routers.GET("/events/:id", middlewares.RoleChecker(h.GetEventsByConsumerId, "rw,ro"))
+	routers.GET("/events_counter/:id", middlewares.RoleChecker(h.GetEventsCounterByConsumerId, "rw,ro"))
 }

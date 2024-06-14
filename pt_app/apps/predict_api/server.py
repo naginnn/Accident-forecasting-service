@@ -10,9 +10,11 @@ app = FastAPI(redoc_url=None)
 
 """ Настройки CORS """
 
-origins = [
-    "*",
-]
+# origins = [
+#     "*",
+# ]
+
+origins = os.environ.get('CORS').split(',')
 
 app.add_middleware(
     middleware_class=CORSMiddleware,

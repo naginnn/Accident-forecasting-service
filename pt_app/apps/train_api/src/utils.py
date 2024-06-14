@@ -12,7 +12,7 @@ from rq.command import send_stop_job_command
 from rq.exceptions import *
 from rq.job import Job, get_current_job
 
-from apps.train_api.src.tasks import update_progress, prepare_dataset, load_data
+from apps.train_api.src.tasks import update_progress, prepare_dataset
 from pkg.utils import get_elapsed_time, FakeJob
 from settings.rd import get_redis_client
 
@@ -86,4 +86,3 @@ async def autostart():
 
 
 # async upload_sync():
-

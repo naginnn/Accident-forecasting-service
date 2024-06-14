@@ -32,9 +32,18 @@ services:
       - .env
     ports:
       - "5432:5432"
-#    volumes:
+    volumes:
+      # Снять дамп БД с Docker контейнера, в контейнере выполнить команду
+      # pg_dump -U username postgres -n public | gzip > db_public.sql.gz
+      # Повторить операцию для других схем.
+      # Скопировать дамп БД на хост: 'docker cp <имя конейнера>:/home/db_public.sql.gz .'
+      # Повторить операцию для других схем
+      # Добавить префиксы приоритета загрузки например 01_db_public.sql.gz
+      # Префикс 00_ у скрипта удаления схемы public, для корректной загрузки 01_db_public.sql.gz
+      # Файлы скриптов должны быть в папке, указанной в строке ниже
+      # Для инициализации БД раскоментировать строку ниже
+      - ./db_dump:/docker-entrypoint-initdb.d
 #      - ./pg_data:/var/lib/postgresql/data
-
 #
   redis:
     image: redis:alpine
@@ -90,6 +99,26 @@ services:
     links:
       - db
 
+  reports:
+    container_name: reports-api
+    build:
+      context: ./pt_app
+      dockerfile: ./apps/predict_api/Dockerfile
+      network: host
+    restart: always
+    command: >
+      sh -c "python3 apps/predict_api/server.py"
+    ports:
+      - "2227:2227"
+    env_file:
+      - ./.env
+    volumes:
+      - ./models:/models
+      - ./autostart:/autostart
+    depends_on:
+      - db
+    links:
+      - db
 
   train:
     container_name: train-api

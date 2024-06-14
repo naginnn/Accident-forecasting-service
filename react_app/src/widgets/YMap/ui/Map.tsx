@@ -1,32 +1,55 @@
-import {FC, useMemo, useState} from "react";
-import {LngLat} from "ymaps3";
+import {FC, useCallback, useEffect, useMemo, useState} from "react";
 
 import cls from './map.module.scss'
 
 import {classNames} from "@src/shared/lib/classNames";
-import {ErrorWrapper} from "@src/entities/errorWrapper";
 
 import {YMapLocationRequest} from "@yandex/ymaps3-types";
 
-import {MapMenu} from './mapMenu/MapMenu';
 import {MapContext} from '../model/context'
-import {coordinates} from "../const/coordinates";
 
 import {
     YMap,
     YMapDefaultSchemeLayer,
     YMapDefaultFeaturesLayer,
     YMapControls,
-    YMapScaleControl
+    YMapScaleControl,
+    YMapZoomControl,
+    YMapControlButton,
+    YMapListener
 } from '../const/mapInit'
 import {useGetAreasQuery} from "../api/getAreas";
 
+window.map = null;
+
 interface IMapProps {
-    initLocation: YMapLocationRequest
+    location: YMapLocationRequest
+    setLocation: React.Dispatch<React.SetStateAction<YMapLocationRequest>>
+    children?: any
 }
 
-export const Map: FC<IMapProps> = ({initLocation}) => {
-    const [location, setLocation] = useState<YMapLocationRequest>(initLocation || {center: coordinates.moscow, zoom: 11})
+export const Map: FC<IMapProps> = ({location, setLocation, children}) => {
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    useEffect(() => {
+        const onFullscreenChange = () => {
+            setIsFullscreen(Boolean(document.fullscreenElement));
+        };
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+
+        return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+    }, []);
+
+    const onUpdate = useCallback(({location}: {location: YMapLocationRequest}) => setLocation(location), []);
+
+    const onClickHandler = useCallback(() => {
+        if (isFullscreen) {
+            document.exitFullscreen();
+        } else if (window.map) {
+            debugger
+            window.map.container.requestFullscreen();
+        }
+    }, [isFullscreen]);
 
     const {data, isFetching, error} = useGetAreasQuery()
 
@@ -47,17 +70,30 @@ export const Map: FC<IMapProps> = ({initLocation}) => {
                 {/*>*/}
                 {/*    <MapMenu/>*/}
                 {/*</ErrorWrapper>*/}
-                <div className={classNames(cls.map)}>
+                <div className={classNames(cls.map, {[cls.map_fullscreen]: isFullscreen})}>
                     <YMap
                         location={location}
                         mode="vector"
                         zoomRounding="smooth"
+                        ref={(x) => (window.map = x)}
                     >
+                        <YMapListener onUpdate={onUpdate}/>
                         <YMapDefaultSchemeLayer/>
                         <YMapDefaultFeaturesLayer/>
-                        <YMapControls position='top right'>
+                        <YMapControls position="right">
+                            <YMapZoomControl/>
+                        </YMapControls>
+                        <YMapControls position='top left'>
                             <YMapScaleControl/>
                         </YMapControls>
+                        <YMapControls position="top right">
+                            <YMapControlButton onClick={onClickHandler}>
+                                <div className={
+                                    classNames(cls.fullscreen, {[cls.exitFullscreen]: isFullscreen})
+                                }/>
+                            </YMapControlButton>
+                        </YMapControls>
+                        {children}
                     </YMap>
                 </div>
             </div>

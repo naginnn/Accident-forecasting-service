@@ -19,6 +19,30 @@ func (h handler) GetEvent(c *gin.Context) {
 	c.JSON(http.StatusOK, &event)
 }
 
+func (h handler) GetEventsByConsumerId(c *gin.Context) {
+	id := c.Param("id")
+	var events []models.EventConsumer
+	if h.DB.
+		Where("obj_consumer_id = ?", id).Find(&events).RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, "Event not found")
+		return
+	}
+
+	c.JSON(http.StatusOK, &events)
+}
+
+func (h handler) GetEventsCounterByConsumerId(c *gin.Context) {
+	id := c.Param("id")
+	var events []models.EventCounter
+	if h.DB.
+		Where("obj_consumer_id = ?", id).Find(&events).RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, "Event not found")
+		return
+	}
+
+	c.JSON(http.StatusOK, &events)
+}
+
 func (h handler) UpdateEvent(c *gin.Context) {
 	id := c.Query("id")
 	var event models.EventConsumer

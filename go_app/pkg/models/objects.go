@@ -76,6 +76,7 @@ type ObjConsumer struct {
 
 	TempConditions TempCondition         `gorm:"type:jsonb;default:'{}';" json:"temp_conditions"`
 	WeatherFall    []WeatherConsumerFall `json:"weather_fall"`
+	EventsCounter  []EventCounter        `json:"events_counter"`
 	Events         []EventConsumer       `json:"events"`
 	WallMaterial   []*MaterialWall       `gorm:"many2many:material_consumer_walls" json:"wall_material"`
 }

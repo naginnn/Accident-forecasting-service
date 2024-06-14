@@ -16,10 +16,10 @@ export const {useGetConsumersCorrelationsQuery} = apiBase.injectEndpoints({
 })
 
 apiBase.enhanceEndpoints({
-    addTagTypes: ['ConsumerCorrelations'],
+    addTagTypes: ['Consumers'],
     endpoints: {
         useGetConsumersCorrelationsQuery: {
-            providesTags: ['ConsumerCorrelations']
-        },
+            providesTags: ['Consumers']
+        }
     }
 })

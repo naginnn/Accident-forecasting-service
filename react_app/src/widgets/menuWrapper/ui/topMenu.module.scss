@@ -1,0 +1,12 @@
+@import './variable';
+
+.topMenuWrapper {
+  z-index: 10000;
+  position: relative;
+  p: 8px 8px;
+  border-radius: 0 0 8px 0;
+  width: calc(100% - 16px);
+  height: $top-menu-height;
+  background-color: white;
+  box-shadow: $paper-shadow;
+}

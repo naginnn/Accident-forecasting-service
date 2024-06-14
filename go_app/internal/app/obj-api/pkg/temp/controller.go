@@ -16,5 +16,6 @@ func RegRoutes(r *gin.Engine, c *presets.Config) {
 	}
 	routers := r.Group("/api/v1/obj")
 	routers.POST("/weather/calculate", h.CalculateWeatherFall)
+	routers.POST("/weather/calculate_go", h.CalculateWeatherFallGo)
 	routers.POST("/weather/update", h.UpdateAreaForecasts)
 }

@@ -1,6 +1,8 @@
 import {createTheme} from "@mui/material/styles";
 import {ruRU} from '@mui/material/locale';
 
+import {Button} from './components/Button'
+
 export const theme = createTheme(
     {
         typography: {
@@ -24,6 +26,7 @@ export const theme = createTheme(
             },
         },
         components: {
+            MuiButton: Button,
             MuiPaper: {
                 styleOverrides: {
                     root: {

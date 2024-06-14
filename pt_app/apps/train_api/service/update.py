@@ -194,7 +194,7 @@ class SaveView:
             session.commit()
 
     @staticmethod
-    def save_objects_new(session: Session, df: pd.DataFrame, events: pd.DataFrame):
+    def save_objects_new(session: Session, df: pd.DataFrame, events: pd.DataFrame, counter_events: pd.DataFrame):
         for index, row in df.iterrows():
             location_district = create_or_update(
                 session=session,
@@ -215,10 +215,12 @@ class SaveView:
                 create_fields=dict(
                     name=row['obj_consumer_station_location_area'],
                     location_district_id=location_district.id,
+                    coordinates=row['location_area_coord'],
                 ),
                 update_fields=dict(
                     name=row['obj_consumer_station_location_area'],
                     location_district_id=location_district.id,
+                    coordinates=row['location_area_coord'],
                 )
             )
 
@@ -373,14 +375,13 @@ class SaveView:
 
             # events['unom'] = events['unom'].astype(int)
             events_df = events[events['unom'] == float(row['obj_consumer_unom'])]
-            if not events.empty:
-                print(float(row['obj_consumer_unom']))
+            # if not events.empty:
+            #     print(float(row['obj_consumer_unom']))
             # events_df = events[events['unom'] == float(row['obj_consumer_station_unom'])]
             # if not events.empty:
             #     print()
 
             for idx, e in events_df.iterrows():
-                work_days = 0
                 event_consumer = EventConsumer()
                 event_consumer.obj_consumer_id = obj_consumer.id
                 event_consumer.source = e['event_source']
@@ -388,14 +389,38 @@ class SaveView:
                 event_consumer.is_approved = True
                 event_consumer.is_closed = True
                 event_consumer.probability = 100.0
-                event_consumer.days_of_work = work_days
+                event_consumer.days_of_work = e['days_of_work']
                 event_consumer.created = e['event_created']
-                event_consumer.closed = e['event_closed'] if e['event_closed'] else e['event_closed_ext']
+                event_consumer.closed = e['event_closed']
                 session.add(event_consumer)
 
+            counter_events_filtered = counter_events[counter_events['unom'] == float(row['obj_consumer_unom'])]
+            ###
+            # if not counter_events_filtered.empty:
+            #     counter_events_filtered = counter_events_filtered[(counter_events_filtered['month_year'] >= e['event_created']) & (counter_events_filtered['month_year'] <= e['event_closed'])]
+            #     if not counter_events_filtered.empty:
+            #         print()
+            ###
+            for idx, ec in counter_events_filtered.iterrows():
+                event_counter = EventCounter()
+                event_counter.obj_consumer_id = obj_consumer.id
+                # event_counter.event_consumer_id = ec['']
+                event_counter.contour = ec['contour_co']
+                event_counter.counter_mark = ec['counter_mark']
+                event_counter.counter_number = ec['number_counter']
+                event_counter.created = ec['month_year']
+                event_counter.gcal_in_system = ec['obyom_podanogo_teplonositelya_v_sistemu_co']
+                event_counter.gcal_out_system = ec['obyom_obratnogo_teplonositelya_is_sistemu_co']
+                event_counter.subset = ec['podmes']
+                event_counter.leak = ec['ytechka']
+                event_counter.supply_temp = ec['temp_podachi']
+                event_counter.return_temp = ec['temp_obratki']
+                event_counter.work_hours_counter = ec['narabotka_chasov_schetchika']
+                event_counter.heat_thermal_energy = ec['rashod_teplovoy_energy']
+                event_counter.errors = ec['errors']
+                event_counter.errors_desc = ec['error_desc']
+                session.add(event_counter)
             session.commit()
-            print()
-
 
     # @staticmethod
     # def save_wall_materials(session: Session, df: pd.DataFrame) -> pd.DataFrame:
@@ -410,28 +435,29 @@ class SaveView:
 def save_for_view(session: Session, tables: dict):
     job = FakeJob.get_current_job()
     # df = tables.get("full")
+    counter_events = tables.get("events_counter_all")
     events = tables.get("events_all")
     flat_table = tables.get("flat_table")
     # locations = SaveView.save_locations(session=session, df=df)
-    SaveView.save_objects_new(session=session, df=flat_table, events=events)
+    SaveView.save_objects_new(session=session, df=flat_table, events=events, counter_events=counter_events)
     # SaveView.save_objects(session=session, df=flat_table, locations=locations, all_events=events)
     print('Success')
 
 
 def save_for_predict(db: Engine, df_predict: pd.DataFrame):
-    df_predict.to_sql(name="data_for_prediction", con=db, if_exists="replace", index=False)
+    df_predict.to_sql(name="consumer_event_predict", con=db, if_exists="replace", index=False)
 
 
 def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd.DataFrame):
-    events_df.rename(columns={"id": "event_id"}, inplace=True)
+    events_df.rename(columns={"id": "event_class"}, inplace=True)
     # predicated_df = predicated_df.join(events_df, on="event_id", how="inner")
-    predicated_df = predicated_df.merge(events_df, on='event_id', how='inner')
+    predicated_df = predicated_df.merge(events_df, on='event_class', how='inner')
     # ограничение по точности
     predicated_df = predicated_df[predicated_df['percent'] > 0.7]
     predicated_df.reset_index()
     for i, row in predicated_df.iterrows():
         event = EventConsumer()
-        event.obj_consumer_id = row['consumer_id']
+        event.obj_consumer_id = row['obj_consumer_id']
         event.source = "Модель"
         event.is_closed = False
         event.description = row['event_name']
@@ -443,10 +469,11 @@ def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd
 
 
 def save_model_info(session: Session, model: CatBoostClassifier, accuracy_score: float, feature_importances: dict):
+    name = f"models_{str(datetime.datetime.now())}.cbm"
+    model.save_model(f"{os.getenv('MODEL_PATH')}/{name}")
     model_info = ModelInfo(
-        name="new_events_new_dsa.cbm",
-        path="new_events_new_dsa.cbm",
-        # path=os.getenv("MODEL_PATH") + "/events.cbm",
+        name=name,
+        path=f"{os.getenv('MODEL_PATH')}/{name}",
         metrics="",
         accuracy=round(accuracy_score, 2),
         feature_importance=feature_importances,

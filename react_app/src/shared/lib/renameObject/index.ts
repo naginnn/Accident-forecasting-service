@@ -1,0 +1,1 @@
+export {renameObject} from './utils/renameObject'
