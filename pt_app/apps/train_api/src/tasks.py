@@ -56,8 +56,11 @@ def prepare_dataset(**kwargs) -> None:
     db = kwargs.get('db')
     session = Session(db)
     files = kwargs.get('files')
-    save_view = kwargs.get('save_view')
-    agr_counter = kwargs.get('agr_counter')
+    is_save_view = kwargs.get('save_view')
+    is_agr_counter = kwargs.get('agr_counter')
+    is_agr_train = kwargs.get('agr_train')
+    is_agr_predict = kwargs.get('agr_predict')
+    is_predict = kwargs.get('is_save_predict')
     # job = FakeJob.get_current_job()
     job = get_current_job()
     # 85 seconds 1.5 minute
@@ -69,7 +72,7 @@ def prepare_dataset(**kwargs) -> None:
         save_unprocessed_data(db=db, tables=tables)
         update_progress(job=job, progress=15, msg="Сохранено")
     # 250 seconds = 4 minute
-    if save_view:
+    if is_save_view:
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
         # 3. Получаем все таблицы из схемы unprocessed
         tables = get_unprocessed_data(db=db)
@@ -81,13 +84,22 @@ def prepare_dataset(**kwargs) -> None:
         # 5. Записываем
         save_for_view(session=session, tables=agr_view_tables)
     # 1410 seconds = 18 minute
-    if agr_counter:
+    if is_agr_counter:
         # агрегация показаний счетчика с потребителем и инцидентами
         agr_events_counters(db=db)
     update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # 6. Получаем все таблицы из схемы public
     # 5 seconds
     processed = get_processed_data(db=db)
+
+    if is_agr_train:
+        update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
+        agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
+        model, accuracy_score, feature_importances = train_model(train_df=agr_train_df)
+
+    if is_agr_predict:
+        agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
+        save_for_predict(db=db, df_predict=agr_predict_df)
 
     update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
     # 116 seconds = 2 minute

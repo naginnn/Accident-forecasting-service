@@ -85,7 +85,6 @@ async def create_object_report(id: int):
                     obj.address as "Адрес потребителя", 
                     ld.name as "Округ", 
                     la.name as "Район",
-                    obj.address as "Адрес потребителя", 
                     ocs.name as "Имя ЦТП", 
                     ocs.address as "Адрес ЦТП",
                     obj.balance_holder as "Балансодержатель",
@@ -162,8 +161,8 @@ async def create_object_report(id: int):
                        ec.counter_number      as "Номер счетчика",
                        ec.gcal_in_system      as "Объем поданного теплоносителя в систему ЦО",
                        ec.gcal_out_system     as "Объем обратного теплоносителя в систему ЦО",
-                       ec.subset              as "Разница между подачей и обраткой (Подмес)",
-                       ec.leak                as "Разница между подачей и обраткой (Утечка)",
+                       ec.subset              as "Разница между подачей и обраткой(Подмес)",
+                       ec.leak                as "Разница между подачей и обраткой(Утечка)",
                        ec.supply_temp         as "Температура подачи",
                        ec.return_temp         as "Температура обратки",
                        ec.work_hours_counter  as "Наработка часов счетчика",
@@ -179,6 +178,7 @@ async def create_object_report(id: int):
                        obj.wear_pct           as "Фактический износ здания, проц."
                 from obj_consumers obj
                          join event_counters ec on ec.obj_consumer_id = obj.id
+                where obj.id = '{str(id)}'
                 """
     df_events_counter = pd.read_sql(event_counter_query, sync_db)
     df_events_counter["Дата создания"] = df_events_counter["Дата создания"].astype(str)
@@ -187,7 +187,6 @@ async def create_object_report(id: int):
                 select 
                     obj.address as "Адрес потребителя",
                     obj.total_area as "Общ. площадь", 
-                    obj.energy_class as "Класс энергоэффективности", 
                     obj.operating_mode as "Режим работы потребителя",
                     obj.balance_holder as "Балансодержатель",
                     obj.type as "Тип",
@@ -216,6 +215,7 @@ async def create_object_report(id: int):
     df_events.to_excel(writer, sheet_name="Открытые инциденты", index=False)
     df_events_counter.to_excel(writer, sheet_name="Выгрузка ОДПУ отопления", index=False)
     df_objects.to_excel(writer, sheet_name="Взаимосвязанные потребители", index=False)
+
     set_column_size(writer, df_object, "Потребители")
     set_column_size(writer, df_events, "Открытые инциденты")
     set_column_size(writer, df_events_counter, "Выгрузка ОДПУ отопления")
@@ -224,8 +224,3 @@ async def create_object_report(id: int):
     writer.close()
     excel_file = output.getvalue()
     return file_name, excel_file
-
-
-# if __name__ == '__main__':
-#     # asyncio.run(create_objects_report())
-#     asyncio.run(create_object_report(1))
