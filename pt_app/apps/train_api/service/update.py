@@ -468,9 +468,9 @@ def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd
 
 def save_model_info(session: Session, model: CatBoostClassifier, accuracy_score: float, feature_importances: dict):
     name = f"models_{str(datetime.datetime.now())}.cbm"
+    model.save_model(f"{os.getenv('MODEL_PATH')}/{name}")
     model_info = ModelInfo(
         name=name,
-        # path="new_events_new_dsa.cbm",
         path=f"{os.getenv('MODEL_PATH')}/{name}",
         metrics="",
         accuracy=round(accuracy_score, 2),

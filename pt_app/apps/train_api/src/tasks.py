@@ -92,13 +92,11 @@ def prepare_dataset(**kwargs) -> None:
     session = get_sync_session()
     # 85 seconds 1.5 minute
     if files:
-        start = time.time()
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
         # 1. собираем и пред агрегируем входные данные
         tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
-        print(time.time() - start, "files")
     # 250 seconds = 4 minute
     if save_view:
         start = time.time()
@@ -116,11 +114,8 @@ def prepare_dataset(**kwargs) -> None:
 
     # 1410 seconds = 18 minute
     if agr_counter:
-        start = time.time()
         # агрегация показаний счетчика с потребителем и инцидентами
         agr_events_counters(db=db)
-        print(time.time() - start, "agr_event_counters")
-        return
     #
     # update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # # 6. Получаем все таблицы из схемы public
@@ -141,13 +136,6 @@ def prepare_dataset(**kwargs) -> None:
     update_progress(job=job, progress=85, msg="Сохранение модели и метаинформации")
     save_model_info(session=session, model=model, accuracy_score=accuracy_score,
                     feature_importances=feature_importances)
-    #
-    ### mock data
-    # from catboost import CatBoostClassifier
-    # agr_predict_df = pd.read_sql("""select * from data_for_prediction""", db).drop('event_class', axis=1)
-    # model = CatBoostClassifier().load_model("events.cbm")
-    ### mock data
-    # 0.1 seconds
     update_progress(job=job, progress=90, msg="Расчет предсказаний")
     predicated_df = predict_data(model=model, predict_df=agr_predict_df)
     update_progress(job=job, progress=95, msg="Сохранение предсказаний")
