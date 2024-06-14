@@ -5,6 +5,8 @@ import sys
 import threading
 import time
 from zipfile import ZipFile
+
+import requests
 from joblib import Parallel, delayed
 import rq
 import pandas as pd
@@ -138,6 +140,10 @@ def prepare_dataset(**kwargs) -> None:
     predicated_df = predict_data(model=model, predict_df=agr_predict_df)
     update_progress(job=job, progress=95, msg="Сохранение предсказаний")
     save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('events_classes'))
+    update_progress(job=job, progress=99, msg="Обновление данных о погодных условиях")
+    update_weather_data()
+    # update_weather_consumers_fall()
+    update_weather_consumers_fall_go()
     update_progress(job=job, progress=100, msg="Выполнено успешно")
 
 
@@ -169,7 +175,6 @@ def loop(path, file_name):
 
 
 def upload_xlsx_faster():
-    start = time.time()
     path = "/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart"
     list_files = os.listdir(path)
     res = Parallel(n_jobs=-2, verbose=10)(delayed(loop)
@@ -181,16 +186,40 @@ def upload_xlsx_faster():
     return files
 
 
+def update_weather_data():
+    r = requests.post(
+        url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/update"
+    )
+    return r.status_code
+
+
+def update_weather_consumers_fall():
+    r = requests.post(
+        url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/calculate"
+    )
+    return r.status_code
+
+
+def update_weather_consumers_fall_go():
+    r = requests.post(
+        url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/calculate_go"
+    )
+    return r.status_code
+
+
 if __name__ == '__main__':
-    start = time.time()
+    # update_weather_data()
+    print(update_weather_consumers_fall())
+
+    # start = time.time()
     # files = get_data_from_excel()
     # 119 seconds
     # files = upload_xlsx_faster()
     # prepare_dataset(save_view=True)
-    prepare_dataset(
-        files=None,
-        save_view=True,
-        agr_counter=False
-    )
+    # prepare_dataset(
+    #     files=None,
+    #     save_view=True,
+    #     agr_counter=False
+    # )
     # print(time.time() - start, "upload")
     # prepare_dataset(files=files, save_view=False, agr_counter=False)

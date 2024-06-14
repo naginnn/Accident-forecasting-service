@@ -43,12 +43,15 @@ class AgrView:
     @staticmethod
     @log
     def _get_area_coord(df: pd.DataFrame) -> pd.DataFrame:
-        df['location_area_coord'] = df['obj_consumer_station_location_area'].apply(lambda x: AgrView._get_coord_by_area(x))
+        df['location_area_coord'] = df['obj_consumer_station_location_area'].apply(
+            lambda x: AgrView._get_coord_by_area(x))
         return df
+
     @staticmethod
     @log
     def _get_coord_by_area(x):
         return DISTRICT_LOCATION.get(x, "55.753544 37.621202")
+
     @staticmethod
     @log
     def _get_ranking(df: pd.DataFrame) -> pd.DataFrame:
