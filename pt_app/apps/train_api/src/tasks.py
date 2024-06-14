@@ -125,25 +125,19 @@ def prepare_dataset(**kwargs) -> None:
     #
     # update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # # 6. Получаем все таблицы из схемы public
-    start = time.time()
     # 5.1 seconds
     processed = get_processed_data(db=db)
-    print(time.time() - start, "get_processed_data")
-    # # #
-    # update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
-    start = time.time()
+    
+    update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
     # 116 seconds
     agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
-    print(time.time() - start, "agregate_train_df")
 
     update_progress(job=job, progress=75, msg="Сохранение данных")
-    start = time.time()
     # 0.7 seconds
     save_for_predict(db=db, df_predict=agr_predict_df)
-    print(time.time() - start, "save_for_predict")
     #
     update_progress(job=job, progress=80, msg="Обучение модели и оценка точности")
-    # 371 seconds
+    # 371 seconds = 6 minute
     model, accuracy_score, feature_importances = train_model(train_df=agr_train_df)
     update_progress(job=job, progress=85, msg="Сохранение модели и метаинформации")
     save_model_info(session=session, model=model, accuracy_score=accuracy_score,
