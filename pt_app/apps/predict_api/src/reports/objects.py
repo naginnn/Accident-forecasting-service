@@ -78,6 +78,132 @@ async def create_objects_report():
     return file_name, excel_file
 
 
+async def create_consumer_station_report(id: int):
+    file_name = str(datetime.now().__format__('%d%m%Y')) + '_' + 'consume_station_report'
+    consumer_station_query = f"""
+                select ocs.name                as "Номер ТП",
+                       ld.name as "Округ",
+                       la.name as "Район",
+                       ocs.address             as "Адрес ТП",
+                       ocs.type                as "Вид ТП",
+                       ocs.place_type          as "Тип размещения",
+                       ocs.ods_name            as "Номер ОДС",
+                       ocs.ods_address         as "Адрес ОДС",
+                       ocs.ods_manager_company as "Потребитель(или УК)",
+                       oss.name                as "Источник теплоснабжения",
+                       oss.address             as "Адрес источника",
+                       oss.e_power             as "Электро энергия",
+                       oss.t_power             as "Тепловая энергия",
+                       oss.boiler_count        as "Кол-во котлов",
+                       oss.turbine_count       as "Кол-во Турбин"
+                from obj_consumer_stations ocs
+                         join obj_source_stations oss on oss.id = ocs.id
+                         join location_districts ld on ld.id = ocs.location_district_id
+                         join location_areas la on la.id = ocs.location_area_id
+                where ocs.id = '{str(id)}'
+                """
+    df_consumer_station = pd.read_sql(consumer_station_query, sync_db)
+
+    objects_query = f"""
+                select obj.address        as "Адрес потребителя",
+                       ld.name as "Округ",
+                       la.name as "Район",
+                       obj.total_area     as "Общ. площадь",
+                       obj.operating_mode as "Режим работы потребителя",
+                       obj.balance_holder as "Балансодержатель",
+                       obj.type           as "Тип",
+                       obj.priority       as "Приоритет",
+                       obj.energy_class   as "Класс энергоэффективности",
+                       obj.load_gvs       as "Тепловая нагрузка ГВС ср.",
+                       obj.load_fact      as "Тепловая нагрузка ГВС факт.",
+                       obj.heat_load      as "Тепловая нагрузка отопления строения",
+                       obj.vent_load      as "Тепловая нагрузка вентиляции строения",
+                       obj.total_area     as "Общая площадь",
+                       obj.build_year     as "Год постройки",
+                       obj.wear_pct       as "Фактический износ здания, проц."
+                from obj_consumer_stations ocs
+                    join obj_consumers obj on ocs.id = obj.obj_consumer_station_id
+                    join location_districts ld on ld.id = ocs.location_district_id
+                    join location_areas la on la.id = ocs.location_area_id
+                where ocs.id = '{str(id)}'
+    """
+    df_objects = pd.read_sql(objects_query, sync_db)
+
+    events_query = f"""
+                        select obj.address        as "Адрес потребителя",
+                               ec.description    as "Описание инцидента",
+                               ec.created        as "Дата создания инцидента",
+                               ec.is_closed      as "Статус инцидента",
+                               ec.days_of_work   as "Кол-во дней устранения инцидента",
+                               ec.probability    as "Вероятность предсказания",
+                               ocs.name           as "Имя ЦТП",
+                               ocs.address        as "Адрес ЦТП",
+                               ec.source         as "Источник",
+                               obj.total_area     as "Общ. площадь",
+                               obj.energy_class   as "Класс энергоэффективности",
+                               obj.operating_mode as "Режим работы потребителя",
+                               obj.priority       as "Приоритет",
+                               obj.load_gvs       as "Тепловая нагрузка ГВС ср.",
+                               obj.load_fact      as "Тепловая нагрузка ГВС факт.",
+                               obj.heat_load      as "Тепловая нагрузка отопления строения",
+                               obj.vent_load      as "Тепловая нагрузка вентиляции строения",
+                               obj.build_year     as "Год постройки",
+                               obj.wear_pct       as "Фактический износ здания, проц."
+                        from obj_consumer_stations ocs
+                            join obj_consumers obj on ocs.id = obj.obj_consumer_station_id
+                            join event_consumers ec on ec.obj_consumer_id = obj.id
+                        where ec.is_closed = false and ocs.id = '{str(id)}'
+        """
+    df_events = pd.read_sql(events_query, sync_db)
+
+    event_counter_query = f"""
+                select obj.address            as "Адрес потребителя",
+                       ec.contour             as "Контур",
+                       ec.counter_mark        as "Марка счетчика",
+                       ec.counter_number      as "Номер счетчика",
+                       ec.gcal_in_system      as "Объем поданного теплоносителя в систему ЦО",
+                       ec.gcal_out_system     as "Объем обратного теплоносителя в систему ЦО",
+                       ec.subset              as "Разница между подачей и обраткой(Подмес)",
+                       ec.leak                as "Разница между подачей и обраткой(Утечка)",
+                       ec.supply_temp         as "Температура подачи",
+                       ec.return_temp         as "Температура обратки",
+                       ec.work_hours_counter  as "Наработка часов счетчика",
+                       ec.heat_thermal_energy as "Расход тепловой энергии",
+                       ec.errors              as "Ошибка",
+                       ec.errors_desc         as "Описание ошибки",
+                       ec.created             as "Дата создания",
+                       obj.balance_holder     as "Балансодержатель",
+                       obj.type               as "Тип",
+                       obj.priority           as "Приоритет",
+                       obj.energy_class       as "Класс энергоэффективности",
+                       obj.build_year         as "Год постройки",
+                       obj.wear_pct           as "Фактический износ здания, проц."
+                from obj_consumer_stations ocs
+                         join obj_consumers obj on ocs.id = obj.obj_consumer_station_id
+                         join event_counters ec on ec.obj_consumer_id = obj.id
+                where ocs.id = '{str(id)}'
+                """
+    df_events_counter = pd.read_sql(event_counter_query, sync_db)
+    df_events_counter["Дата создания"] = df_events_counter["Дата создания"].astype(str)
+
+    output = io.BytesIO()
+    writer = pd.ExcelWriter(output, engine="xlsxwriter")
+
+    df_consumer_station.to_excel(writer, sheet_name="Информация о ЦТП", index=False)
+    df_objects.to_excel(writer, sheet_name="Взаимосвязанные потребители", index=False)
+    df_events.to_excel(writer, sheet_name="Открытые инциденты", index=False)
+    df_events_counter.to_excel(writer, sheet_name="Выгрузка ОДПУ отопления", index=False)
+
+    set_column_size(writer, df_consumer_station, "Информация о ЦТП")
+    set_column_size(writer, df_objects, "Взаимосвязанные потребители")
+    set_column_size(writer, df_events, "Открытые инциденты")
+    set_column_size(writer, df_events_counter, "Выгрузка ОДПУ отопления")
+
+    writer.close()
+    excel_file = output.getvalue()
+    return file_name, excel_file
+
+
 async def create_object_report(id: int):
     file_name = str(datetime.now().__format__('%d%m%Y')) + '_' + 'object_report'
     obj_query = f"""
@@ -145,11 +271,11 @@ async def create_object_report(id: int):
 
     def change_event_status(data):
         if data:
-            return "Открыт"
+            return "Закрыт"
         elif data is None:
             return '-'
         elif not data:
-            return "Закрыт"
+            return "Открыт"
 
     df_events["Статус инцидента"] = df_events["Статус инцидента"].apply(lambda x: change_event_status(x))
     df_events["Дата создания инцидента"] = df_events["Дата создания инцидента"].astype(str)
@@ -212,15 +338,21 @@ async def create_object_report(id: int):
     writer = pd.ExcelWriter(output, engine="xlsxwriter")
 
     df_object.to_excel(writer, sheet_name="Потребители", index=False)
-    df_events.to_excel(writer, sheet_name="Открытые инциденты", index=False)
+    df_events.to_excel(writer, sheet_name="Инциденты", index=False)
     df_events_counter.to_excel(writer, sheet_name="Выгрузка ОДПУ отопления", index=False)
     df_objects.to_excel(writer, sheet_name="Взаимосвязанные потребители", index=False)
 
     set_column_size(writer, df_object, "Потребители")
-    set_column_size(writer, df_events, "Открытые инциденты")
+    set_column_size(writer, df_events, "Инциденты")
     set_column_size(writer, df_events_counter, "Выгрузка ОДПУ отопления")
     set_column_size(writer, df_objects, "Взаимосвязанные потребители")
 
     writer.close()
     excel_file = output.getvalue()
     return file_name, excel_file
+
+
+# if __name__ == '__main__':
+#     # asyncio.run(create_objects_report())
+#     # asyncio.run(create_object_report(5))
+#     asyncio.run(create_consumer_station_report(1))
