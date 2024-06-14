@@ -40,32 +40,16 @@ async def start_task(f: Callable, job_id: str, **kwargs) -> Tuple[dict, bool]:
         return dict(state=job.get_status()), False
 
 
-async def check_task_state(job_id: str) -> Tuple[dict, bool] | Tuple[None, bool]:
+async def check_task_state(job_id: str) -> Tuple[dict, str] | Tuple[None, str]:
     redis = get_redis_client()
     try:
         job = Job.fetch(id=job_id, connection=redis)
-        status = job.get_status()
-        if status in ["started", "queued"]:
-            return job.get_meta(), True
-        if status in ["finished"]:
-            return {"state": "finish"}, True
-        else:
-            return None, False
+        return job.get_meta(), job.get_status()
     except NoSuchJobError:
-        return None, False
+        return None, "finished"
         # return dict(error="no such job, job was not started"), False
 
 
-async def autostart():
-    files = {}
-    threads = []
-    for filename in os.listdir("/autostart"):
-        thread = threading.Thread(target=load_data, args=(files, filename,), daemon=True)
-        threads.append(thread)
-        thread.start()
-    for thread in threads:
-        thread.join()
-    prepare_dataset(files=files)
 
 # async def check_train_state(job_name='upload_files') -> dict:
 #     redis = get_redis_client()

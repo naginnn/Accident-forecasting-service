@@ -22,9 +22,9 @@ func (h handler) GetEvent(c *gin.Context) {
 func (h handler) GetEventsByConsumerId(c *gin.Context) {
 	id := c.Param("id")
 	var events []models.EventConsumer
-	if h.DB.
-		Where("obj_consumer_id = ?", id).Find(&events).RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, "Event not found")
+	err := h.DB.Where("obj_consumer_id = ?", id).Find(&events).Error
+	if err != nil {
+		c.JSON(http.StatusNotFound, err)
 		return
 	}
 
@@ -34,9 +34,9 @@ func (h handler) GetEventsByConsumerId(c *gin.Context) {
 func (h handler) GetEventsCounterByConsumerId(c *gin.Context) {
 	id := c.Param("id")
 	var events []models.EventCounter
-	if h.DB.
-		Where("obj_consumer_id = ?", id).Find(&events).RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, "Event not found")
+	err := h.DB.Where("obj_consumer_id = ?", id).Find(&events).Error
+	if err != nil {
+		c.JSON(http.StatusNotFound, err)
 		return
 	}
 

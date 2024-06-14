@@ -27,8 +27,9 @@ DB_URL = f"postgresql+psycopg2://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NA
 database = create_async_engine(DATABASE_ASYNC_URL, poolclass=NullPool, future=True, connect_args=connect_args)
 
 async_session = sessionmaker(bind=database, class_=AsyncSession, expire_on_commit=False, autoflush=False)
+conn_str = f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}'
 
-sync_db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
+sync_db = create_engine(conn_str)
 
 
 def get_sync_session():

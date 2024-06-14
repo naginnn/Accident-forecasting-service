@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 import pandas as pd
 from joblib import Parallel, delayed
 
-from settings.db import sync_db
+# from settings.db import sync_db
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
 def __agr_and_save(c, event_counters, event_consumers):
+    from settings.db import sync_db
     all_df = pd.DataFrame()
     event_counter_consumer = event_counters[event_counters['obj_consumer_id'] == c['id']]
     events = event_consumers[event_consumers['obj_consumer_id'] == c['id']]
@@ -121,10 +122,6 @@ def agr_events_counters(db):
         all_df = pd.concat([all_df, events])
         if not all_df.empty:
             all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)
-        # del all_df
-        # del event_counter_consumer
-        # del events
-
     consumers['id'].apply(lambda x: res(x))
 
 

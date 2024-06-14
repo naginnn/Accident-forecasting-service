@@ -9,11 +9,10 @@ from fastapi import APIRouter, Depends, UploadFile
 from redis import Redis
 from rq import Queue, get_current_job
 from pydantic import BaseModel
-
-from apps.train_api.src.tasks import upload_files
-from apps.train_api.src.utils import start_task, check_task_state, autostart
+from apps.train_api.src.upload_file import upload_files_new
+from apps.train_api.src.utils import start_task, check_task_state
 from pkg.auth import Authorization
-from settings.db import sync_db, get_sync_session
+from settings.db import sync_db, get_sync_session, conn_str
 from settings.rd import get_redis_client
 
 train_router = APIRouter(tags=["train"],
@@ -27,25 +26,20 @@ train_router = APIRouter(tags=["train"],
 @train_router.post("/upload", status_code=200)
 async def upload_data(file: UploadFile):
     """ Загрузка Zip файла """
-    res, ok = await check_task_state(job_id='upload_files')
-    if ok:
-        return {'result': res, 'state': ok}
+    res, status = await check_task_state(job_id='upload_files')
+    if status == "started":
+        return {'result': res, 'state': status}
 
     contents = await file.read()
     bts = io.BytesIO(contents)
-    res, ok = await start_task(f=upload_files, job_id='upload_files', bts=bts)
+    res, ok = await start_task(f=upload_files_new, job_id='upload_files', conn_str=conn_str, bts=bts)
     return {'result': res, 'state': ok}
 
 
 @train_router.get("/upload_state", status_code=200)
 async def upload_state():
-    """ Загрузка Zip файла """
-    res, ok = await check_task_state(job_id='upload_files')
-    return {'result': res, 'state': ok}
+    """ Статус процесса"""
+    res, status = await check_task_state(job_id='upload_files')
+    return {'result': res, 'state': status}
 
 
-@train_router.get("/autostart", status_code=200)
-async def upload_state():
-    """ Загрузка Zip файла """
-    res, ok = await autostart()
-    return {'result': res, 'state': ok}

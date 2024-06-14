@@ -27,8 +27,8 @@ from apps.train_api.service.utils import (get_word, MultiColumnLabelEncoder,
 from pkg.utils import FakeJob
 import os
 
-from settings.db import get_sync_session
-from settings.rd import get_redis_client
+# from settings.db import get_sync_session
+# from settings.rd import get_redis_client
 
 from apps.train_api.src._test_utils import log
 from apps.train_api.service.aggregate.agr_unprocessed import AgrUnprocessed
@@ -38,35 +38,9 @@ from apps.train_api.service.aggregate.agr_event_counter import agr_events_counte
 
 
 def update_progress(job: Job, progress: float, msg: str):
-    print(progress, msg)
     job.meta['stage'] = progress
     job.meta['msg'] = msg
     job.save_meta()
-
-
-async def upload_files(bts: io.BytesIO):
-    """ Переодическая задача, разбор архива и вызов парсинга """
-    # job = get_current_job()
-    job = FakeJob.get_current_job()
-    # Загрузка файлов
-    # job.meta['stage'] = 0.0
-    # job.save_meta()
-
-    files = {}
-    update_progress(job=job, progress=10, msg="Чтение архива")
-    with ZipFile(bts, "r") as zip_file:
-        for xlxs_file in zip_file.filelist:
-            if '__MACOSX' not in xlxs_file.filename:
-                files[xlxs_file.filename] = pd.ExcelFile(
-                    io.BytesIO(zip_file.open(xlxs_file.filename).read()),
-                )
-
-        prepare_dataset(files=files)
-
-
-# def load_data(files: dict, filename: str):
-#     files[filename] = pd.ExcelFile(f"../../../autostart/{filename}", )
-
 
 @log
 def get_data_from_excel() -> dict[str, pd.ExcelFile]:
@@ -79,19 +53,13 @@ def get_data_from_excel() -> dict[str, pd.ExcelFile]:
 
 @log
 def prepare_dataset(**kwargs) -> None:
-    PG_USR = os.getenv('POSTGRES_USER', 'username')
-    PG_PWD = os.getenv('POSTGRES_PASSWORD', 'password')
-    PG_HOST = os.getenv('POSTGRES_HOST', 'localhost')
-    PG_PORT = os.getenv('POSTGRES_PORT', '5432')
-    PG_DB_NAME = os.getenv('POSTGRES_DB', 'postgres')
-    db = create_engine(f'postgresql://{PG_USR}:{PG_PWD}@{PG_HOST}:{PG_PORT}/{PG_DB_NAME}')
+    db = kwargs.get('db')
     session = Session(db)
     files = kwargs.get('files')
     save_view = kwargs.get('save_view')
     agr_counter = kwargs.get('agr_counter')
-    job = FakeJob.get_current_job()
-    # job = get_current_job()
-    session = get_sync_session()
+    # job = FakeJob.get_current_job()
+    job = get_current_job()
     # 85 seconds 1.5 minute
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
@@ -99,6 +67,7 @@ def prepare_dataset(**kwargs) -> None:
         tables = AgrUnprocessed.execute(tables=files)
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
+        update_progress(job=job, progress=15, msg="Сохранено")
     # 250 seconds = 4 minute
     if save_view:
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
@@ -111,15 +80,13 @@ def prepare_dataset(**kwargs) -> None:
         update_progress(job=job, progress=45, msg="Сохранение данных")
         # 5. Записываем
         save_for_view(session=session, tables=agr_view_tables)
-
     # 1410 seconds = 18 minute
     if agr_counter:
         # агрегация показаний счетчика с потребителем и инцидентами
         agr_events_counters(db=db)
-    #
-    # update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
-    # # 6. Получаем все таблицы из схемы public
-    # 5.1 seconds
+    update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
+    # 6. Получаем все таблицы из схемы public
+    # 5 seconds
     processed = get_processed_data(db=db)
 
     update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
@@ -174,7 +141,7 @@ def loop(path, file_name):
     return s
 
 
-def upload_xlsx_faster():
+def upload_xlsx_faster(bytes: str):
     path = "/Users/sergeyesenin/GolandProjects/services01/pt_app/autostart"
     list_files = os.listdir(path)
     res = Parallel(n_jobs=-2, verbose=10)(delayed(loop)

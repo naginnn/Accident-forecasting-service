@@ -433,14 +433,10 @@ class SaveView:
 
 # сохранить без подгрузки координат
 def save_for_view(session: Session, tables: dict):
-    job = FakeJob.get_current_job()
-    # df = tables.get("full")
     counter_events = tables.get("events_counter_all")
     events = tables.get("events_all")
     flat_table = tables.get("flat_table")
-    # locations = SaveView.save_locations(session=session, df=df)
     SaveView.save_objects_new(session=session, df=flat_table, events=events, counter_events=counter_events)
-    # SaveView.save_objects(session=session, df=flat_table, locations=locations, all_events=events)
     print('Success')
 
 
@@ -450,7 +446,6 @@ def save_for_predict(db: Engine, df_predict: pd.DataFrame):
 
 def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd.DataFrame):
     events_df.rename(columns={"id": "event_class"}, inplace=True)
-    # predicated_df = predicated_df.join(events_df, on="event_id", how="inner")
     predicated_df = predicated_df.merge(events_df, on='event_class', how='inner')
     # ограничение по точности
     predicated_df = predicated_df[predicated_df['percent'] > 0.7]
