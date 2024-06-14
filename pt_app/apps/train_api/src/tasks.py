@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 from zipfile import ZipFile
-
+from catboost import CatBoostClassifier
 import requests
 from joblib import Parallel, delayed
 import rq
@@ -15,11 +15,11 @@ from sklearn import preprocessing
 from rq.job import Job, get_current_job
 from sqlalchemy import text as sa_text, select
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy import Connection, create_engine, NullPool
+from sqlalchemy import Connection, create_engine, NullPool, Engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, Session
 from apps.train_api.service.receive import (predict_data, save_unprocessed_data,
-                                            get_unprocessed_data, get_processed_data)
+                                            get_unprocessed_data, get_processed_data, get_model)
 from apps.train_api.service.train import train_model
 from apps.train_api.service.update import save_for_view, save_for_predict, save_predicated, save_model_info
 from apps.train_api.service.utils import (get_word, MultiColumnLabelEncoder,
@@ -42,6 +42,7 @@ def update_progress(job: Job, progress: float, msg: str):
     job.meta['msg'] = msg
     job.save_meta()
 
+
 @log
 def get_data_from_excel() -> dict[str, pd.ExcelFile]:
     path_to_excel = "../../../autostart"
@@ -52,18 +53,20 @@ def get_data_from_excel() -> dict[str, pd.ExcelFile]:
 
 
 @log
-def prepare_dataset(**kwargs) -> None:
-    db = kwargs.get('db')
+def prepare_dataset(
+        db: Engine,
+        *,
+        files: dict = None,
+        is_save_view: bool = True,
+        is_agr_counter: bool = True,
+        is_agr_train: bool = True,
+        is_agr_predict: bool = True,
+        is_predict: bool = True,
+        is_weather_update: bool = True,
+) -> None:
     session = Session(db)
-    files = kwargs.get('files')
-    is_save_view = kwargs.get('save_view')
-    is_agr_counter = kwargs.get('agr_counter')
-    is_agr_train = kwargs.get('agr_train')
-    is_agr_predict = kwargs.get('agr_predict')
-    is_predict = kwargs.get('is_save_predict')
     # job = FakeJob.get_current_job()
     job = get_current_job()
-    # 85 seconds 1.5 minute
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
         # 1. собираем и пред агрегируем входные данные
@@ -71,12 +74,10 @@ def prepare_dataset(**kwargs) -> None:
         # 2. Сохраняем в схему unprocessed
         save_unprocessed_data(db=db, tables=tables)
         update_progress(job=job, progress=15, msg="Сохранено")
-    # 250 seconds = 4 minute
     if is_save_view:
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
         # 3. Получаем все таблицы из схемы unprocessed
         tables = get_unprocessed_data(db=db)
-        #
         update_progress(job=job, progress=35, msg="Агрегация и чистка данных для представления")
         # 4. Пред агрегируем данные для записи в нормальную структуру
         agr_view_tables = AgrView.execute(tables=tables)
@@ -85,45 +86,47 @@ def prepare_dataset(**kwargs) -> None:
         save_for_view(session=session, tables=agr_view_tables)
     # 1410 seconds = 18 minute
     if is_agr_counter:
+        update_progress(job=job, progress=50, msg="Агрегация данных инцидент - счетчик")
         # агрегация показаний счетчика с потребителем и инцидентами
         agr_events_counters(db=db)
     update_progress(job=job, progress=55, msg="Загрузка агрегированных данных")
     # 6. Получаем все таблицы из схемы public
-    # 5 seconds
     processed = get_processed_data(db=db)
 
     if is_agr_train:
-        update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
+        update_progress(job=job, progress=60, msg="Агрегация и анализ данных для модели")
         agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
+        update_progress(job=job, progress=65, msg="Обучение модели и оценка точности")
         model, accuracy_score, feature_importances = train_model(train_df=agr_train_df)
+        update_progress(job=job, progress=70, msg="Сохранение модели и метаинформации")
+        save_model_info(session=session, model=model, accuracy_score=accuracy_score,
+                        feature_importances=feature_importances)
+        if is_agr_predict:
+            is_agr_predict = False
+            update_progress(job=job, progress=75, msg="Загрузка модели")
+            save_for_predict(db=db, df_predict=agr_predict_df)
+            if is_predict:
+                update_progress(job=job, progress=85, msg="Предсказание и сохранение данных")
+                predicated_df = predict_data(model=model, predict_df=agr_predict_df)
+                save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('events_classes'))
 
     if is_agr_predict:
-        agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
+        update_progress(job=job, progress=75, msg="Загрузка модели")
+        model = get_model(session=session)
+        update_progress(job=job, progress=80, msg="Агрегация данных для предсказания")
+        ## add custom agregate
+        agr_predict_df, _ = AgrTrain.execute(tables=processed)
         save_for_predict(db=db, df_predict=agr_predict_df)
+        if is_predict:
+            update_progress(job=job, progress=85, msg="Предсказание и сохранение данных")
+            predicated_df = predict_data(model=model, predict_df=agr_predict_df)
+            save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('events_classes'))
 
-    update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
-    # 116 seconds = 2 minute
-    agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
-
-    update_progress(job=job, progress=75, msg="Сохранение данных")
-    # 0.7 seconds
-    save_for_predict(db=db, df_predict=agr_predict_df)
-    #
-    update_progress(job=job, progress=80, msg="Обучение модели и оценка точности")
-    # 371 seconds = 6 minute
-    model, accuracy_score, feature_importances = train_model(train_df=agr_train_df)
-    update_progress(job=job, progress=85, msg="Сохранение модели и метаинформации")
-    save_model_info(session=session, model=model, accuracy_score=accuracy_score,
-                    feature_importances=feature_importances)
-    update_progress(job=job, progress=90, msg="Расчет предсказаний")
-    predicated_df = predict_data(model=model, predict_df=agr_predict_df)
-    update_progress(job=job, progress=95, msg="Сохранение предсказаний")
-    save_predicated(session=session, predicated_df=predicated_df, events_df=processed.get('events_classes'))
-    update_progress(job=job, progress=99, msg="Обновление данных о погодных условиях")
-    update_weather_data()
-    # update_weather_consumers_fall()
-    update_weather_consumers_fall_go()
-    update_progress(job=job, progress=100, msg="Выполнено успешно")
+    if is_weather_update:
+        update_progress(job=job, progress=90, msg="Обновление данных о погодных условиях")
+        update_weather_data()
+        update_weather_consumers_fall_go()
+    update_progress(job=job, progress=100, msg="Успешно")
 
 
 def loop(path, file_name):

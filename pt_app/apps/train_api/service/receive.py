@@ -11,6 +11,8 @@ import re
 import numpy as np
 from joblib import Parallel, delayed, parallel_backend
 from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
 unprocessed_schema_name = "unprocessed"
 
 
@@ -104,6 +106,13 @@ def get_processed_data(db: Engine) -> dict[str, DataFrame]:
     query = sa_text(f"select * from public.counter_consumer_events")
     tables["counter_consumer_events"] = pd.read_sql(query, db)
     return tables
+
+
+def get_model(session: Session) -> CatBoostClassifier:
+    q = sa_text("select max(mi.id), mi.path from public.model_infos mi group by mi.id")
+    model_info = session.execute(q).fetchone()[1]
+    model = CatBoostClassifier().load_model(model_info)
+    return model
 
 
 def predict_data(model: CatBoostClassifier, predict_df: pd.DataFrame) -> pd.DataFrame:

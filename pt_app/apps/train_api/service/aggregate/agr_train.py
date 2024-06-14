@@ -104,6 +104,14 @@ class AgrTrain:
         return agr_predict_df, agr_train_df
 
     @staticmethod
+    @log
+    def execute_predict(custom: bool = False):
+        if custom:
+            pass
+            return
+        pass
+
+    @staticmethod
     def _transform_consumer(df: pd.DataFrame) -> pd.DataFrame:
         df = MultiColumnLabelEncoder(columns=[
             'street', 'house_number',
