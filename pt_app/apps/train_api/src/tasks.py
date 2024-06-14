@@ -90,7 +90,6 @@ def prepare_dataset(**kwargs) -> None:
     job = FakeJob.get_current_job()
     # job = get_current_job()
     session = get_sync_session()
-    start = time.time()
     # 85 seconds 1.5 minute
     if files:
         start = time.time()
@@ -127,9 +126,9 @@ def prepare_dataset(**kwargs) -> None:
     # # 6. Получаем все таблицы из схемы public
     # 5.1 seconds
     processed = get_processed_data(db=db)
-    
+
     update_progress(job=job, progress=65, msg="Агрегация и анализ данных для модели")
-    # 116 seconds
+    # 116 seconds = 2 minute
     agr_predict_df, agr_train_df = AgrTrain.execute(tables=processed)
 
     update_progress(job=job, progress=75, msg="Сохранение данных")

@@ -127,6 +127,7 @@ def agr_events_counters(db):
 
     consumers['id'].apply(lambda x: res(x))
 
+
 def agr_events_counters_stable(db):
     query = sa_text(
         f"""
@@ -179,4 +180,3 @@ def agr_events_counters_stable(db):
         all_df = pd.concat([all_df, events])
         if not all_df.empty:
             all_df.to_sql(name="counter_consumer_events", schema='public', con=db, if_exists='append', index=False)
-
