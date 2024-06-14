@@ -179,7 +179,7 @@ async def create_object_report(id: int):
                        obj.wear_pct           as "Фактический износ здания, проц."
                 from obj_consumers obj
                          join event_counters ec on ec.obj_consumer_id = obj.id
-                where obj.id = 2
+                where obj.id = '{str(id)}'
                 """
     df_events_counter = pd.read_sql(event_counter_query, sync_db)
     df_events_counter["Дата создания"] = df_events_counter["Дата создания"].astype(str)
