@@ -99,7 +99,6 @@ def prepare_dataset(**kwargs) -> None:
         save_unprocessed_data(db=db, tables=tables)
     # 250 seconds = 4 minute
     if save_view:
-        start = time.time()
         update_progress(job=job, progress=25, msg="Получение необработанных данных")
         # 3. Получаем все таблицы из схемы unprocessed
         tables = get_unprocessed_data(db=db)
@@ -110,7 +109,6 @@ def prepare_dataset(**kwargs) -> None:
         update_progress(job=job, progress=45, msg="Сохранение данных")
         # 5. Записываем
         save_for_view(session=session, tables=agr_view_tables)
-        print(time.time() - start, "save_view")
 
     # 1410 seconds = 18 minute
     if agr_counter:
@@ -191,8 +189,8 @@ if __name__ == '__main__':
     # prepare_dataset(save_view=True)
     prepare_dataset(
         files=None,
-        save_view=False,
+        save_view=True,
         agr_counter=False
     )
-    print(time.time() - start, "upload")
+    # print(time.time() - start, "upload")
     # prepare_dataset(files=files, save_view=False, agr_counter=False)

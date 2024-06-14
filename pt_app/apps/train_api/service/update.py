@@ -215,10 +215,12 @@ class SaveView:
                 create_fields=dict(
                     name=row['obj_consumer_station_location_area'],
                     location_district_id=location_district.id,
+                    coordinates=row['location_area_coord'],
                 ),
                 update_fields=dict(
                     name=row['obj_consumer_station_location_area'],
                     location_district_id=location_district.id,
+                    coordinates=row['location_area_coord'],
                 )
             )
 
