@@ -43,7 +43,8 @@ async def create_objects_report():
                     ecf.probability  as "Вероятность предсказания",
                     ecf.description  as "Последний инцидент",
                     ecf.created  as "Дата создания инцидента",
-                    ecf.is_closed  as "Статус инцидента"
+                    ecf.is_closed  as "Статус инцидента",
+                    ecf.days_of_work  as "Кол-во дней устранения инцидента"
                 from obj_consumers as c
                          join public.location_districts ld on ld.id = c.location_district_id
                          join public.location_areas la on la.id = c.location_area_id
@@ -64,6 +65,8 @@ async def create_objects_report():
             return "Закрыт"
 
     df_objects["Статус инцидента"] = df_objects["Статус инцидента"].apply(lambda x: change_event_status(x))
+    df_objects["Дата создания инцидента"] = df_objects["Дата создания инцидента"].astype(str)
+
     output = io.BytesIO()
     writer = pd.ExcelWriter(output, engine="xlsxwriter")
 
@@ -137,6 +140,7 @@ async def create_object_report(id: int):
                     where obj.id = '{str(id)}'
     """
     df_events = pd.read_sql(events_query, sync_db)
+    df_events["Дата создания инцидента"] = df_events["Дата создания инцидента"].astype(str)
 
     objects_query = f"""
                 select 
