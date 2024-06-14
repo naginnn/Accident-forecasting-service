@@ -42,9 +42,8 @@ services:
       # Префикс 00_ у скрипта удаления схемы public, для корректной загрузки 01_db_public.sql.gz
       # Файлы скриптов должны быть в папке, указанной в строке ниже
       # Для инициализации БД раскоментировать строку ниже
-       - ./db_dump:/docker-entrypoint-initdb.d
+      - ./db_dump:/docker-entrypoint-initdb.d
 #      - ./pg_data:/var/lib/postgresql/data
-
 #
   redis:
     image: redis:alpine
