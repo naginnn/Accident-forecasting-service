@@ -14,12 +14,7 @@ app = FastAPI(redoc_url=None)
 #     "*",
 # ]
 
-origins = [
-    os.environ.get('CORS').split(',')
-]
-
-
-
+origins = os.environ.get('CORS').split(',')
 
 app.add_middleware(
     middleware_class=CORSMiddleware,
