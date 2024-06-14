@@ -33,7 +33,7 @@ async def get_objects_report():
     return StreamingResponse(content=io.BytesIO(excel_file), headers=headers)
 
 
-@predict_router.get("/object_report", status_code=200)
+@predict_router.get("/objects_report/{id}", status_code=200)
 async def get_object_report(id: int):
     file_name, excel_file = await create_object_report(id)
     headers = {
