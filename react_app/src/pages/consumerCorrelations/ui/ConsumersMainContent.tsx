@@ -6,12 +6,11 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import {Box, IconButton, Slide, Tab, Tabs} from "@mui/material";
 
 import {PaperWrapper} from "@src/shared/ui/paperWrapper";
-import {YMap} from "@src/widgets/YMap";
-import {coordinates} from "@src/widgets/YMap/const/coordinates";
 
-import {ConsumerCorrelationsInfo} from "../types/consumerCorrelationsInfo";
-import {ConsumersTable} from "./ConsumersTable";
-import {SingleConsumerInfo} from "./SingleConsumerInfo";
+import {Consumer, ConsumerCorrelationsInfo} from "../types/consumerCorrelationsInfo";
+import {ConsumersTable} from "./consumersTable/ConsumersTable";
+import {SingleConsumerInfo} from "./singleConsumer/SingleConsumerInfo";
+import {ConsumersMap} from "./consumersMap/ConsumersMap";
 
 interface ConsumersMainContentProps {
     data: ConsumerCorrelationsInfo
@@ -19,7 +18,7 @@ interface ConsumersMainContentProps {
 
 export const ConsumersMainContent: FC<ConsumersMainContentProps> = ({data}) => {
     const [activeTab, setActiveTab] = useState<number>(0)
-    const [activeConsumer, setActiveConsumer] = useState<number | undefined>()
+    const [activeConsumer, setActiveConsumer] = useState<Consumer | undefined>()
 
     return (
         <PaperWrapper sx={{mt: '16px', position: 'relative'}}>
@@ -58,17 +57,8 @@ export const ConsumersMainContent: FC<ConsumersMainContentProps> = ({data}) => {
                         <ConsumersTable data={data.consumers_dep} setActiveConsumer={setActiveConsumer}/>
                     }
                     {
-                        activeTab === 1 &&
-                        <Box sx={{height: '600px', width: '100%', position: 'relative'}}>
-                            {/*<YMap*/}
-                            {/*    initLocation={{*/}
-                            {/*        center: data.area?.coordinates*/}
-                            {/*            .split(' ')*/}
-                            {/*            .reverse() as unknown as LngLat || coordinates.moscow,*/}
-                            {/*        zoom: 13*/}
-                            {/*    }}*/}
-                            {/*/>*/}
-                        </Box>
+                        activeTab === 1 && data &&
+                        <ConsumersMap info={data} setActiveConsumer={setActiveConsumer}/>
                     }
                 </Box>
             </Slide>
@@ -77,7 +67,7 @@ export const ConsumersMainContent: FC<ConsumersMainContentProps> = ({data}) => {
                     activeConsumer
                         ? <Box>
                             <SingleConsumerInfo
-                                consumerId={activeConsumer}
+                                consumer={activeConsumer}
                             />
                         </Box>
                         : <div/>

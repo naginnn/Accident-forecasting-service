@@ -10,10 +10,10 @@ import {TableCell, Typography} from "@mui/material";
 
 import {FocusedTableRow} from "@src/shared/ui/focusedTableRow";
 import {VisibleColumnT} from "@src/widgets/tableFilter";
-
-import {CriticalStatusName, TransformConsumers} from "../api/getConsumers";
-import {EditStatusButton} from "./EditStatusButton";
 import {openNewWindowPage} from "@src/shared/lib/openNewWindowPage";
+
+import {CriticalStatusName, TransformConsumers} from "../../api/getConsumers";
+import {EditStatusButton} from "./EditStatusButton";
 
 interface IConsumersProps {
     info: TransformConsumers

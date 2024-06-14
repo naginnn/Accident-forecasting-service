@@ -14,7 +14,7 @@ interface ConsumerMapProps {
 }
 
 export const ConsumerMap: FC<ConsumerMapProps> = ({data}) => {
-    const [location, setLocation] = useState<YMapLocationRequest>({center: coordinates.districts.VAO, zoom: 11})
+    const [location, setLocation] = useState<YMapLocationRequest>({center: coordinates.districts.VAO, zoom: 9})
 
     return (
         <Box sx={{height: '700px', width: '100%', position: 'relative', mt: '16px'}}>

@@ -2,8 +2,8 @@ import {apiBase, OBJ_URL, getAuthHeader, getRequestOptions, handleErrorResponse}
 export const {useApproveIncidentMutation} = apiBase.injectEndpoints({
     endpoints: (build => ({
         approveIncident: build.mutation<void, number>({
-            query: (consumerId) => ({
-                url: OBJ_URL + `/api/v1/obj/events?id=${consumerId}&cmd=approve`,
+            query: (eventId) => ({
+                url: OBJ_URL + `/api/v1/obj/events?id=${eventId}&cmd=approve`,
                 method: 'POST',
                 ...getRequestOptions(getAuthHeader())
             }),

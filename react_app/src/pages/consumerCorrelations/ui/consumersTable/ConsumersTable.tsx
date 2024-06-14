@@ -6,7 +6,7 @@ import {TableBody} from "@mui/material";
 import {TableFilter, VisibleColumnT} from "@src/widgets/tableFilter";
 import {sortArr} from "@src/shared/lib/sortArr";
 
-import {Consumer} from "../types/consumerCorrelationsInfo";
+import {Consumer} from "../../types/consumerCorrelationsInfo";
 import {ConsumerRow} from "./ConsumerRow";
 
 interface ConsumersTableProps {

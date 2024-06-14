@@ -3,8 +3,8 @@ import {apiBase, OBJ_URL, getAuthHeader, getRequestOptions, handleErrorResponse}
 export const {useCloseIncidentMutation} = apiBase.injectEndpoints({
     endpoints: (build => ({
         closeIncident: build.mutation<void, number>({
-            query: (consumerId) => ({
-                url: OBJ_URL + `/api/v1/obj/events?id=${consumerId}&cmd=close`,
+            query: (eventId) => ({
+                url: OBJ_URL + `/api/v1/obj/events?id=${eventId}&cmd=close`,
                 method: 'POST',
                 ...getRequestOptions(getAuthHeader())
             }),

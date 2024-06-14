@@ -5,7 +5,7 @@ import {FocusedTableRow} from "@src/shared/ui/focusedTableRow";
 
 import {TableCell, Typography} from "@mui/material";
 
-import {Consumer} from "../types/consumerCorrelationsInfo";
+import {Consumer} from "../../types/consumerCorrelationsInfo";
 
 interface IConsumerRowProps {
     info: Consumer

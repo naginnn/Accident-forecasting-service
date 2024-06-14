@@ -16,9 +16,9 @@ import {manageConsumerStatus} from "@src/pages/consumers/utils/manageConsumerSta
 import {LoadingWrapper} from "@src/entities/loadingWrapper";
 import { ErrorWrapper } from "@src/entities/errorWrapper";
 
-import {useApproveIncidentMutation} from "../api/approveIncident";
-import {useCancelIncidentMutation} from "../api/cancelIncident";
-import {useCloseIncidentMutation} from "../api/closeIncident";
+import {useApproveIncidentMutation} from "../../api/approveIncident";
+import {useCancelIncidentMutation} from "../../api/cancelIncident";
+import {useCloseIncidentMutation} from "../../api/closeIncident";
 
 interface EditStatusButtonProps {
     info: TransformConsumers
@@ -100,7 +100,7 @@ export const EditStatusButton: FC<EditStatusButtonProps> = ({info, updateStatus}
                             disabled={!info.is_warning}
                             onClick={(e) => {
                                 e.stopPropagation()
-                                cancelInc(info.consumer_id)
+                                cancelInc(info.event_id)
                             }}
                         >
                             <ListItemIcon sx={{color: red[700]}}>
@@ -112,7 +112,7 @@ export const EditStatusButton: FC<EditStatusButtonProps> = ({info, updateStatus}
                             disabled={!info.is_approved || info.is_closed}
                             onClick={(e) => {
                                 e.stopPropagation()
-                                closeInc(info.consumer_id)
+                                closeInc(info.event_id)
                             }}
                         >
                             <ListItemIcon sx={{color: red[700]}}>
@@ -124,7 +124,7 @@ export const EditStatusButton: FC<EditStatusButtonProps> = ({info, updateStatus}
                             disabled={info.is_approved || info.is_closed}
                             onClick={(e) => {
                                 e.stopPropagation()
-                                approveInc(info.consumer_id)
+                                approveInc(info.event_id)
                             }}
                         >
                             <ListItemIcon sx={{color: green[700]}}>

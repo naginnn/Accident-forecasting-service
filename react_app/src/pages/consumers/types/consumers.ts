@@ -9,10 +9,7 @@ export interface Consumers {
     consumer_station_name: string
     consumer_station_address: string
     consumer_station_coordinates: string
-    consumer_geo_data: {
-        center: LngLat
-        polygon: LngLat[]
-    }
+    consumer_geo_data: LngLat
     location_district_consumer_id: number
     location_district_consumer_name: string
     location_area_consumer_id: number
@@ -25,6 +22,7 @@ export interface Consumers {
     source: string
     description: string
     probability: number
+    event_id: number
     is_approved: boolean
     is_closed: boolean
     is_warning: boolean

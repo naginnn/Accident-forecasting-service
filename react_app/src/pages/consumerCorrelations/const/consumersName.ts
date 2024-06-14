@@ -1,4 +1,4 @@
-export const consumersTableName = {
+export const consumersName = {
     address: 'Адрес',
     balance_holder: 'Балансодержатель',
     sock_type: 'Тип',
@@ -8,9 +8,9 @@ export const consumersTableName = {
     energy_class: 'Класс энергоэффективности',
     operating_mode: 'Режим работы',
     priority: 'Приоритет',
-    heat_load: 'heat_load',
-    load_fact: 'load_fact',
-    load_gvs: 'load_gvs',
-    vent_load: 'vent_load',
-    wear_pct: 'wear_pct'
+    heat_load: 'Тепловая нагрузка отопления строения',
+    load_fact: 'Тепловая нагрузка ГВС ср.',
+    load_gvs: 'Тепловая нагрузка ГВС факт.',
+    vent_load: 'Тепловая нагрузка вентиляции строения',
+    wear_pct: 'Фактический износ здания, %'
 }

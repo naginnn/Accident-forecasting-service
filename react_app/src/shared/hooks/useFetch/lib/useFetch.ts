@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid';
 import {useEffect, useState} from "react";
 import {FetchBaseQueryError} from "@reduxjs/toolkit/dist/query/fetchBaseQuery";
 
@@ -69,7 +70,7 @@ export const useFetch = <T>({responseCallback}: IUseFetch): UseFetchReturnType<T
             }
         } catch (e) {
             console.error(e)
-            setError({status: 'FETCH_ERROR'} as FetchBaseQueryError)
+            setError({status: 'FETCH_ERROR', requestId: uuidv4()} as unknown as FetchBaseQueryError)
             setIsSuccess(false)
         } finally {
             setIsLoading(false)

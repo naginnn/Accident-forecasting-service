@@ -9,6 +9,7 @@ export const {
     YMapDefaultFeaturesLayer,
     YMapScaleControl,
     YMapControls,
+    YMapControl,
     YMapFeature,
     YMapControlButton,
     YMapLayer,
@@ -25,4 +26,9 @@ export const {
     YMapClusterer,
     clusterByGrid
 } = reactify.module(await ymaps3.import('@yandex/ymaps3-clusterer@0.0.1'))
+
+export const {
+    YMapDefaultMarker
+} = reactify.module(await ymaps3.import('@yandex/ymaps3-markers@0.0.1'));
+
 
