@@ -54,6 +54,7 @@ async def create_objects_report():
                          left join public.event_consumers ecf on ecf.id = ec.id
                 """
     df_objects = pd.read_sql(query, sync_db)
+    df_objects["Дата создания инцидента"] = df_objects["Дата создания инцидента"].astype(str)
 
     def change_event_status(data):
         if data:
@@ -179,6 +180,6 @@ async def create_object_report(id: int):
     return file_name, excel_file
 
 
-# if __name__ == '__main__':
-#     # asyncio.run(create_objects_report())
-#     asyncio.run(create_object_report(10))
+if __name__ == '__main__':
+    # asyncio.run(create_objects_report())
+    asyncio.run(create_object_report(13))
