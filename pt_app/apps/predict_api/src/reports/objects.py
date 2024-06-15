@@ -204,9 +204,6 @@ async def create_consumer_station_report(id: int):
     excel_file = output.getvalue()
     return file_name, excel_file
 
-
-
-
 async def create_object_report(id: int):
     file_name = str(datetime.now().__format__('%d%m%Y')) + '_' + 'object_report'
     obj_query = f"""
@@ -353,7 +350,6 @@ async def create_object_report(id: int):
     writer.close()
     excel_file = output.getvalue()
     return file_name, excel_file
-
 
 # if __name__ == '__main__':
 #     # asyncio.run(create_objects_report())
