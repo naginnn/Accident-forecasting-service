@@ -7,6 +7,7 @@ class Utils:
     # Use in view, unprocessed
     @staticmethod
     def get_coord(x, darr=False):
+        """ Возвращает координату для точки, либо список координат для полигона """
         res = []
         if isinstance(x, str):
             numbers = re.findall(r'[\d\.\-]+', x)

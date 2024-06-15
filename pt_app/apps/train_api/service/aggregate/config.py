@@ -225,3 +225,167 @@ EVENTS_COLUMNS_MAP = {
     'Адрес': 'address',
     'Дата и время завершения события во внешней системе': 'event_closed',
 }
+
+FLAT_TABLE_COLUMNS_MAP = {
+    'Источник теплоснабжения': 'obj_source_name',
+    'Дата ввода в эксплуатацию': 'obj_source_launched',
+    'Адрес ТЭЦ': 'obj_source_address',
+    'geoData_ТЭЦ': 'obj_source_geodata_center',
+    # obj_consumer_station
+    'Административный округ (ТП)': 'obj_consumer_station_location_district',
+    'Муниципальный район': 'obj_consumer_station_location_area',
+    'Номер ТП': 'obj_consumer_station_name',
+    'Адрес ТП': 'obj_consumer_station_address',
+    'Вид ТП': 'obj_consumer_station_type',
+    'Тип по размещению': 'obj_consumer_station_place_type',
+    'UNOM_ТП': 'obj_consumer_station_unom',
+    'geoData_ТП': 'obj_consumer_station_geodata',
+    'geodata_center_ТП': 'obj_consumer_station_geodata_center',
+    # obj_consumer
+    'Адрес строения': 'obj_consumer_address',
+    'Балансодержатель': 'obj_consumer_balance_holder',
+    'Тепловая нагрузка ГВС ср.': 'obj_consumer_gvs_load_avg',
+    'Тепловая нагрузка ГВС факт.': 'obj_consumer_gvs_load_fact',
+    'Тепловая нагрузка отопления строения': 'obj_consumer_heat_build_load',
+    'Тепловая нагрузка вентиляции строения': 'obj_consumer_vent_build_load',
+    'Диспетчеризация': 'obj_consumer_is_dispatch',
+    'UNOM': 'obj_consumer_unom',
+    'Административный округ': 'obj_consumer_location_district',
+    'Муниципальный округ': 'obj_consumer_location_area',
+    'Улица': 'obj_consumer_street',
+    'Тип номера дом': 'obj_consumer_house_type',
+    'Номер дома': 'obj_consumer_house_number',
+    'Номер корпуса': 'obj_consumer_corpus_number',
+    'Тип номера строения/сооружения': 'obj_consumer_soor_type',
+    'Номер строения': 'obj_consumer_soor_number',
+    'Материал': 'wall_material',
+    'Назначение': 'obj_consumer_target',
+    'Класс': 'obj_consumer_class',
+    'Тип': 'obj_consumer_build_type',
+    'Этажность': 'obj_consumer_build_floors',
+    'Общая площадь': 'obj_consumer_total_area',
+    'geoData': 'obj_consumer_geodata',
+    'geodata_center': 'obj_consumer_geodata_center',
+}
+
+FLAT_TABLE_COLUMNS = [
+    # source station
+    'obj_source_name', 'obj_source_launched', 'obj_source_address',
+    'obj_source_e_power',
+    'obj_source_t_power',
+    'obj_source_boiler_count',
+    'obj_source_turbine_count',
+    'obj_source_geodata_center',
+    # consumer_station
+    'obj_consumer_station_location_district',
+    'obj_consumer_station_location_area', 'obj_consumer_station_name',
+    'obj_consumer_station_address', 'obj_consumer_station_type',
+    'obj_consumer_station_place_type', 'obj_consumer_station_unom',
+    'obj_consumer_station_geodata',
+    'obj_consumer_station_geodata_center',
+    # obj_consumer
+    'obj_consumer_address',
+    'obj_consumer_balance_holder',
+    'obj_consumer_gvs_load_avg',
+    'obj_consumer_gvs_load_fact',
+    'obj_consumer_heat_build_load',
+    'obj_consumer_vent_build_load',
+    'obj_consumer_is_dispatch',
+    'obj_consumer_unom',
+    'obj_consumer_location_district',
+    'obj_consumer_location_area',
+    'obj_consumer_street',
+    'obj_consumer_house_type',
+    'obj_consumer_house_number',
+    'obj_consumer_corpus_number',
+    'obj_consumer_soor_type',
+    'obj_consumer_soor_number',
+    'wall_material',
+    'obj_consumer_target',
+    'obj_consumer_class',
+    'obj_consumer_build_type',
+    'obj_consumer_build_floors',
+    'obj_consumer_total_area',
+    'obj_consumer_geodata',
+    'obj_consumer_geodata_center',
+]
+
+BTI_COLUMNS = [
+    'UNOM',
+    'Адрес строения',
+    'Административный округ',
+    'Муниципальный округ',
+    'Улица',
+    'Тип номера дом',
+    'Номер дома',
+    'Номер корпуса',
+    'Тип номера строения/сооружения',
+    'Номер строения',
+    'Материал',
+    'Назначение',
+    'Класс',
+    'Тип',
+    'Этажность',
+    'Общая площадь',
+]
+
+BTI_COLUMNS_FOR_AGR = [
+    'id', 'Город', 'Административный округ',
+    'Муниципальный округ', 'Населенный пункт',
+    'Улица', 'Тип номера дом', 'Номер дома',
+    'Номер корпуса', 'Тип номера строения/сооружения',
+    'Номер строения', 'UNOM', 'UNAD',
+    'Материал', 'Назначение', 'Класс', 'Тип', 'Этажность', 'Признак', 'Общая площадь',
+]
+
+TP_COLUMNS = [
+    'id_ТП', 'Город_ТП', 'Административный округ_ТП',
+    'Муниципальный округ_ТП', 'Населенный пункт_ТП',
+    'Улица_ТП', 'Тип номера дом_ТП', 'Номер дома_ТП',
+    'Номер корпуса_ТП',
+    'Тип номера строения/сооружения_ТП',
+    'Номер строения_ТП', 'UNOM_ТП', 'UNAD_ТП',
+    'Материал_ТП', 'Назначение_ТП', 'Класс_ТП', 'Тип_ТП',
+    'Этажность_ТП', 'Признак_ТП',
+    'Общая площадь_ТП', 'Адрес строения ТП', 'Адрес ТП',
+]
+
+OBJ_SOURCE_COLUMNS = [
+    'obj_source_e_power',
+    'obj_source_t_power',
+    'obj_source_boiler_count',
+    'obj_source_turbine_count'
+]
+
+ODS_COLUMNS = [
+    'obj_consumer_station_name',
+    'obj_consumer_station_ods_name',
+    'obj_consumer_station_ods_address',
+    'obj_consumer_station_ods_id_yy',
+    'obj_consumer_station_ods_manager_company',
+]
+
+ODS_COLUMNS_MAP = {
+    'ЦТП': 'obj_consumer_station_name',
+    '№ ОДС': 'obj_consumer_station_ods_name',
+    'ID УУ': 'obj_consumer_station_ods_id_yy',
+    'Адрес ОДС': 'obj_consumer_station_ods_address',
+    'Потребитель (или УК)': 'obj_consumer_station_ods_manager_company',
+}
+
+SOURCE_STATION_INFO = {
+    # name, address, coords, add_info
+    'ТЭЦ №23': [["Монтажная ул., 1/4с1", 37.764117, 55.821649],
+                (1420, 3709, 23, 8)],
+    'РТС Перово': [["ул. Энергетиков, 5, Дзержинский", 37.816665, 55.630469],
+                   (0, 391, 4, 0)],
+    'ТЭЦ №22': [["Кетчерская ул., 11А", 37.837246, 55.747464],
+                (1070, 3402, 22, 11)],
+    'ТЭЦ №11': [["шоссе Энтузиастов, 32с1", 37.730223, 55.752803],
+                (330, 868, 7, 3)],
+    'КТС-42': [["Гражданская 4-я ул., д. 41", 37.719944, 55.807567],
+               (0, 25, 4, 0)],
+    'КТС Акулово': [["пос. Акулово, д.30А", 37.794460, 56.006502],
+                    (0, 8, 4, 0)],
+    'КТС-28': [["Бойцовая ул., д. 24", 37.727607, 55.814801], (0, 28, 4, 0)],
+}

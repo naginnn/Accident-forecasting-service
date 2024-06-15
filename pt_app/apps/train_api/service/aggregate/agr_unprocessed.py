@@ -4,6 +4,9 @@ import re
 from apps.train_api.src._test_utils import log
 from apps.train_api.service.aggregate.config import (
     MATERIALS, COUNTER_EVENTS_COLUMNS_MAP, OUTAGE_COLUMNS_MAP, EVENTS_COLUMNS_MAP,
+    FLAT_TABLE_COLUMNS_MAP, FLAT_TABLE_COLUMNS, BTI_COLUMNS, TP_COLUMNS,
+    OBJ_SOURCE_COLUMNS, ODS_COLUMNS, ODS_COLUMNS_MAP, BTI_COLUMNS_FOR_AGR,
+    SOURCE_STATION_INFO
 )
 from apps.train_api.service.aggregate.utils import Utils
 
@@ -11,12 +14,15 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 
 class AgrUnprocessed:
+    """ Класс для подготовки данных """
     @staticmethod
     @log
     def execute(tables) -> dict[str, pd.DataFrame]:
+        """ Основной метод для получения агрегированных таблиц """
+
         # Создание плоской таблицы
         flat_table = AgrUnprocessed._get_flat_table(
-            main_df=tables.get('7.xlsx'),  # Схема подключений МОЭК
+            main=tables.get('7.xlsx'),     # Схема подключений МОЭК
             bti=tables.get('9.xlsx'),      # Выгрузка БТИ
             coords=tables.get("13.xlsx"),  # Адресный реестр объектов недвижимости города Москвы
             ods=tables.get('8.xlsx'),      # Данные АСУПР с диспетчерскими ОДС
@@ -46,10 +52,15 @@ class AgrUnprocessed:
             'outage': outage,
         }
 
-        print('agr_tables', agr_tables)
-        print(type(outage))
+        # test case
+        # удалить после тестирования
+        AgrUnprocessed._test_execute(agr_tables)
 
-        # start test case
+        return agr_tables
+
+    @staticmethod
+    def _test_execute(agr_tables: dict[str, pd.DataFrame]):
+        """ Проверка результирующих таблиц """
         tests = {
             'flat_table': (5575, 49),   # rows, cols
             'events_all': (916483, 8),
@@ -69,54 +80,40 @@ class AgrUnprocessed:
             print('Test Agregate.execute: PASS')
         else:
             print('Test Agregate.execute: NO PASS')
-        # end test case
-
-        return agr_tables
 
     @staticmethod
     def _get_flat_table(
-            main_df: pd.DataFrame, bti: pd.DataFrame, coords: pd.DataFrame,
+            main: pd.DataFrame, bti: pd.DataFrame, coords: pd.DataFrame,
             ods: pd.DataFrame, energy: pd.DataFrame) -> pd.DataFrame:
         """ Создание плоской таблицы """
 
+        main_df = main
+
         # Выгрузка БТИ
         bti_df = AgrUnprocessed._agr_bti(bti)
-        big_df = main_df.merge(bti_df[[
-            'UNOM', 'Адрес строения',
-            'Административный округ', 'Муниципальный округ',
-            'Улица', 'Тип номера дом', 'Номер дома',
-            'Номер корпуса', 'Тип номера строения/сооружения',
-            'Номер строения',
-            'Материал', 'Назначение', 'Класс', 'Тип', 'Этажность',
-            'Общая площадь',
-        ]], how="inner", on='Адрес строения')
+        big_df = main_df.merge(bti_df[[*BTI_COLUMNS]], how="inner", on='Адрес строения')
 
+        # Формируем таблицу для ТП
         tp_df = bti_df.__deepcopy__()
-        tp_df.columns = ['id_ТП', 'Город_ТП', 'Административный округ_ТП',
-                         'Муниципальный округ_ТП', 'Населенный пункт_ТП',
-                         'Улица_ТП', 'Тип номера дом_ТП', 'Номер дома_ТП',
-                         'Номер корпуса_ТП',
-                         'Тип номера строения/сооружения_ТП',
-                         'Номер строения_ТП', 'UNOM_ТП', 'UNAD_ТП',
-                         'Материал_ТП', 'Назначение_ТП', 'Класс_ТП', 'Тип_ТП',
-                         'Этажность_ТП', 'Признак_ТП',
-                         'Общая площадь_ТП', 'Адрес строения ТП', 'Адрес ТП'
-                         ]
-        with_tp_df = big_df.merge(tp_df[['UNOM_ТП', 'Адрес ТП']], how="inner",
-                                  on='Адрес ТП')
+        tp_df.columns = TP_COLUMNS
+        with_tp_df = big_df.merge(
+            tp_df[['UNOM_ТП', 'Адрес ТП']], how="inner", on='Адрес ТП')
 
         # Адресный реестр объектов недвижимости города Москвы
         df_coord = coords
         df_coord = df_coord[1:]
         df_coord['UNOM'] = df_coord['UNOM'].astype(float)
-        res = with_tp_df.merge(df_coord[['geoData', 'geodata_center', 'UNOM']],
-                               how="inner", on='UNOM')
+        big_tp_coord = with_tp_df.merge(
+            df_coord[['geoData', 'geodata_center', 'UNOM']], how="inner", on='UNOM')
         df_coord = df_coord.rename(
             columns={'UNOM': 'UNOM_ТП', 'geoData': 'geoData_ТП',
-                     'geodata_center': 'geodata_center_ТП'}).__deepcopy__()
-        flat_table = res.merge(
+                     'geodata_center': 'geodata_center_ТП'}
+        ).__deepcopy__()
+
+        flat_table = big_tp_coord.merge(
             df_coord[['geoData_ТП', 'geodata_center_ТП', 'UNOM_ТП']],
             how="inner", on='UNOM_ТП')
+
         flat_table['geodata_center'] = flat_table['geodata_center'].apply(
             lambda x: Utils.get_coord(x))
         flat_table['geoData'] = flat_table['geoData'].apply(
@@ -130,107 +127,15 @@ class AgrUnprocessed:
             lambda x: AgrUnprocessed._set_obj_source_station_coord(x))
         flat_table["Адрес ТЭЦ"] = flat_table['geoData_ТЭЦ'].apply(
             lambda x: AgrUnprocessed._get_addr(x))
-        flat_table.rename(columns={
-            'Источник теплоснабжения': 'obj_source_name',
-            'Дата ввода в эксплуатацию': 'obj_source_launched',
-            'Адрес ТЭЦ': 'obj_source_address',
-            'geoData_ТЭЦ': 'obj_source_geodata_center',
-            # obj_consumer_station
-            'Административный округ (ТП)': 'obj_consumer_station_location_district',
-            'Муниципальный район': 'obj_consumer_station_location_area',
-            'Номер ТП': 'obj_consumer_station_name',
-            'Адрес ТП': 'obj_consumer_station_address',
-            'Вид ТП': 'obj_consumer_station_type',
-            'Тип по размещению': 'obj_consumer_station_place_type',
-            'UNOM_ТП': 'obj_consumer_station_unom',
-            'geoData_ТП': 'obj_consumer_station_geodata',
-            'geodata_center_ТП': 'obj_consumer_station_geodata_center',
-            # obj_consumer
-            'Адрес строения': 'obj_consumer_address',
-            'Балансодержатель': 'obj_consumer_balance_holder',
-            'Тепловая нагрузка ГВС ср.': 'obj_consumer_gvs_load_avg',
-            'Тепловая нагрузка ГВС факт.': 'obj_consumer_gvs_load_fact',
-            'Тепловая нагрузка отопления строения': 'obj_consumer_heat_build_load',
-            'Тепловая нагрузка вентиляции строения': 'obj_consumer_vent_build_load',
-            'Диспетчеризация': 'obj_consumer_is_dispatch',
-            'UNOM': 'obj_consumer_unom',
-            'Административный округ': 'obj_consumer_location_district',
-            'Муниципальный округ': 'obj_consumer_location_area',
-            'Улица': 'obj_consumer_street',
-            'Тип номера дом': 'obj_consumer_house_type',
-            'Номер дома': 'obj_consumer_house_number',
-            'Номер корпуса': 'obj_consumer_corpus_number',
-            'Тип номера строения/сооружения': 'obj_consumer_soor_type',
-            'Номер строения': 'obj_consumer_soor_number',
-            'Материал': 'wall_material',
-            'Назначение': 'obj_consumer_target',
-            'Класс': 'obj_consumer_class',
-            'Тип': 'obj_consumer_build_type',
-            'Этажность': 'obj_consumer_build_floors',
-            'Общая площадь': 'obj_consumer_total_area',
-            'geoData': 'obj_consumer_geodata',
-            'geodata_center': 'obj_consumer_geodata_center',
-        }, inplace=True)
-        obj_source_columns = (
-            'obj_source_e_power',
-            'obj_source_t_power',
-            'obj_source_boiler_count',
-            'obj_source_turbine_count'
-        )
-        flat_table[[*obj_source_columns]] = flat_table['obj_source_name'].apply(
+        flat_table.rename(columns=FLAT_TABLE_COLUMNS_MAP, inplace=True)
+        flat_table[[*OBJ_SOURCE_COLUMNS]] = flat_table['obj_source_name'].apply(
             lambda x: pd.Series(AgrUnprocessed._get_source_data(x)))
-
-        flat_table = flat_table[[
-            # source station
-            'obj_source_name', 'obj_source_launched', 'obj_source_address',
-            'obj_source_e_power',
-            'obj_source_t_power',
-            'obj_source_boiler_count',
-            'obj_source_turbine_count',
-            'obj_source_geodata_center',
-            # consumer_station
-            'obj_consumer_station_location_district',
-            'obj_consumer_station_location_area', 'obj_consumer_station_name',
-            'obj_consumer_station_address', 'obj_consumer_station_type',
-            'obj_consumer_station_place_type', 'obj_consumer_station_unom',
-            'obj_consumer_station_geodata',
-            'obj_consumer_station_geodata_center',
-            # obj_consumer
-            'obj_consumer_address',
-            'obj_consumer_balance_holder',
-            'obj_consumer_gvs_load_avg',
-            'obj_consumer_gvs_load_fact',
-            'obj_consumer_heat_build_load',
-            'obj_consumer_vent_build_load',
-            'obj_consumer_is_dispatch',
-            'obj_consumer_unom',
-            'obj_consumer_location_district',
-            'obj_consumer_location_area',
-            'obj_consumer_street',
-            'obj_consumer_house_type',
-            'obj_consumer_house_number',
-            'obj_consumer_corpus_number',
-            'obj_consumer_soor_type',
-            'obj_consumer_soor_number',
-            'wall_material',
-            'obj_consumer_target',
-            'obj_consumer_class',
-            'obj_consumer_build_type',
-            'obj_consumer_build_floors',
-            'obj_consumer_total_area',
-            'obj_consumer_geodata',
-            'obj_consumer_geodata_center',
-        ]]
+        flat_table = flat_table[[*FLAT_TABLE_COLUMNS]]
 
         # Данные АСУПР с диспетчерскими ОДС
         ods_df = AgrUnprocessed._agr_ods(ods)
-        flat_table = flat_table.merge(ods_df[['obj_consumer_station_name',
-                                              'obj_consumer_station_ods_name',
-                                              'obj_consumer_station_ods_address',
-                                              'obj_consumer_station_ods_id_yy',
-                                              'obj_consumer_station_ods_manager_company',
-                                              ]], how='left',
-                                      on='obj_consumer_station_name')
+        flat_table = flat_table.merge(
+            ods_df[[*ODS_COLUMNS]], how='left', on='obj_consumer_station_name')
         flat_table.fillna("Нет данных", inplace=True)
         flat_table['wall_material_k'] = flat_table['wall_material'].apply(
             lambda x: AgrUnprocessed._check_heat_resist(x))
@@ -239,9 +144,7 @@ class AgrUnprocessed:
         energy_df = energy
 
         clear_shit = energy_df[
-            ~energy_df["Департамент"].astype(str).str.contains(
-                '^[А-Я]') == True]
-
+            ~energy_df["Департамент"].astype(str).str.contains('^[А-Я]') == True]
         clear_shit["obj_consumer_address"] = clear_shit["Департамент"][2:].apply(
             lambda x: AgrUnprocessed._rename_address(x))
         clear_shit = clear_shit.drop(columns=["Департамент"])
@@ -291,43 +194,13 @@ class AgrUnprocessed:
     @staticmethod
     @log
     def _get_err_counter_desc(counter_events: pd.DataFrame, err_dict: dict) -> pd.DataFrame:
+        """ Обогощает таблицу описанием ошибки """
         counter_events['error_desc'] = counter_events['errors'].apply(lambda x: AgrUnprocessed._add_desc(x, err_dict))
         return counter_events
 
     @staticmethod
-    @log
-    def _agr_bti(bti_df: pd.DataFrame) -> pd.DataFrame:
-        bti_df.columns = bti_df.iloc[0]
-        bti_df = bti_df[1:]
-        bti_df.dropna(subset=['Улица'], inplace=True)
-        bti_df.fillna("Нет данных", inplace=True)
-        bti_df.columns = ['id', 'Город', 'Административный округ',
-                          'Муниципальный округ', 'Населенный пункт',
-                          'Улица', 'Тип номера дом', 'Номер дома',
-                          'Номер корпуса', 'Тип номера строения/сооружения',
-                          'Номер строения', 'UNOM', 'UNAD',
-                          'Материал', 'Назначение', 'Класс', 'Тип', 'Этажность', 'Признак', 'Общая площадь',
-                          ]
-        bti_df['Адрес строения'] = bti_df.apply(lambda x: AgrUnprocessed._compare_addr(x), axis=1)
-        bti_df['Адрес ТП'] = bti_df['Адрес строения'].__deepcopy__()
-        return bti_df
-
-    @staticmethod
-    @log
-    def _agr_ods(ods_df: pd.DataFrame) -> pd.DataFrame:
-        ods_df.rename(columns={
-            'ЦТП': 'obj_consumer_station_name',
-            '№ ОДС': 'obj_consumer_station_ods_name',
-            'ID УУ': 'obj_consumer_station_ods_id_yy',
-            'Адрес ОДС': 'obj_consumer_station_ods_address',
-            'Потребитель (или УК)': 'obj_consumer_station_ods_manager_company',
-        }, inplace=True)
-        ods_df.drop_duplicates(subset=['obj_consumer_station_name'], inplace=True)
-        return ods_df
-
-    # UTILS
-    @staticmethod
     def _add_desc(x, err_dict):
+        """ Возвращает описание ошибки """
         res = []
         try:
             codes = x.split(',')
@@ -342,7 +215,21 @@ class AgrUnprocessed:
             return "na"
 
     @staticmethod
+    @log
+    def _agr_bti(bti_df: pd.DataFrame) -> pd.DataFrame:
+        """ Подготовка таблицы БТИ """
+        bti_df.columns = bti_df.iloc[0]
+        bti_df = bti_df[1:]
+        bti_df.dropna(subset=['Улица'], inplace=True)
+        bti_df.fillna("Нет данных", inplace=True)
+        bti_df.columns = BTI_COLUMNS_FOR_AGR
+        bti_df['Адрес строения'] = bti_df.apply(lambda x: AgrUnprocessed._compare_addr(x), axis=1)
+        bti_df['Адрес ТП'] = bti_df['Адрес строения'].__deepcopy__()
+        return bti_df
+
+    @staticmethod
     def _compare_addr(x):
+        """ Возвращает преобразованный адрес: улица - ул., дом -> д. ..."""
         addrs = []
         if x['Населенный пункт'] != 'Нет данных':
             addrs.append(x['Населенный пункт'].replace('посёлок', 'пос.'))
@@ -361,7 +248,7 @@ class AgrUnprocessed:
             d_type = re.sub('^дом$', 'д.', d_type)
             d_type = re.sub('^сооружение$', 'соор.', d_type)
             d_type = re.sub('^владение$', 'вл.', d_type)
-            # домовладение
+            # домовладение не обрабатываем
             addrs.append(f"{d_type}{x['Номер дома']}")
         if x['Номер корпуса'] != 'Нет данных':
             addrs.append(f"корп.{x['Номер корпуса']}")
@@ -374,45 +261,34 @@ class AgrUnprocessed:
         return ', '.join(addrs)
 
     @staticmethod
-    def _set_obj_source_station_coord(x):
-        coord = []
-        match x:
-            case 'ТЭЦ №23':
-                coord = ["Монтажная ул., 1/4с1", 37.764117, 55.821649]
-            case 'ТЭЦ №22':
-                coord = ["ул. Энергетиков, 5, Дзержинский", 37.816665, 55.630469]
-            case 'РТС Перово':
-                coord = ["Кетчерская ул., 11А", 37.837246, 55.747464]
-            case 'ТЭЦ №11':
-                coord = ["шоссе Энтузиастов, 32с1", 37.730223, 55.752803]
-            case 'КТС-42':
-                coord = ["Гражданская 4-я ул., д. 41", 37.719944, 55.807567]
-            case 'КТС-28':
-                coord = ["Бойцовая ул., д. 24", 37.727607, 55.814801]
-            case 'КТС Акулово':
-                coord = ["пос. Акулово, д.30А", 37.794460, 56.006502]
-        return coord
+    @log
+    def _agr_ods(ods_df: pd.DataFrame) -> pd.DataFrame:
+        """ Подготовка таблицы ODS """
+        ods_df.rename(columns=ODS_COLUMNS_MAP, inplace=True)
+        ods_df.drop_duplicates(subset=['obj_consumer_station_name'], inplace=True)
+        return ods_df
+
+    # UTILS
+    @staticmethod
+    def _set_obj_source_station_coord(source_name):
+        """ Возвращает адрес и координаты станции """
+        coords, _ = SOURCE_STATION_INFO.get(source_name, [])
+        return coords[:]  # возвращаем копию [адрес, координаты]
 
     @staticmethod
     def _get_addr(x):
-        adr = x.pop(0)
-        return adr
+        return x.pop(0)
 
     @staticmethod
-    def _get_source_data(source: str) -> tuple[int, int, int, int]:
+    def _get_source_data(source_name: str) -> tuple[int, int, int, int]:
         # (Электрическая мощность, Тепловая мощность, Котлы, Турбогенераторы)
-        return {
-            'ТЭЦ №23': (1420, 3709, 23, 8),
-            'РТС Перово': (0, 391, 4, 0),
-            'ТЭЦ №22': (1070, 3402, 22, 11),
-            'ТЭЦ №11': (330, 868, 7, 3),
-            'КТС-42': (0, 25, 4, 0),
-            'КТС Акулово': (0, 8, 4, 0),
-            'КТС-28': (0, 28, 4, 0),
-        }.get(source, (0, 0, 0, 0))
+        default = (0, 0, 0, 0)
+        _, source_info = SOURCE_STATION_INFO.get(source_name, default)
+        return source_info
 
     @staticmethod
     def _check_heat_resist(material: str) -> float:
+        """ Возвращает коэф. теплопотерь """
         if material in MATERIALS:
             return MATERIALS[material]
         else:
