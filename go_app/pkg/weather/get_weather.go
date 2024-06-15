@@ -178,6 +178,12 @@ func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *
 		//fallWeather.TempDropping.DateTs = append(fallWeather.TempDropping.DateTs, startTime)
 		//fallWeather.TempDropping.Temp = append(fallWeather.TempDropping.Temp, tInitial)
 		for _, wthr := range *weatherParams {
+			if len(fallWeather.TempDropping.TempData) == 1 {
+				if wthr.TEnv > tInitial {
+					fallWeather.TempDropping.TempData[0].Temp = wthr.TEnv
+				}
+				fallWeather.TempDropping.TempData[0].EnvTemp = wthr.TEnv
+			}
 			tempData.DateTs = wthr.DateTs
 			//fallWeather.TempDropping.DateTs = append(fallWeather.TempDropping.DateTs, wthr.DateTs)
 			if len(consumer.WallMaterial) > 0 {
@@ -191,6 +197,7 @@ func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *
 			// add whether block
 			tInitial = NewtonCooling(&wthr)
 			tempData.Temp = tInitial
+			tempData.EnvTemp = wthr.TEnv
 			fallWeather.TempDropping.TempData = append(fallWeather.TempDropping.TempData, tempData)
 			//fallWeather.TempDropping.Temp = append(fallWeather.TempDropping.Temp, tInitial)
 			if tInitial <= 18 {

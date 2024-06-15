@@ -254,6 +254,7 @@ func (s *TempDropping) Scan(v interface{}) error {
 }
 
 type TempData struct {
-	Temp   float64 `json:"temp"`
-	DateTs int64   `json:"date_ts"`
+	Temp    float64 `json:"temp"`
+	EnvTemp float64 `json:"env_temp"`
+	DateTs  int64   `json:"date_ts"`
 }
