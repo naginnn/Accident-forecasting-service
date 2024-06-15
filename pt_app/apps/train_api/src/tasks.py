@@ -65,8 +65,8 @@ def prepare_dataset(
         is_weather_update: bool = True,
 ) -> None:
     session = Session(db)
-    job = FakeJob.get_current_job()
-    # job = get_current_job()
+    # job = FakeJob.get_current_job()
+    job = get_current_job()
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
         # 1. собираем и пред агрегируем входные данные
