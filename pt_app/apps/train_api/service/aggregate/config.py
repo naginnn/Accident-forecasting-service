@@ -178,3 +178,50 @@ DISTRICT_LOCATION = {
         'район Новогиреево': '55.748154 37.804117',
         'район Восточный': '55.817952 37.862085',
 }
+
+COUNTER_EVENTS_COLUMNS_MAP = {
+    'ID УУ': 'id_uu',
+    'ID ТУ': 'id_ty',
+    'Округ': 'district',
+    'Район': 'area',
+    'Потребители': 'manager_company',
+    'Группа': 'group',
+    'UNOM': 'unom',
+    'Адрес': 'address',
+    'Центральное отопление(контур)': 'contour_co',
+    'Марка счетчика ': 'counter_mark',
+    'Марка счетчика': 'brand_counter',
+    'Серия/Номер счетчика': 'number_counter',
+    'Дата': 'date', 'Месяц/Год': 'month_year', 'Unit': 'unit',
+    'Объём поданого теплоносителя в систему ЦО': 'obyom_podanogo_teplonositelya_v_sistemu_co',
+    'Объём обратного теплоносителя из системы ЦО': 'obyom_obratnogo_teplonositelya_is_sistemu_co',
+    'Разница между подачей и обраткой(Подмес)': 'podmes',
+    'Разница между подачей и обраткой(Утечка)': 'ytechka',
+    'Температура подачи': 'temp_podachi',
+    'Температура обратки': 'temp_obratki',
+    'Наработка часов счётчика': 'narabotka_chasov_schetchika',
+    'Расход тепловой энергии ': 'rashod_teplovoy_energy',
+    'Ошибки': 'errors',
+}
+
+OUTAGE_COLUMNS_MAP = {
+    'Причина': 'reason', 'Источник': 'source',
+    'Дата регистрации отключения': 'date_registration_shutdown',
+    'Планируемая дата отключения': 'planned_shutdown_date',
+    'Планируемая дата включения': 'planned_activation_date',
+    'Фактическая дата отключения': 'fact_shutdown_date',
+    'Фактическая дата включения': 'fact_activation_date',
+    'Вид отключения': 'shutdown_type', 'УНОМ': 'unom',
+    'Адрес': 'address',
+}
+
+EVENTS_COLUMNS_MAP = {
+    'Наименование': 'event_description',
+    'Источник': 'event_source',
+    'Дата создания во внешней системе': 'event_created',
+    'Дата закрытия': 'event_closed_ext',
+    'Округ': 'location_area',
+    'УНОМ': 'unom',
+    'Адрес': 'address',
+    'Дата и время завершения события во внешней системе': 'event_closed',
+}

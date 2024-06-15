@@ -2,7 +2,9 @@ import pandas as pd
 import re
 
 from apps.train_api.src._test_utils import log
-from apps.train_api.service.aggregate.config import MATERIALS
+from apps.train_api.service.aggregate.config import (
+    MATERIALS, COUNTER_EVENTS_COLUMNS_MAP, OUTAGE_COLUMNS_MAP, EVENTS_COLUMNS_MAP,
+)
 from apps.train_api.service.aggregate.utils import Utils
 
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -11,14 +13,74 @@ pd.options.mode.chained_assignment = None  # default='warn'
 class AgrUnprocessed:
     @staticmethod
     @log
-    def execute(tables: dict[str, pd.ExcelFile]) -> dict[str, pd.DataFrame]:
-        agr_tables = {}
+    def execute(tables) -> dict[str, pd.DataFrame]:
+        # Создание плоской таблицы
+        flat_table = AgrUnprocessed._get_flat_table(
+            main_df=tables.get('7.xlsx'),  # Схема подключений МОЭК
+            bti=tables.get('9.xlsx'),      # Выгрузка БТИ
+            coords=tables.get("13.xlsx"),  # Адресный реестр объектов недвижимости города Москвы
+            ods=tables.get('8.xlsx'),      # Данные АСУПР с диспетчерскими ОДС
+            energy=tables.get('12.xlsx'),  # Класс энергоэффективности соцобъектов
+        )
 
-        # Схема подключений МОЭК
-        main_df = tables.get('7.xlsx')
+        # Перечень событий за период (ЦУ КГХ)
+        events_all = AgrUnprocessed._get_events(
+            events=(tables.get('5.xlsx'), tables.get('5.1.xlsx'))
+        )
+
+        # Выгрузка ОДПУ отопления
+        events_counter_all = AgrUnprocessed._get_counter_events(
+            counter_events=(tables.get('11.xlsx_1'), tables.get('11.xlsx_2')),
+            errors_description=tables.get('11.xlsx_W')
+        )
+
+        # Плановые-Внеплановые отключения 01.10.2023-30.04.2023
+        outage = AgrUnprocessed._get_outage(
+            outage=tables.get('6.xlsx')
+        )
+
+        agr_tables = {
+            'flat_table': flat_table,
+            'events_all': events_all,
+            'events_counter_all': events_counter_all,
+            'outage': outage,
+        }
+
+        print('agr_tables', agr_tables)
+        print(type(outage))
+
+        # start test case
+        tests = {
+            'flat_table': (5575, 49),   # rows, cols
+            'events_all': (916483, 8),
+            'events_counter_all': (1004375, 25),
+            'outage': (115, 10),
+        }
+
+        err = False
+        for tbl, df in agr_tables.items():
+            rows = len(df.index)
+            cols = len(df.columns)
+            if tests.get(tbl) != (rows, cols):
+                err = True
+                print('NO GOOD', (rows, cols), 'must be = ', (tests.get(tbl)))
+
+        if not err:
+            print('Test Agregate.execute: PASS')
+        else:
+            print('Test Agregate.execute: NO PASS')
+        # end test case
+
+        return agr_tables
+
+    @staticmethod
+    def _get_flat_table(
+            main_df: pd.DataFrame, bti: pd.DataFrame, coords: pd.DataFrame,
+            ods: pd.DataFrame, energy: pd.DataFrame) -> pd.DataFrame:
+        """ Создание плоской таблицы """
 
         # Выгрузка БТИ
-        bti_df = AgrUnprocessed._agr_bti(tables.get('9.xlsx'))
+        bti_df = AgrUnprocessed._agr_bti(bti)
         big_df = main_df.merge(bti_df[[
             'UNOM', 'Адрес строения',
             'Административный округ', 'Муниципальный округ',
@@ -27,8 +89,8 @@ class AgrUnprocessed:
             'Номер строения',
             'Материал', 'Назначение', 'Класс', 'Тип', 'Этажность',
             'Общая площадь',
-            # ]], how="left", on='Адрес строения')
         ]], how="inner", on='Адрес строения')
+
         tp_df = bti_df.__deepcopy__()
         tp_df.columns = ['id_ТП', 'Город_ТП', 'Административный округ_ТП',
                          'Муниципальный округ_ТП', 'Населенный пункт_ТП',
@@ -44,7 +106,7 @@ class AgrUnprocessed:
                                   on='Адрес ТП')
 
         # Адресный реестр объектов недвижимости города Москвы
-        df_coord = tables.get("13.xlsx")
+        df_coord = coords
         df_coord = df_coord[1:]
         df_coord['UNOM'] = df_coord['UNOM'].astype(float)
         res = with_tp_df.merge(df_coord[['geoData', 'geodata_center', 'UNOM']],
@@ -52,23 +114,23 @@ class AgrUnprocessed:
         df_coord = df_coord.rename(
             columns={'UNOM': 'UNOM_ТП', 'geoData': 'geoData_ТП',
                      'geodata_center': 'geodata_center_ТП'}).__deepcopy__()
-        res2 = res.merge(
+        flat_table = res.merge(
             df_coord[['geoData_ТП', 'geodata_center_ТП', 'UNOM_ТП']],
             how="inner", on='UNOM_ТП')
-        res2['geodata_center'] = res2['geodata_center'].apply(
+        flat_table['geodata_center'] = flat_table['geodata_center'].apply(
             lambda x: Utils.get_coord(x))
-        res2['geoData'] = res2['geoData'].apply(
+        flat_table['geoData'] = flat_table['geoData'].apply(
             lambda x: Utils.get_coord(x, darr=True))
-        res2['geodata_center_ТП'] = res2['geodata_center_ТП'].apply(
+        flat_table['geodata_center_ТП'] = flat_table['geodata_center_ТП'].apply(
             lambda x: Utils.get_coord(x))
-        res2['geoData_ТП'] = res2['geoData_ТП'].apply(
+        flat_table['geoData_ТП'] = flat_table['geoData_ТП'].apply(
             lambda x: Utils.get_coord(x, darr=True))
-        res2['Источник теплоснабжения'].unique().tolist()
-        res2['geoData_ТЭЦ'] = res2['Источник теплоснабжения'].apply(
+        flat_table['Источник теплоснабжения'].unique().tolist()
+        flat_table['geoData_ТЭЦ'] = flat_table['Источник теплоснабжения'].apply(
             lambda x: AgrUnprocessed._set_obj_source_station_coord(x))
-        res2["Адрес ТЭЦ"] = res2['geoData_ТЭЦ'].apply(
+        flat_table["Адрес ТЭЦ"] = flat_table['geoData_ТЭЦ'].apply(
             lambda x: AgrUnprocessed._get_addr(x))
-        res2.rename(columns={
+        flat_table.rename(columns={
             'Источник теплоснабжения': 'obj_source_name',
             'Дата ввода в эксплуатацию': 'obj_source_launched',
             'Адрес ТЭЦ': 'obj_source_address',
@@ -115,10 +177,10 @@ class AgrUnprocessed:
             'obj_source_boiler_count',
             'obj_source_turbine_count'
         )
-        res2[[*obj_source_columns]] = res2['obj_source_name'].apply(
+        flat_table[[*obj_source_columns]] = flat_table['obj_source_name'].apply(
             lambda x: pd.Series(AgrUnprocessed._get_source_data(x)))
 
-        res2 = res2[[
+        flat_table = flat_table[[
             # source station
             'obj_source_name', 'obj_source_launched', 'obj_source_address',
             'obj_source_e_power',
@@ -161,58 +223,26 @@ class AgrUnprocessed:
         ]]
 
         # Данные АСУПР с диспетчерскими ОДС
-        ods_df = AgrUnprocessed._agr_ods(tables.get('8.xlsx'))
-        res2 = res2.merge(ods_df[['obj_consumer_station_name',
-                                  'obj_consumer_station_ods_name',
-                                  'obj_consumer_station_ods_address',
-                                  'obj_consumer_station_ods_id_yy',
-                                  'obj_consumer_station_ods_manager_company',
-                                  ]], how='left',
-                          on='obj_consumer_station_name')
-        res2.fillna("Нет данных", inplace=True)
-        res2['wall_material_k'] = res2['wall_material'].apply(
+        ods_df = AgrUnprocessed._agr_ods(ods)
+        flat_table = flat_table.merge(ods_df[['obj_consumer_station_name',
+                                              'obj_consumer_station_ods_name',
+                                              'obj_consumer_station_ods_address',
+                                              'obj_consumer_station_ods_id_yy',
+                                              'obj_consumer_station_ods_manager_company',
+                                              ]], how='left',
+                                      on='obj_consumer_station_name')
+        flat_table.fillna("Нет данных", inplace=True)
+        flat_table['wall_material_k'] = flat_table['wall_material'].apply(
             lambda x: AgrUnprocessed._check_heat_resist(x))
 
-        # Перечень событий за период  (ЦУ КГХ)
-        events = tables.get('5.xlsx')
-        # Перечень событий за период  (ЦУ КГХ)
-        events2 = tables.get('5.1.xlsx')
-        events2.rename(columns={
-            'Дата и время завершения события': 'Дата и время завершения события во внешней системе'},
-                       inplace=True)
-        events = pd.concat([events, events2])
-        events.rename(columns={
-            'Наименование': 'event_description',
-            'Источник': 'event_source',
-            'Дата создания во внешней системе': 'event_created',
-            'Дата закрытия': 'event_closed_ext',
-            'Округ': 'location_area',
-            'УНОМ': 'unom',
-            'Адрес': 'address',
-            'Дата и время завершения события во внешней системе': 'event_closed',
-        }, inplace=True)
-
-        # Плановые-Внеплановые отключения 01.10.2023-30.04.2023
-        outage = tables.get('6.xlsx')
-        outage.rename(columns={
-            'Причина': 'reason', 'Источник': 'source',
-            'Дата регистрации отключения': 'date_registration_shutdown',
-            'Планируемая дата отключения': 'planned_shutdown_date',
-            'Планируемая дата включения': 'planned_activation_date',
-            'Фактическая дата отключения': 'fact_shutdown_date',
-            'Фактическая дата включения': 'fact_activation_date',
-            'Вид отключения': 'shutdown_type', 'УНОМ': 'unom',
-            'Адрес': 'address'}, inplace=True)
-
         # Класс энергоэффективности соцобъектов
-        energy_df = tables.get('12.xlsx')
+        energy_df = energy
 
         clear_shit = energy_df[
             ~energy_df["Департамент"].astype(str).str.contains(
                 '^[А-Я]') == True]
 
-        clear_shit["obj_consumer_address"] = clear_shit["Департамент"][
-                                             2:].apply(
+        clear_shit["obj_consumer_address"] = clear_shit["Департамент"][2:].apply(
             lambda x: AgrUnprocessed._rename_address(x))
         clear_shit = clear_shit.drop(columns=["Департамент"])
         clear_shit.reset_index(drop=True, inplace=True)
@@ -223,70 +253,40 @@ class AgrUnprocessed:
             "Год ввода здания в эксплуатацию": 'obj_consumer_build_date',
         }, inplace=True)
 
-        res2 = res2.merge(clear_shit, how='left', on=["obj_consumer_address"])
-        res2.fillna('Нет данных', inplace=True)
+        flat_table = flat_table.merge(clear_shit, how='left', on=["obj_consumer_address"])
+        flat_table.fillna('Нет данных', inplace=True)
 
-        # Выгрузка ОДПУ отопления
-        counter_events = tables.get('11.xlsx_1')
-        counter_events2 = tables.get('11.xlsx_2')
-        errors_description = tables.get('11.xlsx_W')
-        counter_events_all = pd.concat([counter_events, counter_events2])
-        counter_events_all.rename(columns={
-            'ID УУ': 'id_uu', 'ID ТУ': 'id_ty',
-            'Округ': 'district', 'Район': 'area',
-            'Потребители': 'manager_company', 'Группа': 'group',
-            'UNOM': 'unom',
-            'Адрес': 'address',
-            'Центральное отопление(контур)': 'contour_co',
-            'Марка счетчика ': 'counter_mark',
-            'Марка счетчика': 'brand_counter',
-            'Серия/Номер счетчика': 'number_counter',
-            'Дата': 'date', 'Месяц/Год': 'month_year', 'Unit': 'unit',
-            'Объём поданого теплоносителя в систему ЦО': 'obyom_podanogo_teplonositelya_v_sistemu_co',
-            'Объём обратного теплоносителя из системы ЦО': 'obyom_obratnogo_teplonositelya_is_sistemu_co',
-            'Разница между подачей и обраткой(Подмес)': 'podmes',
-            'Разница между подачей и обраткой(Утечка)': 'ytechka',
-            'Температура подачи': 'temp_podachi',
-            'Температура обратки': 'temp_obratki',
-            'Наработка часов счётчика': 'narabotka_chasov_schetchika',
-            'Расход тепловой энергии ': 'rashod_teplovoy_energy',
-            'Ошибки': 'errors'
-        }, inplace=True)
+        return flat_table
+
+    @staticmethod
+    def _get_events(events: tuple[pd.DataFrame, pd.DataFrame]) -> pd.DataFrame:
+        """ Перечень событий (ЦУ КГХ)"""
+        events[1].rename(columns={
+            'Дата и время завершения события': 'Дата и время завершения события во внешней системе'},
+            inplace=True)
+        events_all = pd.concat([*events])
+        events_all.rename(columns=EVENTS_COLUMNS_MAP, inplace=True)
+
+        return events_all
+
+    @staticmethod
+    def _get_counter_events(counter_events: tuple, errors_description) -> pd.DataFrame:
+        """Выгрузка ОДПУ отопления"""
+        counter_events_all = pd.concat([*counter_events])
+        counter_events_all.rename(columns=COUNTER_EVENTS_COLUMNS_MAP, inplace=True)
         err_dict = errors_description.to_dict(orient='list')
         counter_events_all = AgrUnprocessed._get_err_counter_desc(
             counter_events_all, err_dict)
         counter_events_all.fillna(0, inplace=True)
 
-        agr_tables['flat_table'] = res2
-        agr_tables['events_all'] = events
-        agr_tables['events_counter_all'] = counter_events_all
-        agr_tables['outage'] = outage
-        print('agr_tables', agr_tables)
-        print(type(outage))
+        return counter_events_all
 
-        # start test case
-        tests = {
-            'flat_table': (5575, 49),   # rows, cols
-            'events_all': (916483, 8),
-            'events_counter_all': (1004375, 25),
-            'outage': (115, 10),
-        }
+    @staticmethod
+    def _get_outage(outage: pd.DataFrame) -> pd.DataFrame:
+        """Плановые-Внеплановые отключения"""
+        outage.rename(columns=OUTAGE_COLUMNS_MAP, inplace=True)
 
-        err = False
-        for tbl, df in agr_tables.items():
-            rows = len(df.index)
-            cols = len(df.columns)
-            if tests.get(tbl) != (rows, cols):
-                err = True
-                print('NO GOOD', (rows, cols), 'must be = ', (tests.get(tbl)))
-
-        if not err:
-            print('Test Agregate.execute: PASS')
-        else:
-            print('Test Agregate.execute: NO PASS')
-        # end test case
-
-        return agr_tables
+        return outage
 
     @staticmethod
     @log
