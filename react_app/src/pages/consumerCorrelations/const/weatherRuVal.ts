@@ -1,4 +1,4 @@
-export const conditionRuVal: Record<string, string> = {
+export const conditionRuVal = {
     'clear': 'ясно',
     'partly-cloudy': 'переменная облачность',
     'cloudy': 'облачно',
@@ -7,7 +7,7 @@ export const conditionRuVal: Record<string, string> = {
     'light-rain': 'небольшой дождь',
     'rain': 'умеренный дождь',
     'moderate-rain': 'сильный дождь',
-    'heavy-rain': 'непрерывный',
+    'heavy-rain': 'непрерывный дождь',
     'continuous-heavy-rain': 'дождь',
     'showers': 'сильный ливень',
     'wet-snow': 'мокрый снег',
@@ -18,9 +18,9 @@ export const conditionRuVal: Record<string, string> = {
     'thunderstorm': 'гроза',
     'thunderstorm-with-rain': 'гроза с дождем',
     'thunderstorm-with-hail': 'гроза с градом'
-}
+} as const
 
-export const windDirRuVal: Record<string, string> = {
+export const windDirRuVal = {
     's': 'Юг',
     'n': 'Север',
     'w': 'Запад',
@@ -29,4 +29,4 @@ export const windDirRuVal: Record<string, string> = {
     'ne': 'Северо-восток',
     'se': 'Юго-восток',
     'sw': 'Юго-запад',
-}
+} as const

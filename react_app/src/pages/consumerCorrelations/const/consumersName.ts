@@ -2,6 +2,7 @@ export const consumersName = {
     address: 'Адрес',
     balance_holder: 'Балансодержатель',
     sock_type: 'Тип',
+    target: 'Назначение',
     total_area: 'Общая площадь',
     floors: 'Количество этажей',
     is_dispatch: 'Диспетчеризация',

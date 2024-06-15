@@ -53,6 +53,7 @@ export const TableConsumers: FC<ITableConsumersPropsZ> = ({data, updateStatus}) 
             >
                 <TableFilter.Banner withSearch withManageColumn>
                     <DownloadExcelButton
+                        sx={{width: '190px'}}
                         onClick={downloadExcel}
                     >
                         Загрузить excel
@@ -69,11 +70,7 @@ export const TableConsumers: FC<ITableConsumersPropsZ> = ({data, updateStatus}) 
                     keyName='consumer_address'
                     id='consumer_address'
                     topic='Адрес потребителя'
-                />
-                <TableFilter.SelectCell
-                    keyName='consumer_name'
-                    id='consumer_name'
-                    topic='Тип потребителя'
+                    sx={{width: '230px'}}
                 />
                 <TableFilter.SelectCell
                     keyName='location_district_consumer_name'

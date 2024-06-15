@@ -1,5 +1,4 @@
-import {LngLat} from "ymaps3";
-import {FC, useState} from "react";
+import {FC, useMemo, useState} from "react";
 
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
@@ -7,18 +6,25 @@ import {Box, IconButton, Slide, Tab, Tabs} from "@mui/material";
 
 import {PaperWrapper} from "@src/shared/ui/paperWrapper";
 
-import {Consumer, ConsumerCorrelationsInfo} from "../types/consumerCorrelationsInfo";
 import {ConsumersTable} from "./consumersTable/ConsumersTable";
 import {SingleConsumerInfo} from "./singleConsumer/SingleConsumerInfo";
 import {ConsumersMap} from "./consumersMap/ConsumersMap";
+import {CriticalStatusName, FormattedConsumer} from "../types/formattedConsumer";
+import {FormattedConsumerCorrelationsInfo} from "../api/getConsumerCorrelations";
 
 interface ConsumersMainContentProps {
-    data: ConsumerCorrelationsInfo
+    data: FormattedConsumerCorrelationsInfo
 }
 
 export const ConsumersMainContent: FC<ConsumersMainContentProps> = ({data}) => {
     const [activeTab, setActiveTab] = useState<number>(0)
-    const [activeConsumer, setActiveConsumer] = useState<Consumer | undefined>()
+    const [activeConsumer, setActiveConsumer] = useState<FormattedConsumer | undefined>()
+
+    const isIncident = useMemo(() => {
+        return !!data.consumers_dep?.some(info => {
+            return info.critical_status !== CriticalStatusName.IS_NO_ACCENDENT
+        })
+    }, [data])
 
     return (
         <PaperWrapper sx={{mt: '16px', position: 'relative'}}>
@@ -54,7 +60,11 @@ export const ConsumersMainContent: FC<ConsumersMainContentProps> = ({data}) => {
                 <Box>
                     {
                         data?.consumers_dep && activeTab === 0 &&
-                        <ConsumersTable data={data.consumers_dep} setActiveConsumer={setActiveConsumer}/>
+                        <ConsumersTable
+                            consumerStationId={data.consumer_stations?.id}
+                            data={data.consumers_dep}
+                            setActiveConsumer={setActiveConsumer}
+                        />
                     }
                     {
                         activeTab === 1 && data &&
@@ -67,6 +77,7 @@ export const ConsumersMainContent: FC<ConsumersMainContentProps> = ({data}) => {
                     activeConsumer
                         ? <Box>
                             <SingleConsumerInfo
+                                isIncident={isIncident}
                                 consumer={activeConsumer}
                             />
                         </Box>

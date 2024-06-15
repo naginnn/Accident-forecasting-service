@@ -2,6 +2,7 @@ import {createTheme} from "@mui/material/styles";
 import {ruRU} from '@mui/material/locale';
 
 import {Button} from './components/Button'
+import {TableBody} from "./components/TableBody";
 
 export const theme = createTheme(
     {
@@ -27,6 +28,7 @@ export const theme = createTheme(
         },
         components: {
             MuiButton: Button,
+            MuiTableBody: TableBody,
             MuiPaper: {
                 styleOverrides: {
                     root: {

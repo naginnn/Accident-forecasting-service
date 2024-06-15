@@ -3,7 +3,6 @@ import {useNavigate, useParams} from "react-router-dom";
 
 import {Box, Breadcrumbs, Grid} from "@mui/material";
 
-
 import {PageWrapper} from "@src/entities/pageWrapper";
 import {LoadingWrapper} from "@src/entities/loadingWrapper";
 import {ErrorWrapper} from "@src/entities/errorWrapper";
@@ -15,6 +14,7 @@ import {AppRoutes} from "@src/shared/config/router/ui/router";
 import {useGetConsumersCorrelationsQuery} from "../api/getConsumerCorrelations";
 import {ConsumersMainContent} from "./ConsumersMainContent";
 import {CommonInfoBlock} from "./CommonInfoBlock";
+import {SourceStationBlock} from "@src/pages/consumerCorrelations/ui/SourceStationBlock";
 
 export const ConsumerCorrelations: FC = withMenu(() => {
     const navigate = useNavigate()
@@ -53,16 +53,32 @@ export const ConsumerCorrelations: FC = withMenu(() => {
                         {
                             data &&
                             <>
-                                <Grid container columnSpacing={2}>
-                                    <Grid item sx={{flex: '0 0 500px'}}>
+                                <Grid container columnGap={2}>
+                                    <Grid item sx={{flex: '0 0 550px', maxHeight: '500px', oveflow: 'auto'}}>
                                         <CommonInfoBlock
                                             weather={data.weather}
                                             areaName={data.area?.name}
-                                            srcStations={data.source_stations}
                                             consumerStationName={data.consumer_stations?.name}
                                             consumerStationAddr={data.consumer_stations?.address}
                                         />
                                     </Grid>
+                                    {
+                                        data.source_stations &&
+                                        <Grid
+                                            item
+                                            sx={{
+                                                flex: '0 0 550px',
+                                                maxHeight: '500px',
+                                                maxWidth: '550px',
+                                                oveflow: 'auto'
+                                            }}
+                                        >
+                                            {
+                                                data.source_stations.length &&
+                                                <SourceStationBlock info={data.source_stations[0]}/>
+                                            }
+                                        </Grid>
+                                    }
                                 </Grid>
                                 <ConsumersMainContent data={data}/>
                             </>

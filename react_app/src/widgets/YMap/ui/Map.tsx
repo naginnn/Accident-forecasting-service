@@ -63,13 +63,6 @@ export const Map: FC<IMapProps> = ({location, setLocation, children}) => {
     return (
         <MapContext.Provider value={contextVal}>
             <div className={classNames(cls.map_wrapper)}>
-                {/*<ErrorWrapper*/}
-                {/*    snackBarErrors={{*/}
-                {/*        errors: [{error: true, message: 'Не удалось загрузить данные'}]*/}
-                {/*    }}*/}
-                {/*>*/}
-                {/*    <MapMenu/>*/}
-                {/*</ErrorWrapper>*/}
                 <div className={classNames(cls.map, {[cls.map_fullscreen]: isFullscreen})}>
                     <YMap
                         location={location}
@@ -80,13 +73,13 @@ export const Map: FC<IMapProps> = ({location, setLocation, children}) => {
                         <YMapListener onUpdate={onUpdate}/>
                         <YMapDefaultSchemeLayer/>
                         <YMapDefaultFeaturesLayer/>
-                        <YMapControls position="right">
+                        <YMapControls position="left">
                             <YMapZoomControl/>
                         </YMapControls>
-                        <YMapControls position='top left'>
+                        <YMapControls position='bottom left'>
                             <YMapScaleControl/>
                         </YMapControls>
-                        <YMapControls position="top right">
+                        <YMapControls position="top left">
                             <YMapControlButton onClick={onClickHandler}>
                                 <div className={
                                     classNames(cls.fullscreen, {[cls.exitFullscreen]: isFullscreen})

@@ -4,40 +4,36 @@ import {IconButton, Typography} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import {orange, red} from "@mui/material/colors";
 
-import {YMapMarker, YMapFeature} from "@src/widgets/YMap";
+import {YMapFeature, YMapMarker} from "@src/widgets/YMap";
 import {useToggle} from "@src/shared/hooks/useToggle";
 import {PaperWrapper} from "@src/shared/ui/paperWrapper";
 import {Link} from "@src/shared/ui/link";
 
-import {Consumer} from "../../types/consumerCorrelationsInfo";
+import {CriticalStatusName, FormattedConsumer} from "../../types/formattedConsumer";
 
 interface ConsumersPopupPolygonProps {
-    info: Consumer
-    setActiveConsumer: React.Dispatch<React.SetStateAction<Consumer | undefined>>
+    info: FormattedConsumer
+    setActiveConsumer: React.Dispatch<React.SetStateAction<FormattedConsumer | undefined>>
 }
 
 export const ConsumersPopupPolygon: FC<ConsumersPopupPolygonProps> = ({info, setActiveConsumer}) => {
     const {on: openPopup, off: closePopup, value: isOpenPopup} = useToggle()
 
     const getPolygonColor = () => {
-        if (info.events?.length && !info.events[0].is_closed) {
-            if (info.events[0].is_approved) {
-                return red[500]
-            } else {
-                return orange[500]
-            }
+        if (info.critical_status === CriticalStatusName.IS_APPROVED) {
+            return red[500]
+        } else if (info.critical_status === CriticalStatusName.IS_WARNING) {
+            return orange[500]
         }
 
         return '#006efc'
     }
 
     const fillPolygonColor = () => {
-        if (info.events?.length && !info.events[0].is_closed) {
-            if (info.events[0].is_approved) {
-                return red[100]
-            } else {
-                return orange[100]
-            }
+        if (info.critical_status === CriticalStatusName.IS_APPROVED) {
+            return red[100]
+        } else if (info.critical_status === CriticalStatusName.IS_WARNING) {
+            return orange[100]
         }
 
         return 'rgba(56, 56, 219, 0.5)'
@@ -92,6 +88,11 @@ export const ConsumersPopupPolygon: FC<ConsumersPopupPolygonProps> = ({info, set
                             <b>Тип:</b>
                             &nbsp;
                             {info.sock_type || '-'}
+                        </Typography>
+                        <Typography>
+                            <b>Назначение:</b>
+                            &nbsp;
+                            {info.target || '-'}
                         </Typography>
                         <Typography>
                             <b>Общ. площадь:</b>

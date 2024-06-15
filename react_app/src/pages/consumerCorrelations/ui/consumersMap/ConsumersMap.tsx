@@ -6,14 +6,15 @@ import {Box, Button, Paper} from "@mui/material";
 import {coordinates} from "@src/widgets/YMap/const/coordinates";
 import {YMap, YMapControl, YMapControls} from "@src/widgets/YMap";
 
-import {Consumer, ConsumerCorrelationsInfo} from "../../types/consumerCorrelationsInfo";
 import {ConsumerStationPopup} from "./ConsumerStationPopup";
 import {SourceStationPopup} from "./SourceStationPopup";
 import {ConsumersPopupPolygon} from "./ConsumersPopupPolygon";
+import {FormattedConsumer} from "../../types/formattedConsumer";
+import {FormattedConsumerCorrelationsInfo} from "../../api/getConsumerCorrelations";
 
 interface ConsumersMapProps {
-    info: ConsumerCorrelationsInfo
-    setActiveConsumer: React.Dispatch<React.SetStateAction<Consumer | undefined>>
+    info: FormattedConsumerCorrelationsInfo
+    setActiveConsumer: React.Dispatch<React.SetStateAction<FormattedConsumer | undefined>>
 }
 
 export const ConsumersMap: FC<ConsumersMapProps> = ({info, setActiveConsumer}) => {

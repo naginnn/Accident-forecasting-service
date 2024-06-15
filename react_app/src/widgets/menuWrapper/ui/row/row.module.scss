@@ -44,6 +44,7 @@
     transition: width .5s cubic-bezier(0.4, 0, 0.2, 1) 0ms;
     overflow: hidden;
     width: 0px;
+    max-height: 40px;
 
     &-open {
       width: calc(100%);

@@ -14,10 +14,11 @@ import {openNewWindowPage} from "@src/shared/lib/openNewWindowPage";
 
 import {CriticalStatusName, TransformConsumers} from "../../api/getConsumers";
 import {EditStatusButton} from "./EditStatusButton";
+import {CopyCell} from "@src/entities/copyCell";
 
 interface IConsumersProps {
     info: TransformConsumers
-    visibleColumn: VisibleColumnT<TransformConsumers> & {manage_table: boolean}
+    visibleColumn: VisibleColumnT<TransformConsumers> & { manage_table: boolean }
     updateStatus: React.Dispatch<React.SetStateAction<TransformConsumers[]>>
     criticalStatus: CriticalStatusName
 }
@@ -37,13 +38,17 @@ export const ConsumersRow: FC<IConsumersProps> = ({info, visibleColumn, updateSt
         }
     }
 
-    const getCell = (info: TransformConsumers, keyName: Exclude<keyof TransformConsumers, 'consumer_geo_data' | 'critical_status'>) => {
+    const getCell = (info: TransformConsumers, keyName: Exclude<keyof TransformConsumers, 'consumer_geo_data' | 'critical_status'>, isCopy: boolean = false) => {
         if (visibleColumn && visibleColumn[keyName]) {
-            return <TableCell>
-                <Typography variant='body2'>
+            return isCopy
+                ? <CopyCell>
                     {info[keyName]}
-                </Typography>
-            </TableCell>
+                </CopyCell>
+                : <TableCell>
+                    <Typography variant='body2'>
+                        {info[keyName]}
+                    </Typography>
+                </TableCell>
         }
         return null
     }
@@ -84,8 +89,7 @@ export const ConsumersRow: FC<IConsumersProps> = ({info, visibleColumn, updateSt
             onMouseDown={onOpenConsumerCortnsNewPage}
         >
             {getStatusCell('critical_status')}
-            {getCell(info, 'consumer_address')}
-            {getCell(info, 'consumer_name')}
+            {getCell(info, 'consumer_address', true)}
             {getCell(info, 'location_district_consumer_name')}
             {getCell(info, 'location_area_consumer_name')}
             {getCell(info, 'source_station_name')}

@@ -5,22 +5,27 @@ import {TableBody} from "@mui/material";
 
 import {TableFilter, VisibleColumnT} from "@src/widgets/tableFilter";
 import {sortArr} from "@src/shared/lib/sortArr";
+import {ErrorWrapper} from "@src/entities/errorWrapper";
+import {DownloadExcelButton} from "@src/shared/ui/downloadExlsBtn";
 
-import {Consumer} from "../../types/consumerCorrelationsInfo";
 import {ConsumerRow} from "./ConsumerRow";
+import {FormattedConsumer} from "../../types/formattedConsumer";
+import {useDownloadConsumerStation} from "../../api/downloadExcel";
 
 interface ConsumersTableProps {
-    data: Consumer[]
-    setActiveConsumer: React.Dispatch<React.SetStateAction<Consumer | undefined>>
+    data: FormattedConsumer[]
+    consumerStationId: number | undefined
+    setActiveConsumer: React.Dispatch<React.SetStateAction<FormattedConsumer | undefined>>
 }
 
-export const ConsumersTable: FC<ConsumersTableProps> = ({data, setActiveConsumer}) => {
-    const sortedData = useMemo(() => {
+export const ConsumersTable: FC<ConsumersTableProps> = ({data, setActiveConsumer, consumerStationId}) => {
+    const {downloadExcel, error} = useDownloadConsumerStation()
+    const sortedData: FormattedConsumer[] = useMemo(() => {
         return sortArr(data, 'priority', 'desc', true)
     }, [data])
 
 
-    const getTableBodyLayout = (data: Consumer[], getPageContent: (x: Consumer[]) => Consumer[], visibleColumn: VisibleColumnT<Consumer>) => {
+    const getTableBodyLayout = (data: FormattedConsumer[], getPageContent: (x: FormattedConsumer[]) => FormattedConsumer[], visibleColumn: VisibleColumnT<FormattedConsumer>) => {
         return (
             <TableBody>
                 {
@@ -40,21 +45,43 @@ export const ConsumersTable: FC<ConsumersTableProps> = ({data, setActiveConsumer
     }
 
     return (
+        <ErrorWrapper
+            snackBarErrors={{
+                errors: [{error, message: 'Не удалось загрузить excel'}]
+            }}
+        >
             <TableFilter
                 data={sortedData}
                 getTableBodyLayout={getTableBodyLayout}
                 withPagination
             >
-                <TableFilter.Banner withSearch withManageColumn/>
-                <TableFilter.SelectCell keyName='address' id='address' topic='Адрес' sx={{width: '15%'}}/>
+                <TableFilter.Banner withSearch withManageColumn>
+                    {
+                        typeof consumerStationId !== 'undefined' &&
+                        <DownloadExcelButton onClick={() => downloadExcel(consumerStationId)}>
+                            Загрузить excel
+                        </DownloadExcelButton>
+                    }
+                </TableFilter.Banner>
+                <TableFilter.SelectCell
+                    isInvisible
+                    keyName='critical_status'
+                    id='critical_status'
+                    sx={{width: '50px'}}
+                    topic='Статус критичности'
+                />
+                <TableFilter.SelectCell keyName='address' id='address' topic='Адрес' sx={{width: '230px'}}/>
                 <TableFilter.SelectCell keyName='balance_holder' id='balance_holder' topic='Балансодержатель'/>
                 <TableFilter.SelectCell keyName='sock_type' id='sock_type' topic='Тип'/>
+                <TableFilter.SelectCell keyName='target' id='target' topic='Назначение'/>
                 <TableFilter.SortCell keyName='total_area' id='total_area' topic='Общ. площадь'/>
                 <TableFilter.SortCell keyName='floors' id='floors' topic='Кол-во этажей'/>
-                <TableFilter.SelectCell booleanName={['Да', 'Нет']} keyName='is_dispatch' id='is_dispatch' topic='Диспетчеризация'/>
+                <TableFilter.SelectCell booleanName={['Да', 'Нет']} keyName='is_dispatch' id='is_dispatch'
+                                        topic='Диспетчеризация'/>
                 <TableFilter.SelectCell keyName='energy_class' id='energy_class' topic='Класс энергоэффективности'/>
                 <TableFilter.SelectCell keyName='operating_mode' id='operating_mode' topic='Время работы'/>
                 <TableFilter.SortCell keyName='priority' id='priority' topic='Приоритет'/>
             </TableFilter>
+        </ErrorWrapper>
     )
 };

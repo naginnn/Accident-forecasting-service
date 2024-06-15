@@ -27,7 +27,7 @@ export const ConsumersWrapper: FC = withMenu(({}) => {
     }, [dataConsumers])
 
     return (
-        <>
+        <Box sx={{overflow: 'hidden'}}>
             <Breadcrumbs>
                 <Link sx={{color: 'black'}}>
                     Потребители
@@ -80,6 +80,6 @@ export const ConsumersWrapper: FC = withMenu(({}) => {
                     </ErrorWrapper>
                 </LoadingWrapper>
             </PageWrapper>
-        </>
+        </Box>
 );
 }, 'Потребители')

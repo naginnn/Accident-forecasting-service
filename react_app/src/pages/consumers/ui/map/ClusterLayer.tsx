@@ -88,7 +88,7 @@ export const ClusterLayer: FC<ClusterLayerProps> = ({setLocation, data, location
                         onClick={() => {
                             setLocation({
                                 center: features[0].geometry.coordinates,
-                                zoom: 14
+                                zoom: 17
                             })
                         }}
                         sx={{p: '4px'}}

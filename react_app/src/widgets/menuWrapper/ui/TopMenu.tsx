@@ -20,7 +20,8 @@ interface ITopMenu {
 }
 
 export const TopMenu = ({menuIsVisible}: ITopMenu) => {
-    const {on: openModal, off: closeModal, value: isOpenMenu} = useToggle()
+    const {on: openUploadModal, off: closeUploadModal, value: isOpenUploadModal} = useToggle()
+    const {on: openSettingModal, off: closeSettingModal, value: isOpenSettubgModal} = useToggle()
     const {uploadData, isLoading, error} = useUploadFile()
 
     if (!menuIsVisible)
@@ -32,19 +33,17 @@ export const TopMenu = ({menuIsVisible}: ITopMenu) => {
                 snackBarErrors={{errors: [{error, message: 'Не удалось загрузить данные'}]}}
             >
                 <div className={classNames(cls.topMenuWrapper)}>
-                    {
-                        <UploadModal
-                            isOpen={isOpenMenu}
-                            onClose={closeModal}
-                            fetchData={uploadData}
-                        />
-                    }
+                    <UploadModal
+                        isOpen={isOpenUploadModal}
+                        onClose={closeUploadModal}
+                        fetchData={uploadData}
+                    />
                     <Box sx={{height: '100%', width: '100%', px: '16px', display: 'flex', alignItems: 'center'}}>
                         <Box sx={{width: '100px', display: 'inline-block'}}>
                             <img src={logo} style={{width: '90%', maxHeight: '100%'}}/>
                         </Box>
-                        <Box sx={{ml: 'auto', display: 'inline-block', width: 'fit-content'}}>
-                            <FocusedIcon onClick={openModal}>
+                        <Box sx={{ml: 'auto', display: 'flex', gap: '8px', width: 'fit-content'}}>
+                            <FocusedIcon onClick={openUploadModal}>
                                 <FileUploadIcon/>
                             </FocusedIcon>
                         </Box>

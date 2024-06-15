@@ -98,7 +98,9 @@ export const CollapsedBlock = (
                             }
                         </Grid>
                         <Grid item>
-                            <Typography sx={{userSelect: 'none'}}>{topicName}</Typography>
+                            <Typography sx={{userSelect: 'none', fontWeight: 500}}>
+                                {topicName}
+                            </Typography>
                         </Grid>
                     </Grid>
                     {textPlacement === 'left' && getDivider()}

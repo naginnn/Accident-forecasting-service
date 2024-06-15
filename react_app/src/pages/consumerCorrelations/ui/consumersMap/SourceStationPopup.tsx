@@ -40,14 +40,14 @@ export const SourceStationPopup: FC<SourcetationLayerProps> = ({info}) => {
                             <CloseIcon/>
                         </IconButton>
                         <Typography>
-                            <b>Адрес:</b>
-                            &nbsp;
-                            {info.address}
-                        </Typography>
-                        <Typography>
                             <b>Имя:</b>
                             &nbsp;
                             {info.name}
+                        </Typography>
+                        <Typography>
+                            <b>Адрес:</b>
+                            &nbsp;
+                            {info.address}
                         </Typography>
                         <Typography>
                             <b>Кол-во котлов:</b>
@@ -55,19 +55,19 @@ export const SourceStationPopup: FC<SourcetationLayerProps> = ({info}) => {
                             {info.boiler_count}
                         </Typography>
                         <Typography>
-                            <b>Электрическая мощность:</b>
-                            &nbsp;
-                            {info.e_power}
-                        </Typography>
-                        <Typography>
                             <b>Тепловая мощность:</b>
                             &nbsp;
-                            {info.t_power}
+                            {info.t_power} Гкал/ч
                         </Typography>
                         <Typography>
                             <b>Кол-во турбин:</b>
                             &nbsp;
                             {info.turbine_count}
+                        </Typography>
+                        <Typography>
+                            <b>Электрическая мощность:</b>
+                            &nbsp;
+                            {info.e_power} МВт
                         </Typography>
                     </PaperWrapper>
                 </YMapMarker>

@@ -72,6 +72,7 @@ type WallMaterial = {
 export type TempDropping = {
     date_ts: number
     temp: number
+    env_temp: number
 }
 
 type WeatherFall = {

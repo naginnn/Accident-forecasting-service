@@ -9,13 +9,17 @@ import {ErrorLayout} from "@src/entities/errorWrapper";
 
 import {Consumers} from "src/pages/consumers";
 import {ConsumerCorrelations} from "@src/pages/consumerCorrelations";
+import {Settings} from "@src/pages/settings";
+import {ModelInfo} from "@src/pages/modelInfo";
 
 export enum AppRoutes {
     LOGIN = 'login',
     REGISTRATION = 'registration',
     NOT_FOUND = 'not_found',
     CONSUMERS = 'consumers',
-    CONSUMERS_CORRELATIONS = 'consumers_correlations'
+    CONSUMERS_CORRELATIONS = 'consumers_correlations',
+    SETTINGS = 'settings',
+    MODEL_INFO = 'model-info'
 }
 
 export const routerPaths: Record<AppRoutes, string> = {
@@ -23,7 +27,9 @@ export const routerPaths: Record<AppRoutes, string> = {
     [AppRoutes.REGISTRATION]: '/registration',
     [AppRoutes.NOT_FOUND]: '*',
     [AppRoutes.CONSUMERS]: '/consumers',
-    [AppRoutes.CONSUMERS_CORRELATIONS]: '/consumers/:consumer_stations_id'
+    [AppRoutes.CONSUMERS_CORRELATIONS]: '/consumers/:consumer_stations_id',
+    [AppRoutes.SETTINGS]: '/settings',
+    [AppRoutes.MODEL_INFO]: '/model-info'
 }
 
 export const routes: RouteObject[] = [
@@ -40,6 +46,16 @@ export const routes: RouteObject[] = [
             {
                 path: routerPaths[AppRoutes.CONSUMERS_CORRELATIONS],
                 element: <ConsumerCorrelations/>,
+                errorElement: <ErrorLayout/>
+            },
+            {
+                path: routerPaths[AppRoutes.SETTINGS],
+                element: <Settings/>,
+                errorElement: <ErrorLayout/>
+            },
+            {
+                path: routerPaths[AppRoutes.MODEL_INFO],
+                element: <ModelInfo/>,
                 errorElement: <ErrorLayout/>
             }
         ]
