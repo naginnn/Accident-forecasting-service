@@ -465,10 +465,10 @@ def save_predicated(session: Session, predicated_df: pd.DataFrame, events_df: pd
 
 def save_model_info(session: Session, model: CatBoostClassifier, accuracy_score: float, feature_importances: dict):
     name = f"models_{str(datetime.datetime.now())}.cbm"
-    model.save_model(f"{os.getenv('MODEL_PATH')}/{name}")
+    model.save_model(f"/models/{name}")
     model_info = ModelInfo(
         name=name,
-        path=f"{os.getenv('MODEL_PATH')}/{name}",
+        path=f"/models/{name}",
         metrics="",
         accuracy=round(accuracy_score, 2),
         feature_importance=feature_importances,
@@ -477,11 +477,3 @@ def save_model_info(session: Session, model: CatBoostClassifier, accuracy_score:
     session.add(model_info)
     session.commit()
 
-
-def update_coordinates(session: Session):
-    pass
-
-# if __name__ == '__main__':
-#     print()
-#     df = pd.read_excel('test.xlsx', sheet_name='full')
-#     save_for_view(df=df)

@@ -127,6 +127,7 @@ def prepare_dataset(
         update_weather_data()
         update_weather_consumers_fall_go()
     update_progress(job=job, progress=100, msg="Успешно")
+    print("Все охуенно")
 
 
 def loop(path, file_name):
@@ -187,3 +188,17 @@ def update_weather_consumers_fall_go():
         url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/calculate_go"
     )
     return r.status_code
+
+
+# if __name__ == '__main__':
+#     from settings.db import sync_db
+#
+#     prepare_dataset(sync_db,
+#                     files=None,
+#                     is_save_view=False,
+#                     is_agr_counter=False,
+#                     is_agr_train=True,
+#                     is_agr_predict=True,
+#                     is_predict=True,
+#                     is_weather_update=True
+#                     )
