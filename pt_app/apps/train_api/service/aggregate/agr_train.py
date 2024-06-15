@@ -78,6 +78,8 @@ class AgrTrain:
                              'event_class', ]]
         agr_train_df = train_df[train_df['last_event_class'].notna()]
 
+        agr_train_df.dropna(inplace=True)
+
         agr_predict_df = train_df.groupby(['obj_consumer_id']).first()
         agr_predict_df = agr_predict_df.reset_index()
         agr_predict_df['time'] = datetime.datetime.now()

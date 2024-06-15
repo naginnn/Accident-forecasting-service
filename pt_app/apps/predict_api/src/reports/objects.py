@@ -205,6 +205,8 @@ async def create_consumer_station_report(id: int):
     return file_name, excel_file
 
 
+
+
 async def create_object_report(id: int):
     file_name = str(datetime.now().__format__('%d%m%Y')) + '_' + 'object_report'
     obj_query = f"""

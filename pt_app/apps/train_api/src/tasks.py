@@ -65,8 +65,8 @@ def prepare_dataset(
         is_weather_update: bool = True,
 ) -> None:
     session = Session(db)
-    # job = FakeJob.get_current_job()
-    job = get_current_job()
+    job = FakeJob.get_current_job()
+    # job = get_current_job()
     if files:
         update_progress(job=job, progress=15, msg="Сохранение необработанных данных")
         # 1. собираем и пред агрегируем входные данные
@@ -187,21 +187,3 @@ def update_weather_consumers_fall_go():
         url=f"http://{os.getenv('API_OBJ_HOST')}:{os.getenv('API_OBJ_PORT')}/api/v1/obj/weather/calculate_go"
     )
     return r.status_code
-
-
-if __name__ == '__main__':
-    # update_weather_data()
-    print(update_weather_consumers_fall())
-
-    # start = time.time()
-    # files = get_data_from_excel()
-    # 119 seconds
-    # files = upload_xlsx_faster()
-    # prepare_dataset(save_view=True)
-    # prepare_dataset(
-    #     files=None,
-    #     save_view=True,
-    #     agr_counter=False
-    # )
-    # print(time.time() - start, "upload")
-    # prepare_dataset(files=files, save_view=False, agr_counter=False)
