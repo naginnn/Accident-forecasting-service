@@ -175,8 +175,6 @@ func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *
 		tempData.DateTs = startTime
 		tempData.Temp = tInitial
 		fallWeather.TempDropping.TempData = append(fallWeather.TempDropping.TempData, tempData)
-		//fallWeather.TempDropping.DateTs = append(fallWeather.TempDropping.DateTs, startTime)
-		//fallWeather.TempDropping.Temp = append(fallWeather.TempDropping.Temp, tInitial)
 		for _, wthr := range *weatherParams {
 			if len(fallWeather.TempDropping.TempData) == 1 {
 				if wthr.TEnv > tInitial {
@@ -185,21 +183,16 @@ func PredicateTemp(db *gorm.DB, consumers *[]models.ObjConsumer, weatherParams *
 				fallWeather.TempDropping.TempData[0].EnvTemp = wthr.TEnv
 			}
 			tempData.DateTs = wthr.DateTs
-			//fallWeather.TempDropping.DateTs = append(fallWeather.TempDropping.DateTs, wthr.DateTs)
 			if len(consumer.WallMaterial) > 0 {
 				wthr.K = consumer.WallMaterial[0].K
 			} else {
 				wthr.K = 0.01
 			}
 			wthr.TInitial = tInitial
-			// add whether block
-
-			// add whether block
 			tInitial = NewtonCooling(&wthr)
 			tempData.Temp = tInitial
 			tempData.EnvTemp = wthr.TEnv
 			fallWeather.TempDropping.TempData = append(fallWeather.TempDropping.TempData, tempData)
-			//fallWeather.TempDropping.Temp = append(fallWeather.TempDropping.Temp, tInitial)
 			if tInitial <= 18 {
 				break
 			}
