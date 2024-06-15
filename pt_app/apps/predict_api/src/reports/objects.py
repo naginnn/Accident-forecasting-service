@@ -155,6 +155,7 @@ async def create_consumer_station_report(id: int):
                         where ec.is_closed = false and ocs.id = '{str(id)}'
         """
     df_events = pd.read_sql(events_query, sync_db)
+    df_events["Дата создания инцидента"] = df_events["Дата создания инцидента"].astype(str)
 
     event_counter_query = f"""
                 select obj.address            as "Адрес потребителя",
