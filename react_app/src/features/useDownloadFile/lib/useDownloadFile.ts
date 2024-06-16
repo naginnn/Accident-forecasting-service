@@ -17,7 +17,7 @@ export const useDownloadFile = (): IUseDownloadReturnType => {
     const [fileName, setFileName] = useState<string>('')
 
     const onGetFileName = (response: Response) => {
-        const fileName = getFileName(response) || 'default'
+        const fileName = 'default' || getFileName(response)
         setFileName(fileName)
     }
 
