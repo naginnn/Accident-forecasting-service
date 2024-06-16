@@ -36,6 +36,14 @@ def upload_files_new(conn_str: str, bts: io.BytesIO):
                         is_agr_predict=True,
                         is_predict=True,
                         is_weather_update=True)
+        # prepare_dataset(db,
+        #                 files=files,
+        #                 is_save_view=True,
+        #                 is_agr_counter=True,
+        #                 is_agr_train=True,
+        #                 is_agr_predict=True,
+        #                 is_predict=True,
+        #                 is_weather_update=True)
 
 
 def loop_for_file(xlsx, filename):
