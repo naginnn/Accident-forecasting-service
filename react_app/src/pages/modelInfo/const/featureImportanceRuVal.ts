@@ -41,5 +41,4 @@ export const featureImportanceRuVal = {
     'b_class': 'Тип (жилое/нежилое)',
     'energy_class': 'Класс энергоэффективности потребителя',
     'location_district_id': 'Округ потребителя',
-
 } as const
