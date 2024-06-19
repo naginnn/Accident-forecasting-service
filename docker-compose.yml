@@ -24,6 +24,7 @@ services:
     ports:
       - "3000:3000"
 
+
   db:
     image: postgres:alpine
     container_name: db
