@@ -11,3 +11,5 @@ url = f"redis://{RD_HOST}:{RD_PORT}"
 
 def get_redis_client():
     return redis.Redis.from_url(url)
+
+
