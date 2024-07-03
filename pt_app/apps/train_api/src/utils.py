@@ -1,72 +1,42 @@
-import io
-import os
-import threading
-from datetime import timedelta
-from typing import Tuple, Dict, Any, Callable
-from zipfile import ZipFile
+from collections.abc import Callable
 
-import pandas as pd
-from redis import Redis
+from apps.train_api.src.tasks import update_progress
 from rq import Queue
 from rq.command import send_stop_job_command
-from rq.exceptions import *
-from rq.job import Job, get_current_job
-
-from apps.train_api.src.tasks import update_progress, prepare_dataset
-from pkg.utils import get_elapsed_time, FakeJob
+from rq.exceptions import *  # noqa: F403
+from rq.job import Job
 from settings.rd import get_redis_client
 
-job_name = "train_job"
+job_name = 'train_job'
 
 
-# states = ["queued", "started", "deferred", "finished", "stopped", "scheduled", "canceled", "failed"]
 
 
-async def start_task(f: Callable, job_id: str, **kwargs) -> Tuple[dict, bool]:
+async def start_task(f: Callable, job_id: str, **kwargs) -> tuple[dict, bool]:  # noqa: D103, ANN003
     redis = get_redis_client()
     q = Queue(connection=redis, default_timeout=-1)
     try:
         send_stop_job_command(redis, job_id)
         job = q.enqueue(f=f, job_id=job_id, **kwargs)
-    except NoSuchJobError:
+    except NoSuchJobError:  # noqa: F405
         job = q.enqueue(f=f, job_id=job_id, **kwargs)
-    except Exception as e:
-        return dict(error=str(e)), False
-    update_progress(job=job, progress=5, msg="Подготовка")
+    except Exception as e:  # noqa: BLE001
+        return {'error': str(e)}, False
+    update_progress(job=job, progress=5, msg='Подготовка')
     status = job.get_status()
-    if status in ["started", "queued"]:
+    if status in ['started', 'queued']:
         return job.get_meta(), True
-    else:
-        return dict(state=job.get_status()), False
+    else:  # noqa: RET505
+        return {'state': job.get_status()}, False
 
 
-async def check_task_state(job_id: str) -> Tuple[dict, str] | Tuple[None, str]:
+async def check_task_state(job_id: str) -> tuple[dict, str] | tuple[None, str]:  # noqa: D103
     redis = get_redis_client()
     try:
         job = Job.fetch(id=job_id, connection=redis)
         return job.get_meta(), job.get_status()
-    except NoSuchJobError:
-        return None, "finished"
-        # return dict(error="no such job, job was not started"), False
-
-
-
-# async def check_train_state(job_name='upload_files') -> dict:
-#     redis = get_redis_client()
-#     mo
-#         job = Job.fetch(id=job_name, connection=redis)
-#         status = job.get_status()
-#         if status != "started":
-#             end_time = job.get_meta().get("end_time")
-#             train_time = end_time
-#         else:
-#             start_time = job.get_meta().get("start_time")
-#             train_time = str(timedelta(seconds=get_elapsed_time(start_time)))[:-4]
-#         return dict(state=job.get_status(),
-#                     training_time=train_time,
-#                     )
-#     except NoSuchJobError:
-#         return dict(error="no such job, training was not started")
+    except NoSuchJobError:  # noqa: F405
+        return None, 'finished'
 
 
 # async upload_sync():

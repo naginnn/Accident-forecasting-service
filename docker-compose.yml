@@ -136,7 +136,7 @@ services:
       - ./.env
     volumes:
       - ./models:/models
-      - ./autostart:/autostart
+      - ./pt_app:/app
     depends_on:
       - db
     links:
