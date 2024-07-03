@@ -13,7 +13,6 @@ from fastapi.openapi.utils import get_openapi
 
 from apps.train_api.src.tasks import prepare_dataset
 
-# app = FastAPI(redoc_url=None)
 app = FastAPI(docs_url=None,
               redoc_url=None,
               openapi_url="/docs/train/openapi.json")

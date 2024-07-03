@@ -1,25 +1,24 @@
 import io
 import os
 from zipfile import ZipFile
-import rq
-from rq.job import Job, get_current_job
-from joblib import Parallel, delayed
-import pandas as pd
 
+import pandas as pd
+import rq
 from apps.train_api.src.tasks import prepare_dataset
+from joblib import Parallel, delayed
+from rq.job import Job, get_current_job
 from sqlalchemy import create_engine
 
 
-def upload_files_new(conn_str: str, bts: io.BytesIO):
-    """ Переодическая задача, разбор архива и вызов парсинга """
+def upload_files_new(conn_str: str, bts: io.BytesIO) -> None:
+    """ Переодическая задача, разбор архива и вызов парсинга. """  # noqa: D210
     db = create_engine(conn_str)
     job = get_current_job()
-    # job = FakeJob.get_current_job()
     # Загрузка файлов
     job.meta['stage'] = 0.0
     job.save_meta()
 
-    with ZipFile(bts, "r") as zip_file:
+    with ZipFile(bts, 'r') as zip_file:
         res = Parallel(n_jobs=-2, verbose=10)(delayed(loop_for_file)
                                               (io.BytesIO(zip_file.open(xlxs_file.filename).read()), xlxs_file.filename)
                                               for xlxs_file in zip_file.filelist if
@@ -27,7 +26,6 @@ def upload_files_new(conn_str: str, bts: io.BytesIO):
         files = {}
         for r in res:
             files.update(r)
-        print("ok", files.keys())
         prepare_dataset(db,
                         files=files,
                         is_save_view=True,
@@ -46,9 +44,9 @@ def upload_files_new(conn_str: str, bts: io.BytesIO):
         #                 is_weather_update=True)
 
 
-def loop_for_file(xlsx, filename):
+def loop_for_file(xlsx, filename):  # noqa: ANN001, ANN201
     match filename:
-        case "13.xlsx":
+        case '13.xlsx':
             s = {filename: pd.read_excel(xlsx, usecols=[
                 'geoData', 'geodata_center', 'UNOM'
             ])}
