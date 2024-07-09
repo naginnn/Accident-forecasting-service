@@ -1,51 +1,21 @@
 
 ## Documentation
+Emergency forecasting service
+[Duplicate reserve]
+origin https://gitlab.com/naginnn/hack2024
 
-- go_app - Приложения GO
-- pt_app - Приложения Python
-- react_app - Приложения React
-- models - Хранение моделей
-- env - env для локального тестирования
-- env_dev - использует docker
-- docker-compose.yml - Docker compose
+## Consists of
+
+1. User Interface
+2. ML API
+3. Forecasting API
+4. Data Transfer API
+5. Reporting service
 
 
 
 ## Usage/Examples
-
-## go_app
-```java
-internal
-  app
-    auth-api - Авторизация/Регистрация
-    obj-api - Предикт/Логика выдачи
-    cb-api - Catboost GO
-  pkg
-pkg
-go.mod
-go.sum
-```
-## pt_app
-```java
-apps
-  train_api - Обучение и ETL процессы
-pkg
-settings
-utils
-requirements.txt
-```
-## react_app
-**Launching:**
-1. build app:
-``` sh
-npm run build
-```
-2. run app:
-``` sh
-node server.js
-```
-## Run
-```java
-git clone lalalla
-docker-compose up
+```bash
+git clone https://github.com/naginnn/Accident-forecasting-service.git
+docker-compose up -d
 ```
